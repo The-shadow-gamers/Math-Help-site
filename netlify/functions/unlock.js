@@ -15,7 +15,7 @@ exports.handler = async (event) => {
     const sig = crypto.createHmac("sha256", secret).update(ts).digest("base64url");
     const token = `${ts}.${sig}`;
 
-    // Session cookie (no Max-Age) -> requires login each new site load (we also call /logout on load)
+    // Session cookie (no Max-Age) -> requires login each new site load
     return {
       statusCode: 200,
       headers: {
