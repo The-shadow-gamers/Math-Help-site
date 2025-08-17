@@ -1,1 +1,10 @@
+# local env
 .env
+
+# netlify + deps
+.netlify/
+node_modules/
+
+# build output (if any)
+dist/
+build/
