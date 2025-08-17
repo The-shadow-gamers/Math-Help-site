@@ -8,11 +8,11 @@
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Default favicon (will be replaced programmatically) -->
+  <!-- Default favicon (replaced programmatically) -->
   <link rel="icon" type="image/png" href="icon.png" />
 
   <style>
-    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; --blue:#1e40af; }
+    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
@@ -20,7 +20,7 @@
     /* Invisible unlock hotspot (top-left) */
     #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
 
-    /* Locked cover (blue screen) */
+    /* Locked cover (blue “down” screen) */
     #locked-cover{
       position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
       background: linear-gradient(180deg, #0a49c4, #053a97);
@@ -29,7 +29,7 @@
     #locked-inner{max-width:720px}
     #locked-title{font-size:2rem; font-weight:800; letter-spacing:.2px; margin-bottom:.5rem}
     #locked-sub{opacity:.9}
-    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px; }
+    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px;}
 
     /* Panel (hidden until unlocked) */
     .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;
@@ -102,7 +102,7 @@
 
       <!-- Panic key selector -->
       <div class="hint" style="display:flex; align-items:center; gap:.5rem; margin-left:1rem;">
-        <label for="panicSelect">Panic (press <span class="kbd">Alt+Q</span>):</label>
+        <label for="panicSelect">Panic (press <span class="kbd">-</span>):</label>
         <select id="panicSelect" title="Choose cloak for panic key">
           <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
           <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
@@ -251,9 +251,13 @@
 
     document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-    // Panic key: Alt+Q
+    // Panic key: '-' (minus). Ignore when typing.
     document.addEventListener("keydown", (e) => {
-      if (e.altKey && (e.key === "q" || e.key === "Q")) {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+
+      if (e.key === "-" || e.key === "_" || e.code === "Minus") {
         const sel = loadPanic() || JSON.parse(panicSelect.value);
         setTab(sel.title, sel.icon);
         saveCloak(sel.title, sel.icon);
@@ -270,15 +274,13 @@
     panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
 
     // ---- Force login every load:
-    // 1) clear cookie server-side, then
+    // 1) clear cookie server-side
     fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
       .finally(() => {
         // 2) show locked-state title + multi-size favicon group
         setTitle("Math Help - Down");
         setFaviconGroup(DOWN_ICONS);
       });
-
-    // (User must open modal and sign in each visit)
   </script>
 </body>
 </html>
