@@ -24,14 +24,6 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unlocked: false }) };
   }
 
-  const ageMs = Date.now() - Number(ts);
-  if (Number.isNaN(ageMs) || ageMs > 24 * 60 * 60 * 1000) {
-    return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unlocked: false }) };
-  }
-
-  return {
-    statusCode: 200,
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-    body: JSON.stringify({ unlocked: true })
-  };
+  // (optional age check removed; since we force /logout on load, session is per visit)
+  return { statusCode: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }, body: JSON.stringify({ unlocked: true }) };
 };
