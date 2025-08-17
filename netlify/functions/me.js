@@ -24,6 +24,5 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unlocked: false }) };
   }
 
-  // (optional age check removed; since we force /logout on load, session is per visit)
   return { statusCode: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }, body: JSON.stringify({ unlocked: true }) };
 };
