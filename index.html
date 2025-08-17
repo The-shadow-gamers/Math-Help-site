@@ -8,17 +8,28 @@
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
 
-  <!-- Default favicon -->
-  <link id="favicon" rel="icon" type="image/png" href="icon.png" />
+  <!-- Default favicon (will be replaced programmatically) -->
+  <link rel="icon" type="image/png" href="icon.png" />
 
   <style>
-    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; }
+    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; --blue:#1e40af; }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
 
     /* Invisible unlock hotspot (top-left) */
     #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
+
+    /* Locked cover (blue screen) */
+    #locked-cover{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, #0a49c4, #053a97);
+      color:#dbeafe; text-align:center; z-index:1000; padding:2rem;
+    }
+    #locked-inner{max-width:720px}
+    #locked-title{font-size:2rem; font-weight:800; letter-spacing:.2px; margin-bottom:.5rem}
+    #locked-sub{opacity:.9}
+    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px; }
 
     /* Panel (hidden until unlocked) */
     .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;
@@ -33,73 +44,169 @@
     .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
     .btn img{width:18px;height:18px;border-radius:4px}
     .btn.clear{color:#fca5a5;border-color:#4b1010}
-    .hint{margin-left:auto;color:var(--muted);font-size:.9rem}
-    @media (max-width:780px){.hint{display:none}}
+    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
+    @media (max-width:900px){.hint{display:none}}
 
     iframe{width:100%;height:100%;border:none;background:#000}
+
+    /* Modal */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
+    .modal.show{display:flex;}
+    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+    .modal .card{
+      position:relative; width:min(92vw,420px); background:#0f172a; border:1px solid #0b1220;
+      border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45);
+    }
+    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
+    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
+    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
+    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
+    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
+    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
+    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+         background:#0b1220; border:1px solid #1f2937; padding:.15rem .4rem; border-radius:6px; color:#cbd5e1}
+    select{background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; padding:.4rem .6rem}
+    label{color:#9ca3af; font-size:.9rem}
   </style>
 </head>
 <body>
   <!-- Invisible unlock area (top-left corner) -->
   <div id="hotspot" aria-label="Open panel"></div>
 
+  <!-- Blue "down" cover (visible until unlocked) -->
+  <div id="locked-cover">
+    <div id="locked-inner">
+      <img id="locked-icon" src="down-favicon-64.png" alt="">
+      <div id="locked-title">Math Help is down right now</div>
+      <div id="locked-sub">Please come back later.</div>
+    </div>
+  </div>
+
   <div class="wrap">
+    <!-- Panel -->
     <div class="bar" id="panel">
       <span class="brand"><img src="icon.png" alt=""/>Math Help</span>
 
       <!-- Logo buttons -->
-      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png">
-        <img src="calculator-icon.png" alt="" /> Calculator
-      </button>
-      <button class="btn" data-title="Google" data-favicon="google-favicon.png">
-        <img src="google-favicon.png" alt="" /> Google
-      </button>
-      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png">
-        <img src="google-docs-icon.png" alt="" /> Google Docs
-      </button>
-      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png">
-        <img src="classroom-favicon.png" alt="" /> Classroom
-      </button>
-      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png">
-        <img src="khan-favicon.png" alt="" /> Khan Academy
-      </button>
-      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png">
-        <img src="wikipedia-favicon.png" alt="" /> Wikipedia
-      </button>
+      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt=""/>Calculator</button>
+      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt=""/>Google</button>
+      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt=""/>Docs</button>
+      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt=""/>Classroom</button>
+      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt=""/>Khan</button>
+      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt=""/>Wikipedia</button>
 
       <button class="btn clear" id="clearCloak">Clear</button>
-      <span class="hint">Click a logo to change tab. “Clear” restores defaults.</span>
+
+      <!-- Panic key selector -->
+      <div class="hint" style="display:flex; align-items:center; gap:.5rem; margin-left:1rem;">
+        <label for="panicSelect">Panic (press <span class="kbd">Alt+Q</span>):</label>
+        <select id="panicSelect" title="Choose cloak for panic key">
+          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
+          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Proxied app will load after unlock -->
+    <!-- App (proxied) loads after unlock -->
     <iframe id="app" title="Math Help"></iframe>
   </div>
 
+  <!-- Custom Password Modal -->
+  <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="backdrop" data-close></div>
+    <div class="card">
+      <h2>Enter password</h2>
+      <p>This unlocks the page.</p>
+      <div class="row">
+        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+        <button id="togglePw" class="toggle" type="button">Show</button>
+      </div>
+      <div id="pwErr" class="err"></div>
+      <div class="actions">
+        <button class="secondary" data-close type="button">Cancel</button>
+        <button id="pwSubmit" class="primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // ---- Config / Keys
     const DEFAULT_TITLE = "Math Help";
     const DEFAULT_ICON  = "icon.png";
+    const DOWN_ICONS = [
+      { href: "down-favicon-16.png", sizes: "16x16" },
+      { href: "down-favicon-32.png", sizes: "32x32" },
+      { href: "down-favicon-64.png", sizes: "64x64" }
+    ];
+    const LS_CLOAK = "mh_cloak";
+    const LS_PANIC = "mh_panic";
+
+    // ---- Elements
     const panel = document.getElementById("panel");
     const frame = document.getElementById("app");
+    const cover = document.getElementById("locked-cover");
+    const hotspot = document.getElementById("hotspot");
+    const modal = document.getElementById("pwModal");
+    const pwInput = document.getElementById("pwInput");
+    const pwErr = document.getElementById("pwErr");
+    const panicSelect = document.getElementById("panicSelect");
 
-    function getFaviconLink(){
-      let link = document.querySelector('link[rel="icon"]');
-      if(!link){ link = document.createElement('link'); link.rel='icon'; link.type='image/png'; document.head.appendChild(link); }
-      return link;
+    // ---- Favicon helpers
+    function removeFavicons(){
+      document.querySelectorAll('link[rel~="icon"]').forEach(el => el.parentNode.removeChild(el));
     }
-    function setTab(title, icon){ document.title = title; getFaviconLink().href = icon; }
-    function clearTab(){ setTab(DEFAULT_TITLE, DEFAULT_ICON); }
-
-    async function checkUnlocked(){
-      try{
-        const r = await fetch("/.netlify/functions/me", { credentials:"include", cache:"no-store" });
-        const j = await r.json();
-        return !!j.unlocked;
-      }catch{ return false; }
+    function addIcon(href, sizes){
+      const link = document.createElement("link");
+      link.rel = "icon";
+      link.type = "image/png";
+      if (sizes) link.sizes = sizes;
+      link.href = href;
+      document.head.appendChild(link);
     }
+    function setFaviconSingle(href){ removeFavicons(); addIcon(href); }
+    function setFaviconGroup(group){ removeFavicons(); group.forEach(({href, sizes}) => addIcon(href, sizes)); }
 
-    async function unlockFlow(){
-      const pass = prompt("Enter password:");
-      if(!pass) return;
+    function setTitle(t){ document.title = t; }
+    function setTab(title, iconHref){ setTitle(title); setFaviconSingle(iconHref); }
+    function clearTab(){
+      localStorage.removeItem(LS_CLOAK);
+      setTab(DEFAULT_TITLE, DEFAULT_ICON);
+    }
+    function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
+    function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK) || "null"); }catch{ return null; } }
+    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); }catch{ return null; } }
+
+    // ---- Modal controls
+    function openModal(){
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+      pwErr.textContent = "";
+      pwInput.value = "";
+      setTimeout(()=>pwInput.focus(), 0);
+    }
+    function closeModal(){
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+      pwInput.blur();
+    }
+    document.getElementById("togglePw").addEventListener("click", (event) => {
+      pwInput.type = (pwInput.type === "password" ? "text" : "password");
+      event.target.textContent = pwInput.type === "password" ? "Show" : "Hide";
+    });
+    modal.addEventListener("click", (e) => { if (e.target.dataset.close !== undefined) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
+
+    async function submitPassword(){
+      const pass = pwInput.value.trim();
+      if(!pass){ pwErr.textContent = "Password required."; return; }
       try{
         const r = await fetch("/.netlify/functions/unlock", {
           method:"POST",
@@ -108,27 +215,70 @@
           body: JSON.stringify({ password: pass })
         });
         const j = await r.json();
-        if(j.ok){ reveal(); }
-      }catch{}
+        if (j.ok){
+          closeModal();
+          reveal();
+        } else {
+          pwErr.textContent = "Incorrect password.";
+        }
+      }catch{
+        pwErr.textContent = "Network error. Try again.";
+      }
     }
+    document.getElementById("pwSubmit").addEventListener("click", submitPassword);
+    pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
 
+    // ---- Unlock flow
     function reveal(){
+      cover.style.display = "none";
       panel.classList.add("unlocked");
-      if(!frame.src) frame.src = "/app";  // Netlify proxy (keeps real URL out of HTML)
+      if(!frame.src) frame.src = "/app";
+      const saved = loadCloak();
+      if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); }
+      else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
     }
 
-    document.getElementById("hotspot").addEventListener("click", async () => {
-      if(await checkUnlocked()) { reveal(); return; }
-      await unlockFlow();
-    });
+    hotspot.addEventListener("click", () => { openModal(); });
 
     document.querySelectorAll('.btn[data-title]').forEach(btn => {
-      btn.addEventListener('click', () => setTab(btn.dataset.title, btn.dataset.favicon));
+      btn.addEventListener('click', () => {
+        const title = btn.getAttribute('data-title');
+        const icon  = btn.getAttribute('data-favicon');
+        setTab(title, icon);
+        saveCloak(title, icon);
+      });
     });
+
     document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-    clearTab();
-    checkUnlocked().then(u => { if(u) reveal(); });
+    // Panic key: Alt+Q
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "q" || e.key === "Q")) {
+        const sel = loadPanic() || JSON.parse(panicSelect.value);
+        setTab(sel.title, sel.icon);
+        saveCloak(sel.title, sel.icon);
+      }
+    });
+
+    // Persist panic selection
+    const panicSaved = loadPanic();
+    if (panicSaved) {
+      for (const opt of panicSelect.options) {
+        if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; }
+      }
+    }
+    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
+
+    // ---- Force login every load:
+    // 1) clear cookie server-side, then
+    fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
+      .finally(() => {
+        // 2) show locked-state title + multi-size favicon group
+        setTitle("Math Help - Down");
+        setFaviconGroup(DOWN_ICONS);
+      });
+
+    // (User must open modal and sign in each visit)
   </script>
 </body>
 </html>
