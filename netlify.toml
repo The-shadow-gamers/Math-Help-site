@@ -1,0 +1,9 @@
+[build]
+  functions = "netlify/functions"
+
+# Proxy your Wix page so its URL isn't in your HTML
+[[redirects]]
+  from = "/app"
+  to = "https://videogamenerds.wixstudio.com/math-help"
+  status = 200
+  force = true
