@@ -1,2 +1,8 @@
 [build]
   functions = "netlify/functions"
+
+[[redirects]]
+  from = "/app"
+  to = "https://videogamenerds.wixstudio.com/math-help"
+  status = 200
+  force = true
