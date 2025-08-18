@@ -1,0 +1,8 @@
+{
+  "name": "math-help-site",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^5.0.0"
+  }
+}
