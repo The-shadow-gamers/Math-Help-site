@@ -37,6 +37,8 @@
     .btn img{width:18px;height:18px;border-radius:4px}
     .btn.clear{color:#fca5a5;border-color:#4b1010}
     .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
+    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
+    @media (max-width:900px){.hint{display:none}}
 
     iframe{width:100%;height:100%;border:none;background:#000}
 
@@ -117,7 +119,22 @@
       <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt=""/>Classroom</button>
       <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt=""/>Khan</button>
       <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt=""/>Wikipedia</button>
+
       <button class="btn clear" id="clearCloak">Clear</button>
+
+      <!-- Panic UI -->
+      <div class="hint" id="panicUI" style="display:flex;align-items:center;gap:.5rem;margin-left:1rem;">
+        <label for="panicSelect">Panic (press <span class="kbd">-</span>):</label>
+        <select id="panicSelect" title="Choose cloak for panic key">
+          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
+          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+        </select>
+        <button id="panicFire" class="btn" type="button" title="Trigger panic now">Panic</button>
+      </div>
 
       <!-- Admin only controls -->
       <div id="adminPanel">
@@ -136,7 +153,7 @@
     <iframe id="app" title="Math Help"></iframe>
   </div>
 
-  <!-- Password Modal (no admin code shown) -->
+  <!-- Password Modal -->
   <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-close></div>
     <div class="card">
@@ -185,6 +202,7 @@
     const LS_CLOAK     = "mh_cloak";
     const LS_BG_COLOR  = "mh_bg_color";
     const LS_BG_IMAGE  = "mh_bg_img";
+    const LS_PANIC     = "mh_panic";
 
     /* ---------- elements ---------- */
     const panel = document.getElementById("panel");
@@ -252,6 +270,44 @@
     fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
       .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
 
+    /* ======================= PANIC (dropdown + key + button) ======================= */
+    const panicSelect = document.getElementById("panicSelect");
+    const panicFire   = document.getElementById("panicFire");
+
+    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
+
+    (function initPanic(){
+      const saved = loadPanic();
+      if (saved) {
+        for (const opt of panicSelect.options) {
+          if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
+        }
+      } else {
+        savePanic(JSON.parse(panicSelect.value));
+      }
+    })();
+
+    panicSelect.addEventListener("change", () => {
+      savePanic(JSON.parse(panicSelect.value));
+    });
+
+    function triggerPanic(){
+      const sel = loadPanic() || JSON.parse(panicSelect.value);
+      setTab(sel.title, sel.icon);
+      saveCloak(sel.title, sel.icon);
+    }
+    panicFire.addEventListener("click", triggerPanic);
+
+    document.addEventListener("keydown", (e) => {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      if (e.key === "-" || e.key === "_" || e.code === "Minus") {
+        triggerPanic();
+      }
+    });
+
     /* ======================= ADMIN: MINI BROWSER ======================= */
 
     const browserDesk  = document.getElementById("browserDesk");
@@ -284,17 +340,14 @@
         browserDesk.style.backgroundPosition = "center";
       } else {
         browserDesk.style.backgroundImage = "none";
-        // add slight alpha to color for glass effect if 6-digit hex
         const col = /^#([0-9a-f]{6})$/i.test(color) ? color + "cc" : color;
         browserDesk.style.background = col;
       }
-      // update picker UI to stored color
       bgPick.value = color;
     }
 
     function setBgColor(c){
       localStorage.setItem(LS_BG_COLOR, c);
-      // if no image is set, color applies immediately
       if (!localStorage.getItem(LS_BG_IMAGE)) applyBackground();
     }
     bgPick.addEventListener("input", ()=> setBgColor(bgPick.value));
@@ -315,7 +368,6 @@
         }
       };
       reader.readAsDataURL(file);
-      // reset input so selecting the same file later still triggers change
       e.target.value = "";
     });
 
@@ -332,7 +384,7 @@
       active = idx;
       renderTabs();
       showLoader(true);
-      browserFrame.src = TAB_URL + (TAB_URL.includes('?') ? '&' : '?') + 't=' + Date.now(); // bust cache
+      browserFrame.src = TAB_URL + (TAB_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
     }
 
     function renderTabs(){
