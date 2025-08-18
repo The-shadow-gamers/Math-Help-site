@@ -58,9 +58,14 @@
     /* Admin panel (only for admin) */
     #adminPanel{display:none; gap:.5rem; align-items:center; margin-left:1rem}
     #bgPick{width:120px;height:32px;padding:0;border-radius:8px;border:1px solid #1f2937;background:#0b1220}
+    #bgUpload{display:none}
+    #bgLabel{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
+    #bgClear{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
 
     /* Mini Browser “desktop” + window */
-    #browserDesk{display:none; position:fixed; inset:0; z-index:3000; background:#0b1220cc; backdrop-filter:blur(2px); }
+    #browserDesk{display:none; position:fixed; inset:0; z-index:3000;
+                 background:#0b1220cc; backdrop-filter:blur(2px);
+                 background-position:center; background-repeat:no-repeat; background-size:cover;}
     #browserWin{position:absolute; left:50%; top:50%; width:960px; height:600px; transform:translate(-50%,-50%);
                 background:#0f172a; border:1px solid #101826; border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);
                 overflow:hidden; resize:both;}
@@ -118,7 +123,12 @@
       <div id="adminPanel">
         <span class="kbd">ADMIN</span>
         <button id="openBrowser" class="btn">Browser</button>
-        <label style="color:#9ca3af">BG: <input id="bgPick" type="color" value="#0b1220"></label>
+        <label style="color:#9ca3af">BG:
+          <input id="bgPick" type="color" value="#0b1220">
+        </label>
+        <label id="bgLabel" for="bgUpload">Upload</label>
+        <input id="bgUpload" type="file" accept="image/*">
+        <button id="bgClear" type="button">Clear BG</button>
       </div>
     </div>
 
@@ -126,12 +136,12 @@
     <iframe id="app" title="Math Help"></iframe>
   </div>
 
-  <!-- Password Modal -->
+  <!-- Password Modal (no admin code shown) -->
   <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-close></div>
     <div class="card">
       <h2>Enter password</h2>
-      <p>Unlock the page (admin: <span class="kbd">imadmin</span>).</p>
+      <p>Enter your password to unlock the page.</p>
       <div class="row">
         <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="current-password" />
         <button id="togglePw" class="toggle" type="button">Show</button>
@@ -145,7 +155,7 @@
   </div>
 
   <!-- ===== Mini Browser Desktop & Window ===== -->
-  <div id="browserDesk" style="background:#0b1220;">
+  <div id="browserDesk">
     <div id="browserWin">
       <div id="browserTitle">
         <span class="title">Shadow Browser</span>
@@ -172,7 +182,9 @@
     /* ---------- constants / storage keys ---------- */
     const DEFAULT_TITLE = "Math Help";
     const DEFAULT_ICON  = "icon.png";
-    const LS_CLOAK = "mh_cloak";
+    const LS_CLOAK     = "mh_cloak";
+    const LS_BG_COLOR  = "mh_bg_color";
+    const LS_BG_IMAGE  = "mh_bg_img";
 
     /* ---------- elements ---------- */
     const panel = document.getElementById("panel");
@@ -252,16 +264,68 @@
     const closeBtn     = document.getElementById("closeBtn");
     const openBrowser  = document.getElementById("openBrowser");
     const bgPick       = document.getElementById("bgPick");
+    const bgUpload     = document.getElementById("bgUpload");
+    const bgClear      = document.getElementById("bgClear");
 
     const TAB_URL = "https://win11-emu-react.vercel.app/"; // every tab loads this
-    let tabs = [];   // {id, title}
+    let tabs = [];   // {id}
     let active = -1;
 
-    function openDesk(){ browserDesk.style.display="block"; }
-    function closeDesk(){ browserDesk.style.display="none"; }
+    // ---- background (color or image) with persistence ----
+    function applyBackground() {
+      const color = localStorage.getItem(LS_BG_COLOR) || "#0b1220";
+      const img   = localStorage.getItem(LS_BG_IMAGE) || null;
 
-    function setBg(color){ browserDesk.style.background = color + "cc"; }
-    bgPick.addEventListener("input", ()=> setBg(bgPick.value));
+      if (img) {
+        browserDesk.style.backgroundImage = `url("${img}")`;
+        browserDesk.style.backgroundColor = "";
+        browserDesk.style.backgroundSize  = "cover";
+        browserDesk.style.backgroundRepeat= "no-repeat";
+        browserDesk.style.backgroundPosition = "center";
+      } else {
+        browserDesk.style.backgroundImage = "none";
+        // add slight alpha to color for glass effect if 6-digit hex
+        const col = /^#([0-9a-f]{6})$/i.test(color) ? color + "cc" : color;
+        browserDesk.style.background = col;
+      }
+      // update picker UI to stored color
+      bgPick.value = color;
+    }
+
+    function setBgColor(c){
+      localStorage.setItem(LS_BG_COLOR, c);
+      // if no image is set, color applies immediately
+      if (!localStorage.getItem(LS_BG_IMAGE)) applyBackground();
+    }
+    bgPick.addEventListener("input", ()=> setBgColor(bgPick.value));
+
+    bgUpload.addEventListener("change", (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 4 * 1024 * 1024) {
+        alert("Image is large; try a smaller one (<4MB) to save space.");
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem(LS_BG_IMAGE, reader.result);
+          applyBackground();
+        } catch {
+          alert("Could not save image (storage limit).");
+        }
+      };
+      reader.readAsDataURL(file);
+      // reset input so selecting the same file later still triggers change
+      e.target.value = "";
+    });
+
+    bgClear.addEventListener("click", ()=>{
+      localStorage.removeItem(LS_BG_IMAGE);
+      applyBackground();
+    });
+
+    function openDesk(){ applyBackground(); browserDesk.style.display="block"; }
+    function closeDesk(){ browserDesk.style.display="none"; }
 
     function selectTab(idx){
       if (idx < 0 || idx >= tabs.length) return;
@@ -305,7 +369,6 @@
     }
 
     function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
-
     browserFrame.addEventListener("load", ()=> showLoader(false));
 
     tabAdd.addEventListener("click", newTab);
@@ -320,7 +383,6 @@
       if (e.key.toLowerCase()==="f") fullBtn.click();
       if (e.key==="+") tabAdd.click();
     });
-
   </script>
 </body>
 </html>
