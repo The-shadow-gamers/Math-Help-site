@@ -1,7 +1,8 @@
 const crypto = require("crypto");
 
-function sign(secret, ts) {
-  return crypto.createHmac("sha256", secret).update(String(ts)).digest("base64url");
+function b64u(buf){ return Buffer.from(buf).toString("base64url"); }
+function sign(secret, ts, role){
+  return b64u(crypto.createHmac("sha256", secret).update(`${ts}.${role}`).digest());
 }
 
 exports.handler = async (event) => {
@@ -9,17 +10,21 @@ exports.handler = async (event) => {
 
   try {
     const { password } = JSON.parse(event.body || "{}");
+    const userPw  = process.env.APP_PASSWORD_USER  || "";
+    const adminPw = process.env.APP_PASSWORD_ADMIN || "";
+    const secret  = process.env.SIGNING_SECRET     || "change-me";
 
-    const userPw = process.env.APP_PASSWORD_USER || "";
-    const secret = process.env.SIGNING_SECRET || "change-me";
+    let role = null;
+    if (password && password === adminPw) role = "admin";
+    else if (password && password === userPw) role = "user";
 
-    if (!password || password !== userPw) {
-      return { statusCode: 401, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: false }) };
+    if (!role) {
+      return { statusCode: 401, headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ ok:false }) };
     }
 
     const ts  = Date.now();
-    const sig = sign(secret, ts);
-    const token = `${ts}.${sig}`;
+    const sig = sign(secret, ts, role);
+    const token = `${ts}.${role}.${sig}`;
 
     return {
       statusCode: 200,
@@ -28,9 +33,9 @@ exports.handler = async (event) => {
         "Content-Type": "application/json",
         "Cache-Control": "no-store"
       },
-      body: JSON.stringify({ ok: true })
+      body: JSON.stringify({ ok:true, role })
     };
-  } catch {
+  } catch (e) {
     return { statusCode: 400, body: "Bad Request" };
   }
 };
