@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Math Help</title>
 
-  <!-- PWA (optional) -->
   <link rel="manifest" href="manifest.json" />
-
-  <!-- Default favicon (runtime will swap as needed) -->
   <link rel="icon" type="image/png" href="icon.png" />
 
   <style>
@@ -60,12 +57,6 @@
     .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#0b1220; border:1px solid #1f2937; padding:.15rem .4rem; border-radius:6px; color:#cbd5e1}
     select{background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; padding:.4rem .6rem}
     label{color:#9ca3af; font-size:.9rem}
-
-    /* Broadcast UI */
-    #banner{position:fixed; top:0; left:0; right:0; padding:.6rem .9rem; display:none; z-index:3000; text-align:center; font-weight:600}
-    #toast{position:fixed; bottom:1rem; right:1rem; padding:.6rem .9rem; display:none; z-index:3000; border-radius:8px; font-weight:600}
-    #overlay{position:fixed; inset:0; background:rgba(0,0,0,.7); color:#fff; display:none; z-index:3500; align-items:center; justify-content:center; text-align:center; padding:2rem}
-    .txt-info{background:#1d4ed8} .txt-warn{background:#d97706} .txt-error{background:#dc2626}
   </style>
 </head>
 <body>
@@ -113,11 +104,6 @@
     <iframe id="app" title="Math Help"></iframe>
   </div>
 
-  <!-- Broadcast UI -->
-  <div id="banner"></div>
-  <div id="toast"></div>
-  <div id="overlay"><div id="overlayText" style="max-width:900px; font-size:1.6rem; font-weight:800;"></div></div>
-
   <!-- Password Modal -->
   <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-close></div>
@@ -140,11 +126,6 @@
     // ===== Config / Keys
     const DEFAULT_TITLE = "Math Help";
     const DEFAULT_ICON  = "icon.png";
-    const DOWN_ICONS = [
-      { href: "down-favicon-16.png", sizes: "16x16" },
-      { href: "down-favicon-32.png", sizes: "32x32" },
-      { href: "down-favicon-64.png", sizes: "64x64" }
-    ];
     const LS_CLOAK = "mh_cloak";
     const LS_PANIC = "mh_panic";
 
@@ -158,17 +139,10 @@
     const pwErr = document.getElementById("pwErr");
     const panicSelect = document.getElementById("panicSelect");
 
-    // Broadcast UI
-    const banner = document.getElementById("banner");
-    const toast  = document.getElementById("toast");
-    const overlay= document.getElementById("overlay");
-    const overlayText = document.getElementById("overlayText");
-
     // ===== Favicon helpers
     function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
     function addIcon(href, sizes){ const l=document.createElement("link"); l.rel="icon"; l.type="image/png"; if(sizes) l.sizes=sizes; l.href=href; document.head.appendChild(l); }
     function setFaviconSingle(href){ removeFavicons(); addIcon(href); }
-    function setFaviconGroup(group){ removeFavicons(); group.forEach(({href, sizes}) => addIcon(href, sizes)); }
     function setTitle(t){ document.title = t; }
     function setTab(title, iconHref){ setTitle(title); setFaviconSingle(iconHref); }
     function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab(DEFAULT_TITLE, DEFAULT_ICON); }
@@ -200,7 +174,7 @@
         const j = await r.json();
         if (j.ok){
           closeModal();
-          reveal(); // no admin/dev panel to show
+          reveal();
         } else {
           pwErr.textContent = "Incorrect password.";
         }
@@ -211,75 +185,6 @@
     document.getElementById("pwSubmit").addEventListener("click", submitPassword);
     pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
 
-    // ===== Sounds (preload and arm after first interaction)
-    const sounds = {
-      airhorn: new Audio("sounds/airhorn.mp3"),
-      ding:    new Audio("sounds/ding.mp3"),
-      bruh:    new Audio("sounds/bruh.mp3")
-    };
-    Object.values(sounds).forEach(a => { a.preload = "auto"; });
-    let audioArmed = false;
-    function armAudioOnce(){
-      if (audioArmed) return;
-      audioArmed = true;
-      Object.values(sounds).forEach(a => {
-        try {
-          a.muted = true;
-          a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{});
-        } catch{}
-      });
-      window.removeEventListener("click", armAudioOnce);
-      window.removeEventListener("keydown", armAudioOnce);
-      window.removeEventListener("touchstart", armAudioOnce);
-    }
-    window.addEventListener("click", armAudioOnce);
-    window.addEventListener("keydown", armAudioOnce);
-    window.addEventListener("touchstart", armAudioOnce);
-
-    // ===== Broadcast UI helpers
-    let toastTimer = null;
-    function showMessage({ style, level, text, durationMs = 8000 }) {
-      const lvlClass = level === "error" ? "txt-error" : level === "warn" ? "txt-warn" : "txt-info";
-      if (style === "banner") {
-        banner.className = ""; banner.classList.add(lvlClass); banner.textContent = text; banner.style.display = "block";
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(()=>{ banner.style.display = "none"; }, durationMs);
-      } else if (style === "toast") {
-        toast.className = ""; toast.classList.add(lvlClass); toast.textContent = text; toast.style.display = "block";
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, durationMs);
-      } else if (style === "overlay" || style === "modal") {
-        overlay.style.display = "flex";
-        overlayText.textContent = text;
-      }
-    }
-
-    // ===== Event subscribe (long-poll)
-    let cursor = 0;
-    async function pollLoop(){
-      try{
-        const r = await fetch(`/.netlify/functions/events?since=${cursor}&wait=15000`, { credentials:"include", cache:"no-store" });
-        if (r.ok) {
-          const j = await r.json();
-          if (j.events && j.events.length) {
-            j.events.forEach(ev => handleEvent(ev));
-            cursor = j.latest || cursor;
-          }
-        }
-      }catch{}
-      setTimeout(pollLoop, 0);
-    }
-
-    function handleEvent(ev){
-      const p = ev.payload || {};
-      if (p.type === "message") {
-        showMessage(p);
-      } else if (p.type === "sound") {
-        const a = sounds[p.id];
-        if (a && audioArmed) { try { a.currentTime = 0; a.play(); } catch{} }
-      }
-    }
-
     // ===== Reveal UI on unlock
     function reveal(){
       cover.style.display = "none";
@@ -288,10 +193,9 @@
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); }
       else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
-      pollLoop();
     }
 
-    // ===== Hotspot
+    // ===== Hotspot opens modal
     hotspot.addEventListener("click", () => { openModal(); });
 
     // Cloak buttons + clear
@@ -304,7 +208,7 @@
     });
     document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-    // Panic key '-'
+    // Panic key '-' applies saved selection
     document.addEventListener("keydown", (e) => {
       const el = document.activeElement;
       const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
@@ -314,13 +218,34 @@
         setTab(sel.title, sel.icon); saveCloak(sel.title, sel.icon);
       }
     });
+    // Persist panic selection
+    const LS_PANIC_DEFAULT = JSON.parse(panicSelect.value);
     const panicSaved = loadPanic();
-    if (panicSaved) { for (const opt of panicSelect.options) { if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; } } }
+    if (panicSaved) {
+      for (const opt of panicSelect.options) {
+        if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; }
+      }
+    } else {
+      savePanic(LS_PANIC_DEFAULT);
+    }
     panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
 
-    // ===== Force login each load (locked-state favicon/title)
+    // ===== Force login each load (always start locked; also sets "down" favicon group)
     fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
-      .finally(() => { document.title = "Math Help - Down"; setFaviconGroup(DOWN_ICONS); });
+      .finally(() => {
+        document.title = "Math Help - Down";
+        // set down favicons
+        document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove());
+        [
+          { href: "down-favicon-16.png", sizes: "16x16" },
+          { href: "down-favicon-32.png", sizes: "32x32" },
+          { href: "down-favicon-64.png", sizes: "64x64" }
+        ].forEach(({href,sizes}) => {
+          const l=document.createElement("link");
+          l.rel="icon"; l.type="image/png"; l.sizes=sizes; l.href=href;
+          document.head.appendChild(l);
+        });
+      });
   </script>
 </body>
 </html>
