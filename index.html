@@ -12,7 +12,7 @@
   <link rel="icon" type="image/png" href="icon.png" />
 
   <style>
-    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; --info:#2563eb; --warn:#d97706; --error:#dc2626; }
+    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
@@ -51,7 +51,7 @@
     .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
     .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
     .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
-    .input, textarea{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
+    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
     .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
     .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
     .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
@@ -107,35 +107,6 @@
           <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
         </select>
       </div>
-
-      <!-- ADMIN PANEL (visible only if role=admin) -->
-      <div id="adminPanel" style="display:none; margin-left:1rem; gap:.5rem; align-items:center;">
-        <span class="kbd">ADMIN</span>
-
-        <!-- Announcement -->
-        <input id="msgText" class="input" style="width:220px" placeholder="Announcement text">
-        <select id="msgStyle" title="style">
-          <option value="banner">banner</option>
-          <option value="toast">toast</option>
-          <option value="overlay">overlay</option>
-          <option value="modal">modal</option>
-        </select>
-        <select id="msgLevel" title="level">
-          <option value="info">info</option>
-          <option value="warn">warn</option>
-          <option value="error">error</option>
-        </select>
-        <input id="msgDur" class="input" style="width:100px" type="number" value="8000" min="1000" step="500" title="duration (ms)">
-        <button id="btnBroadcastMsg" class="btn">Broadcast</button>
-
-        <!-- Soundboard -->
-        <select id="soundId" title="sound">
-          <option value="airhorn">airhorn</option>
-          <option value="ding">ding</option>
-          <option value="bruh">bruh</option>
-        </select>
-        <button id="btnBroadcastSound" class="btn">Play sound</button>
-      </div>
     </div>
 
     <!-- App (proxied) -->
@@ -185,7 +156,6 @@
     const modal = document.getElementById("pwModal");
     const pwInput = document.getElementById("pwInput");
     const pwErr = document.getElementById("pwErr");
-    const adminPanel = document.getElementById("adminPanel");
     const panicSelect = document.getElementById("panicSelect");
 
     // Broadcast UI
@@ -193,15 +163,6 @@
     const toast  = document.getElementById("toast");
     const overlay= document.getElementById("overlay");
     const overlayText = document.getElementById("overlayText");
-
-    // Admin controls
-    const msgText = document.getElementById("msgText");
-    const msgStyle= document.getElementById("msgStyle");
-    const msgLevel= document.getElementById("msgLevel");
-    const msgDur  = document.getElementById("msgDur");
-    const btnBroadcastMsg = document.getElementById("btnBroadcastMsg");
-    const soundId = document.getElementById("soundId");
-    const btnBroadcastSound = document.getElementById("btnBroadcastSound");
 
     // ===== Favicon helpers
     function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
@@ -239,7 +200,7 @@
         const j = await r.json();
         if (j.ok){
           closeModal();
-          reveal(j.role);
+          reveal(); // no admin/dev panel to show
         } else {
           pwErr.textContent = "Incorrect password.";
         }
@@ -320,14 +281,13 @@
     }
 
     // ===== Reveal UI on unlock
-    function reveal(role = "user"){
+    function reveal(){
       cover.style.display = "none";
       panel.classList.add("unlocked");
       if(!frame.src) frame.src = "/app";
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); }
       else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
-      if (role === "admin") adminPanel.style.display = "inline-flex";
       pollLoop();
     }
 
@@ -361,38 +321,6 @@
     // ===== Force login each load (locked-state favicon/title)
     fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
       .finally(() => { document.title = "Math Help - Down"; setFaviconGroup(DOWN_ICONS); });
-
-    // ===== Admin actions (with visible error text)
-    async function postJSON(url, body) {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body)
-      });
-      const text = await res.text().catch(()=> "");
-      if (!res.ok) {
-        alert(`Broadcast failed (${res.status}): ${text}`);
-        return null;
-      }
-      try { return JSON.parse(text || "{}"); } catch { return {}; }
-    }
-
-    btnBroadcastMsg.addEventListener("click", async () => {
-      const payload = {
-        type: "message",
-        style: msgStyle.value,
-        level: msgLevel.value,
-        text:  msgText.value.slice(0, 500),
-        durationMs: Number(msgDur.value) || 8000
-      };
-      await postJSON("/.netlify/functions/broadcast", payload);
-    });
-
-    btnBroadcastSound.addEventListener("click", async () => {
-      const payload = { type: "sound", id: soundId.value };
-      await postJSON("/.netlify/functions/broadcast", payload);
-    });
   </script>
 </body>
 </html>
