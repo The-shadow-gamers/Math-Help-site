@@ -1,367 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Math Help</title>
+<script>
+  // ... keep all other code ...
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" href="icon.png" />
-
-  <style>
-    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; --info:#2563eb; --warn:#d97706; --error:#dc2626; }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
-
-    #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
-
-    #locked-cover{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#0a49c4,#053a97); color:#dbeafe; text-align:center; z-index:1000; padding:2rem;}
-    #locked-inner{max-width:720px}
-    #locked-title{font-size:2rem; font-weight:800; margin-bottom:.5rem}
-    #locked-sub{opacity:.9}
-    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px;}
-
-    .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
-    .bar.unlocked{display:flex}
-    .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
-    .brand img{width:24px;height:24px;border-radius:6px}
-
-    .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:var(--text);padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
-    .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
-    .btn img{width:18px;height:18px;border-radius:4px}
-    .btn.clear{color:#fca5a5;border-color:#4b1010}
-    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
-    @media (max-width:900px){.hint{display:none}}
-
-    iframe{width:100%;height:100%;border:none;background:#000}
-
-    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
-    .modal.show{display:flex;}
-    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
-    .modal .card{position:relative; width:min(92vw,440px); background:#0f172a; border:1px solid #0b1220; border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45)}
-    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
-    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
-    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
-    .input, textarea{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
-    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
-    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
-    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#0b1220; border:1px solid #1f2937; padding:.15rem .4rem; border-radius:6px; color:#cbd5e1}
-    select{background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; padding:.4rem .6rem}
-    label{color:#9ca3af; font-size:.9rem}
-
-    /* Simple banner/toast/overlay */
-    #banner{position:fixed; top:0; left:0; right:0; padding:.6rem .9rem; display:none; z-index:3000; text-align:center; font-weight:600}
-    #toast{position:fixed; bottom:1rem; right:1rem; padding:.6rem .9rem; display:none; z-index:3000; border-radius:8px; font-weight:600}
-    #overlay{position:fixed; inset:0; background:rgba(0,0,0,.7); color:#fff; display:none; z-index:3500; align-items:center; justify-content:center; text-align:center; padding:2rem}
-    .lvl-info{background:#1e3a8a} .lvl-warn{background:#92400e} .lvl-error{background:#7f1d1d}
-    .txt-info{background:#1d4ed8} .txt-warn{background:#d97706} .txt-error{background:#dc2626}
-  </style>
-</head>
-<body>
-  <div id="hotspot" aria-label="Open panel"></div>
-
-  <div id="locked-cover">
-    <div id="locked-inner">
-      <img id="locked-icon" src="down-favicon-64.png" alt="">
-      <div id="locked-title">Math Help is down right now</div>
-      <div id="locked-sub">Please come back later.</div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <div class="bar" id="panel">
-      <span class="brand"><img src="icon.png" alt=""/>Math Help</span>
-
-      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt=""/>Calculator</button>
-      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt=""/>Google</button>
-      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt=""/>Docs</button>
-      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt=""/>Classroom</button>
-      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt=""/>Khan</button>
-      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt=""/>Wikipedia</button>
-
-      <button class="btn clear" id="clearCloak">Clear</button>
-
-      <div class="hint" style="display:flex; align-items:center; gap:.5rem; margin-left:1rem;">
-        <label for="panicSelect">Panic (press <span class="kbd">-</span>):</label>
-        <select id="panicSelect" title="Choose cloak for panic key">
-          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
-          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-        </select>
-      </div>
-
-      <!-- ADMIN PANEL (hidden unless admin) -->
-      <div id="adminPanel" style="display:none; margin-left:1rem; gap:.5rem; align-items:center;">
-        <span class="kbd">ADMIN</span>
-
-        <!-- Message -->
-        <input id="msgText" class="input" style="width:220px" placeholder="Announcement text">
-        <select id="msgStyle" title="style">
-          <option value="banner">banner</option>
-          <option value="toast">toast</option>
-          <option value="overlay">overlay</option>
-          <option value="modal">modal</option>
-        </select>
-        <select id="msgLevel" title="level">
-          <option value="info">info</option>
-          <option value="warn">warn</option>
-          <option value="error">error</option>
-        </select>
-        <input id="msgDur" class="input" style="width:100px" type="number" value="8000" min="1000" step="500" title="duration (ms)">
-        <button id="btnBroadcastMsg" class="btn">Broadcast</button>
-
-        <!-- Soundboard -->
-        <select id="soundId" title="sound">
-          <option value="airhorn">airhorn</option>
-          <option value="ding">ding</option>
-          <option value="bruh">bruh</option>
-        </select>
-        <button id="btnBroadcastSound" class="btn">Play sound</button>
-      </div>
-    </div>
-
-    <iframe id="app" title="Math Help"></iframe>
-  </div>
-
-  <!-- UI for messages -->
-  <div id="banner"></div>
-  <div id="toast"></div>
-  <div id="overlay"><div id="overlayText" style="max-width:900px; font-size:1.6rem; font-weight:800;"></div></div>
-
-  <!-- Password Modal -->
-  <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="backdrop" data-close></div>
-    <div class="card">
-      <h2>Enter password</h2>
-      <p>This unlocks the page.</p>
-      <div class="row">
-        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="current-password" />
-        <button id="togglePw" class="toggle" type="button">Show</button>
-      </div>
-      <div id="pwErr" class="err"></div>
-      <div class="actions">
-        <button class="secondary" data-close type="button">Cancel</button>
-        <button id="pwSubmit" class="primary" type="button">Unlock</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ===== Config / Keys
-    const DEFAULT_TITLE = "Math Help";
-    const DEFAULT_ICON  = "icon.png";
-    const DOWN_ICONS = [
-      { href: "down-favicon-16.png", sizes: "16x16" },
-      { href: "down-favicon-32.png", sizes: "32x32" },
-      { href: "down-favicon-64.png", sizes: "64x64" }
-    ];
-    const LS_CLOAK = "mh_cloak";
-    const LS_PANIC = "mh_panic";
-
-    // ===== Elements
-    const panel = document.getElementById("panel");
-    const frame = document.getElementById("app");
-    const cover = document.getElementById("locked-cover");
-    const hotspot = document.getElementById("hotspot");
-    const modal = document.getElementById("pwModal");
-    const pwInput = document.getElementById("pwInput");
-    const pwErr = document.getElementById("pwErr");
-    const adminPanel = document.getElementById("adminPanel");
-    const panicSelect = document.getElementById("panicSelect");
-
-    // Msg UI
-    const banner = document.getElementById("banner");
-    const toast  = document.getElementById("toast");
-    const overlay= document.getElementById("overlay");
-    const overlayText = document.getElementById("overlayText");
-
-    // Admin controls
-    const msgText = document.getElementById("msgText");
-    const msgStyle= document.getElementById("msgStyle");
-    const msgLevel= document.getElementById("msgLevel");
-    const msgDur  = document.getElementById("msgDur");
-    const btnBroadcastMsg = document.getElementById("btnBroadcastMsg");
-    const soundId = document.getElementById("soundId");
-    const btnBroadcastSound = document.getElementById("btnBroadcastSound");
-
-    // ===== Favicons
-    function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
-    function addIcon(href, sizes){ const l=document.createElement("link"); l.rel="icon"; l.type="image/png"; if(sizes) l.sizes=sizes; l.href=href; document.head.appendChild(l); }
-    function setFaviconSingle(href){ removeFavicons(); addIcon(href); }
-    function setFaviconGroup(group){ removeFavicons(); group.forEach(({href, sizes}) => addIcon(href, sizes)); }
-    function setTitle(t){ document.title = t; }
-    function setTab(title, iconHref){ setTitle(title); setFaviconSingle(iconHref); }
-    function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab(DEFAULT_TITLE, DEFAULT_ICON); }
-    function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
-    function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK) || "null"); }catch{ return null; } }
-    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
-    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); }catch{ return null; } }
-
-    // ===== Modal
-    function openModal(){ modal.classList.add("show"); modal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
-    function closeModal(){ modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); pwInput.blur(); }
-    document.getElementById("togglePw").addEventListener("click", (event) => { pwInput.type = (pwInput.type === "password" ? "text" : "password"); event.target.textContent = pwInput.type === "password" ? "Show" : "Hide"; });
-    modal.addEventListener("click", (e) => { if (e.target.dataset.close !== undefined) closeModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
-
-    async function submitPassword(){
-      const pass = pwInput.value.trim();
-      if(!pass){ pwErr.textContent = "Password required."; return; }
-      try{
-        const r = await fetch("/.netlify/functions/unlock", { method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include", body: JSON.stringify({ password: pass }) });
-        const j = await r.json();
-        if (j.ok){ closeModal(); reveal(j.role); } else { pwErr.textContent = "Incorrect password."; }
-      }catch{ pwErr.textContent = "Network error. Try again."; }
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(body)
+    });
+    let text = "";
+    try { text = await res.text(); } catch {}
+    if (!res.ok) {
+      console.error("Request failed", res.status, text);
+      alert(`Broadcast failed (${res.status}): ${text || "No message"}`);
+      return null;
     }
-    document.getElementById("pwSubmit").addEventListener("click", submitPassword);
-    pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
+    try { return JSON.parse(text || "{}"); } catch (e) {
+      console.warn("Non-JSON response:", text);
+      return {};
+    }
+  }
 
-    // ===== Sounds preload / arm after first click
-    const sounds = {
-      airhorn: new Audio("sounds/airhorn.mp3"),
-      ding:    new Audio("sounds/ding.mp3"),
-      bruh:    new Audio("sounds/bruh.mp3")
+  btnBroadcastMsg.addEventListener("click", async () => {
+    const payload = {
+      type: "message",
+      style: msgStyle.value,
+      level: msgLevel.value,
+      text:  msgText.value.slice(0, 500),
+      durationMs: Number(msgDur.value) || 8000
     };
-    Object.values(sounds).forEach(a => { a.preload = "auto"; });
-    let audioArmed = false;
-    function armAudioOnce(){
-      if (audioArmed) return;
-      audioArmed = true;
-      Object.values(sounds).forEach(a => {
-        try {
-          a.muted = true;
-          a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{});
-        } catch{}
-      });
-      window.removeEventListener("click", armAudioOnce);
-      window.removeEventListener("keydown", armAudioOnce);
-      window.removeEventListener("touchstart", armAudioOnce);
-    }
-    window.addEventListener("click", armAudioOnce);
-    window.addEventListener("keydown", armAudioOnce);
-    window.addEventListener("touchstart", armAudioOnce);
+    const out = await postJSON("/.netlify/functions/broadcast", payload);
+    if (out) console.log("Broadcast message OK, id:", out.id);
+  });
 
-    // ===== Apply message events
-    let toastTimer = null;
-    function showMessage({ style, level, text, durationMs = 8000 }) {
-      const lvlClass = level === "error" ? "txt-error" : level === "warn" ? "txt-warn" : "txt-info";
-      if (style === "banner") {
-        banner.className = ""; banner.classList.add(lvlClass); banner.textContent = text; banner.style.display = "block";
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(()=>{ banner.style.display = "none"; }, durationMs);
-      } else if (style === "toast") {
-        toast.className = ""; toast.classList.add(lvlClass); toast.textContent = text; toast.style.display = "block";
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, durationMs);
-      } else if (style === "overlay" || style === "modal") {
-        overlay.style.display = "flex";
-        overlayText.textContent = text;
-        // overlay stays until a new event dismisses or page reload
-      }
-    }
+  btnBroadcastSound.addEventListener("click", async () => {
+    const payload = { type: "sound", id: soundId.value };
+    const out = await postJSON("/.netlify/functions/broadcast", payload);
+    if (out) console.log("Broadcast sound OK, id:", out.id);
+  });
 
-    // ===== Event subscribe (long-poll)
-    let cursor = 0;
-    async function pollLoop(){
+  // Tiny status badge so you can see the poller working
+  (function statusBadge(){
+    const el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:.5rem;left:.5rem;font:12px ui-monospace;background:#0b1220;border:1px solid #1f2937;border-radius:8px;color:#cbd5e1;padding:.25rem .5rem;z-index:4000;opacity:.85";
+    el.textContent = "events: -";
+    document.body.appendChild(el);
+
+    const _pollLoop = pollLoop;
+    window.pollLoop = async function(){
       try{
         const r = await fetch(`/.netlify/functions/events?since=${cursor}&wait=15000`, { credentials:"include", cache:"no-store" });
+        if (!r.ok) { el.textContent = `events: HTTP ${r.status}`; setTimeout(window.pollLoop, 1000); return; }
         const j = await r.json();
-        if (j.events && j.events.length) {
-          j.events.forEach(ev => handleEvent(ev));
-          cursor = j.latest || cursor;
-        }
-      }catch{}
-      setTimeout(pollLoop, 0); // immediately poll again
-    }
-
-    function handleEvent(ev){
-      const p = ev.payload || {};
-      if (p.type === "message") {
-        showMessage(p);
-      } else if (p.type === "sound") {
-        const a = sounds[p.id];
-        if (a && audioArmed) { try { a.currentTime = 0; a.play(); } catch{} }
-      }
-    }
-
-    // ===== Reveal UI on unlock
-    function reveal(role = "user"){
-      cover.style.display = "none";
-      panel.classList.add("unlocked");
-      if(!frame.src) frame.src = "/app";
-      const saved = loadCloak();
-      if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); } else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
-      // Admin?
-      if (role === "admin") adminPanel.style.display = "inline-flex";
-      // Start listening to events
-      pollLoop();
-    }
-
-    // ===== Hotspot opens modal
-    hotspot.addEventListener("click", () => { openModal(); });
-
-    // Cloak buttons remember choice
-    document.querySelectorAll('.btn[data-title]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const title = btn.getAttribute('data-title');
-        const icon  = btn.getAttribute('data-favicon');
-        setTab(title, icon); saveCloak(title, icon);
-      });
-    });
-    document.getElementById('clearCloak').addEventListener('click', clearTab);
-
-    // Panic key '-'
-    document.addEventListener("keydown", (e) => {
-      const el = document.activeElement;
-      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-      if (typing) return;
-      if (e.key === "-" || e.key === "_" || e.code === "Minus") {
-        const sel = loadPanic() || JSON.parse(panicSelect.value);
-        setTab(sel.title, sel.icon); saveCloak(sel.title, sel.icon);
-      }
-    });
-    // Persist panic selection
-    const panicSaved = loadPanic();
-    if (panicSaved) { for (const opt of panicSelect.options) { if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; } } }
-    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
-
-    // ===== Force login each load -> set down favicon group
-    fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
-      .finally(() => { document.title = "Math Help - Down"; setFaviconGroup(DOWN_ICONS); });
-
-    // ===== Admin actions
-    btnBroadcastMsg.addEventListener("click", async () => {
-      const payload = {
-        type: "message",
-        style: msgStyle.value,
-        level: msgLevel.value,
-        text:  msgText.value.slice(0, 500),
-        durationMs: Number(msgDur.value) || 8000
-      };
-      await fetch("/.netlify/functions/broadcast", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        credentials:"include",
-        body: JSON.stringify(payload)
-      });
-    });
-
-    btnBroadcastSound.addEventListener("click", async () => {
-      const payload = { type: "sound", id: soundId.value };
-      await fetch("/.netlify/functions/broadcast", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        credentials:"include",
-        body: JSON.stringify(payload)
-      });
-    });
-  </script>
-</body>
-</html>
+        el.textContent = `events: latest=${j.latest ?? "?"} new=${j.events?.length ?? 0}`;
+        if (j.events && j.events.length) { j.events.forEach(ev => handleEvent(ev)); cursor = j.latest || cursor; }
+      } catch(e){ el.textContent = "events: error"; }
+      setTimeout(window.pollLoop, 0);
+    };
+  })();
+</script>
