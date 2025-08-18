@@ -1,6 +1,189 @@
 <script>
-  // ... keep all other code ...
+  // ===== Config / Keys
+  const DEFAULT_TITLE = "Math Help";
+  const DEFAULT_ICON  = "icon.png";
+  const DOWN_ICONS = [
+    { href: "down-favicon-16.png", sizes: "16x16" },
+    { href: "down-favicon-32.png", sizes: "32x32" },
+    { href: "down-favicon-64.png", sizes: "64x64" }
+  ];
+  const LS_CLOAK = "mh_cloak";
+  const LS_PANIC = "mh_panic";
 
+  // ===== Elements
+  const panel = document.getElementById("panel");
+  const frame = document.getElementById("app");
+  const cover = document.getElementById("locked-cover");
+  const hotspot = document.getElementById("hotspot");
+  const modal = document.getElementById("pwModal");
+  const pwInput = document.getElementById("pwInput");
+  const pwErr = document.getElementById("pwErr");
+  const adminPanel = document.getElementById("adminPanel");
+  const panicSelect = document.getElementById("panicSelect");
+
+  const banner = document.getElementById("banner");
+  const toast  = document.getElementById("toast");
+  const overlay= document.getElementById("overlay");
+  const overlayText = document.getElementById("overlayText");
+
+  const msgText = document.getElementById("msgText");
+  const msgStyle= document.getElementById("msgStyle");
+  const msgLevel= document.getElementById("msgLevel");
+  const msgDur  = document.getElementById("msgDur");
+  const btnBroadcastMsg = document.getElementById("btnBroadcastMsg");
+  const soundId = document.getElementById("soundId");
+  const btnBroadcastSound = document.getElementById("btnBroadcastSound");
+
+  // ===== Favicons
+  function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
+  function addIcon(href, sizes){ const l=document.createElement("link"); l.rel="icon"; l.type="image/png"; if(sizes) l.sizes=sizes; l.href=href; document.head.appendChild(l); }
+  function setFaviconSingle(href){ removeFavicons(); addIcon(href); }
+  function setFaviconGroup(group){ removeFavicons(); group.forEach(({href, sizes}) => addIcon(href, sizes)); }
+  function setTitle(t){ document.title = t; }
+  function setTab(title, iconHref){ setTitle(title); setFaviconSingle(iconHref); }
+  function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab(DEFAULT_TITLE, DEFAULT_ICON); }
+  function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
+  function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK) || "null"); }catch{ return null; } }
+  function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+  function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); }catch{ return null; } }
+
+  // ===== Modal
+  function openModal(){ modal.classList.add("show"); modal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
+  function closeModal(){ modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); pwInput.blur(); }
+  document.getElementById("togglePw").addEventListener("click", (event) => { pwInput.type = (pwInput.type === "password" ? "text" : "password"); event.target.textContent = pwInput.type === "password" ? "Show" : "Hide"; });
+  modal.addEventListener("click", (e) => { if (e.target.dataset.close !== undefined) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
+
+  async function submitPassword(){
+    const pass = pwInput.value.trim();
+    if(!pass){ pwErr.textContent = "Password required."; return; }
+    try{
+      const r = await fetch("/.netlify/functions/unlock", { method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include", body: JSON.stringify({ password: pass }) });
+      const j = await r.json();
+      if (j.ok){ closeModal(); reveal(j.role); } else { pwErr.textContent = "Incorrect password."; }
+    }catch{ pwErr.textContent = "Network error. Try again."; }
+  }
+  document.getElementById("pwSubmit").addEventListener("click", submitPassword);
+  pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
+
+  // ===== Sounds (preload/arm)
+  const sounds = {
+    airhorn: new Audio("sounds/airhorn.mp3"),
+    ding:    new Audio("sounds/ding.mp3"),
+    bruh:    new Audio("sounds/bruh.mp3")
+  };
+  Object.values(sounds).forEach(a => { a.preload = "auto"; });
+  let audioArmed = false;
+  function armAudioOnce(){
+    if (audioArmed) return;
+    audioArmed = true;
+    Object.values(sounds).forEach(a => {
+      try { a.muted = true; a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{}); } catch{}
+    });
+    window.removeEventListener("click", armAudioOnce);
+    window.removeEventListener("keydown", armAudioOnce);
+    window.removeEventListener("touchstart", armAudioOnce);
+  }
+  window.addEventListener("click", armAudioOnce);
+  window.addEventListener("keydown", armAudioOnce);
+  window.addEventListener("touchstart", armAudioOnce);
+
+  // ===== Message UI
+  let toastTimer = null;
+  function showMessage({ style, level, text, durationMs = 8000 }) {
+    const lvlClass = level === "error" ? "txt-error" : level === "warn" ? "txt-warn" : "txt-info";
+    if (style === "banner") {
+      banner.className = ""; banner.classList.add(lvlClass); banner.textContent = text; banner.style.display = "block";
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{ banner.style.display = "none"; }, durationMs);
+    } else if (style === "toast") {
+      toast.className = ""; toast.classList.add(lvlClass); toast.textContent = text; toast.style.display = "block";
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, durationMs);
+    } else if (style === "overlay" || style === "modal") {
+      overlay.style.display = "flex";
+      overlayText.textContent = text;
+    }
+  }
+
+  // ===== Event subscribe (long-poll + status badge)
+  let cursor = 0;
+  const badge = (() => {
+    const el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:.5rem;left:.5rem;font:12px ui-monospace;background:#0b1220;border:1px solid #1f2937;border-radius:8px;color:#cbd5e1;padding:.25rem .5rem;z-index:4000;opacity:.85";
+    el.textContent = "events: boot";
+    document.body.appendChild(el);
+    return el;
+  })();
+
+  async function pollLoop(){
+    try{
+      const r = await fetch(`/.netlify/functions/events?since=${cursor}&wait=15000`, { credentials:"include", cache:"no-store" });
+      if (!r.ok) { badge.textContent = `events: HTTP ${r.status}`; setTimeout(pollLoop, 1000); return; }
+      const j = await r.json();
+      badge.textContent = `events: latest=${j.latest ?? "?"} new=${j.events?.length ?? 0}`;
+      if (j.events && j.events.length) {
+        j.events.forEach(ev => handleEvent(ev));
+        cursor = j.latest || cursor;
+      }
+    }catch(e){ badge.textContent = "events: error"; }
+    setTimeout(pollLoop, 0);
+  }
+
+  function handleEvent(ev){
+    const p = ev.payload || {};
+    if (p.type === "message") {
+      showMessage(p);
+    } else if (p.type === "sound") {
+      const a = sounds[p.id];
+      if (a && audioArmed) { try { a.currentTime = 0; a.play(); } catch{} }
+    }
+  }
+
+  // ===== Reveal UI on unlock
+  function reveal(role = "user"){
+    cover.style.display = "none";
+    panel.classList.add("unlocked");
+    if(!frame.src) frame.src = "/app";
+    const saved = loadCloak();
+    if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); } else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
+    if (role === "admin") adminPanel.style.display = "inline-flex";
+    pollLoop();
+  }
+
+  // ===== Hotspot opens modal
+  hotspot.addEventListener("click", () => { openModal(); });
+
+  // Cloak buttons + clear
+  document.querySelectorAll('.btn[data-title]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const title = btn.getAttribute('data-title');
+      const icon  = btn.getAttribute('data-favicon');
+      setTab(title, icon); saveCloak(title, icon);
+    });
+  });
+  document.getElementById('clearCloak').addEventListener('click', clearTab);
+
+  // Panic key '-'
+  document.addEventListener("keydown", (e) => {
+    const el = document.activeElement;
+    const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    if (typing) return;
+    if (e.key === "-" || e.key === "_" || e.code === "Minus") {
+      const sel = loadPanic() || JSON.parse(panicSelect.value);
+      setTab(sel.title, sel.icon); saveCloak(sel.title, sel.icon);
+    }
+  });
+  // Persist panic selection
+  const panicSaved = loadPanic();
+  if (panicSaved) { for (const opt of panicSelect.options) { if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; } } }
+  panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
+
+  // ===== Force login each load (locked state favicon/title regardless of function result)
+  fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
+    .finally(() => { document.title = "Math Help - Down"; setFaviconGroup(DOWN_ICONS); });
+
+  // ===== Admin actions with visible errors
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
@@ -38,24 +221,4 @@
     const out = await postJSON("/.netlify/functions/broadcast", payload);
     if (out) console.log("Broadcast sound OK, id:", out.id);
   });
-
-  // Tiny status badge so you can see the poller working
-  (function statusBadge(){
-    const el = document.createElement("div");
-    el.style.cssText = "position:fixed;bottom:.5rem;left:.5rem;font:12px ui-monospace;background:#0b1220;border:1px solid #1f2937;border-radius:8px;color:#cbd5e1;padding:.25rem .5rem;z-index:4000;opacity:.85";
-    el.textContent = "events: -";
-    document.body.appendChild(el);
-
-    const _pollLoop = pollLoop;
-    window.pollLoop = async function(){
-      try{
-        const r = await fetch(`/.netlify/functions/events?since=${cursor}&wait=15000`, { credentials:"include", cache:"no-store" });
-        if (!r.ok) { el.textContent = `events: HTTP ${r.status}`; setTimeout(window.pollLoop, 1000); return; }
-        const j = await r.json();
-        el.textContent = `events: latest=${j.latest ?? "?"} new=${j.events?.length ?? 0}`;
-        if (j.events && j.events.length) { j.events.forEach(ev => handleEvent(ev)); cursor = j.latest || cursor; }
-      } catch(e){ el.textContent = "events: error"; }
-      setTimeout(window.pollLoop, 0);
-    };
-  })();
 </script>
