@@ -2,19 +2,19 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 exports.handler = async (event) => {
   try {
-    // ✅ ESM module via dynamic import
-    const { getStore } = await import("@netlify/blobs");
+    const blobsMod = await import("@netlify/blobs");
+    const getStore = blobsMod.getStore || blobsMod.default?.getStore;
+    if (!getStore) throw new Error("getStore not available from @netlify/blobs");
+
+    const store = getStore({ name: "mh-events" });
 
     const url = new URL(event.rawUrl);
     const since = Math.max(0, Number(url.searchParams.get("since") || 0));
     const waitMs = Math.min(15000, Math.max(0, Number(url.searchParams.get("wait") || 0)));
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") || 50)));
 
-    const store = getStore("mh-events");
-    const seqKey = "seq";
-
     async function readBatch() {
-      const latestRaw = await store.get(seqKey);
+      const latestRaw = await store.get("seq");
       const latest = Number(latestRaw || 0);
       const have = latest - since;
       if (have <= 0) return { latest, events: [] };
@@ -35,11 +35,7 @@ exports.handler = async (event) => {
       out = await readBatch();
     }
 
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
-      body: JSON.stringify(out)
-    };
+    return { statusCode: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }, body: JSON.stringify(out) };
   } catch (e) {
     return { statusCode: 500, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok:false, error: String(e && e.message || e) }) };
   }
