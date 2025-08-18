@@ -15,10 +15,17 @@ function verify(secret, token) {
 
 exports.handler = async (event) => {
   try {
-    if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, body: "Method Not Allowed" };
+    }
 
-    // ✅ ESM module loaded via dynamic import
-    const { getStore } = await import("@netlify/blobs");
+    // ✅ ESM import (works in Netlify functions)
+    const blobsMod = await import("@netlify/blobs");
+    const getStore = blobsMod.getStore || blobsMod.default?.getStore;
+    if (!getStore) throw new Error("getStore not available from @netlify/blobs");
+
+    // ✅ v7 signature prefers an options object
+    const store = getStore({ name: "mh-events" });
 
     const cookies = parseCookie(event.headers.cookie || "");
     const token = cookies["mh_session"];
@@ -42,17 +49,16 @@ exports.handler = async (event) => {
       if (!styles.has(payload.style)) return { statusCode: 400, body: "Invalid style" };
       if (!levels.has(payload.level)) return { statusCode: 400, body: "Invalid level" };
       if (payload.durationMs && typeof payload.durationMs !== "number") return { statusCode: 400, body: "Invalid durationMs" };
-    }
-    if (payload.type === "sound") {
+    } else if (payload.type === "sound") {
       if (!payload.id || typeof payload.id !== "string") return { statusCode: 400, body: "Missing sound id" };
     }
 
-    const store = getStore("mh-events");
+    // Sequence
     const seqKey = "seq";
     const now = Date.now();
 
     const seqRaw = await store.get(seqKey);
-    const seq = Number(seqRaw || 0) + 1;
+    const seq = (Number(seqRaw || 0) + 1) || 1;
 
     const eventObj = { id: seq, ts: now, payload };
     await store.set(`e/${seq}`, JSON.stringify(eventObj));
@@ -64,7 +70,10 @@ exports.handler = async (event) => {
 
     return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true, id: seq }) };
   } catch (e) {
-    // Return a JSON error instead of crashing → avoids 502
-    return { statusCode: 500, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok:false, error: String(e && e.message || e) }) };
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: false, error: String(e && e.message || e) })
+    };
   }
 };
