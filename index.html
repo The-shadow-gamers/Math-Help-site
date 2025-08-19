@@ -138,7 +138,7 @@
       </div>
     </div>
 
-    <!-- Main area intentionally empty (no idle bandwidth) -->
+    <!-- Main area intentionally empty -->
     <div></div>
   </div>
 
@@ -240,7 +240,7 @@
   </div>
 
 <script>
-/* ========= Settings (client-side passwords) ========= */
+/* ========= Client-side passwords ========= */
 const ADMIN_PASSWORD = "imadmin";
 const USER_PASSWORD  = "gamerzforever";
 
@@ -255,13 +255,50 @@ const hotspot = document.getElementById("hotspot");
 const locked  = document.getElementById("locked");
 const panel   = document.getElementById("panel");
 
-/* ======= Favicons / Title helpers ======= */
-function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(n=>n.remove()); }
-function addIcon(href){ const l=document.createElement("link"); l.rel="icon"; l.type="image/png"; l.href=href; document.head.appendChild(l); }
-function setTab(title, iconHref){ document.title = title; removeFavicons(); addIcon(iconHref); }
-function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
-function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); }catch{ return null; } }
-function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab("Math Help", "icon.png"); }
+/* ---------- FAVICON HELPERS (supports single file OR multi-size map) ---------- */
+let __iconVer = 0;
+function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
+function removeFavicons(){
+  document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(n=>n.remove());
+}
+function addIconWithSizes(href, sizes){
+  const l = document.createElement('link');
+  l.rel = 'icon';
+  l.type = 'image/png';
+  if (sizes) l.sizes = sizes;
+  l.href = __v(href);
+  document.head.appendChild(l);
+}
+function addShortcutIcon(href){
+  const s = document.createElement('link');
+  s.rel = 'shortcut icon';
+  s.href = __v(href);
+  document.head.appendChild(s);
+}
+function setFaviconsMulti(icon){
+  removeFavicons();
+  if (typeof icon === 'string'){
+    addIconWithSizes(icon, '');
+    addShortcutIcon(icon);
+  } else if (icon && typeof icon === 'object'){
+    let first = null;
+    for (const [sizes, href] of Object.entries(icon)){
+      addIconWithSizes(href, sizes);
+      if (!first) first = href;
+    }
+    if (first) addShortcutIcon(first);
+  }
+}
+function setTab(title, icon){
+  document.title = title;
+  setFaviconsMulti(icon);
+}
+function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({ title, icon })); }
+function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); } catch { return null; } }
+function clearTab(){
+  localStorage.removeItem(LS_CLOAK);
+  setTab("Math Help", "icon.png");  // default single-file favicon
+}
 
 /* ======= Password Modal ======= */
 const pwModal = document.getElementById("pwModal");
@@ -283,11 +320,12 @@ function reveal(role){
   locked.style.display = "none";
   panel.classList.add("unlocked");
   const saved = loadCloak();
-  if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab("Math Help", "icon.png");
+  if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
+  else setTab("Math Help", "icon.png");
   IS_ADMIN = (role === "admin");
   document.getElementById("adminPanel").style.display = IS_ADMIN ? "inline-flex" : "none";
 }
-async function submitPassword(){
+function submitPassword(){
   const pass = pwInput.value.trim();
   if (!pass){ pwErr.textContent = "Password required."; return; }
   if (pass === ADMIN_PASSWORD){ closePw(); reveal("admin"); return; }
@@ -431,7 +469,7 @@ function newTab(){ tabs.push({id:Date.now(), src:TAB_URL}); selectTab(tabs.lengt
 
 browserFrame.addEventListener("load", ()=> showLoader(false));
 tabAdd.addEventListener("click", newTab);
-openBrowser.addEventListener("click", ()=>{ openDesk(); if (!tabs.length) newTab(); });
+openBrowser.addEventListener("click", ()=>{ if (!IS_ADMIN){ alert("Admin only."); return; } openDesk(); if (!tabs.length) newTab(); });
 closeBtn.addEventListener("click", closeDesk);
 fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
 document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
@@ -517,7 +555,7 @@ document.addEventListener("keydown",(e)=>{
 function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
 function clearTerm(){ termOut.textContent = ""; }
 
-/* Canvas Runner (for inline HTML execution) */
+/* Simple runner: open HTML in a new tab via Blob (optional) */
 const runFrameURL = (()=>{ let url=null; return {
   open(html, offline=false){
     const csp = offline ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">" : "";
@@ -525,35 +563,35 @@ const runFrameURL = (()=>{ let url=null; return {
     const blob = new Blob([doc], {type:"text/html"});
     if (url) URL.revokeObjectURL(url);
     url = URL.createObjectURL(blob);
-    const w = window.open("", "_blank", "noopener,noreferrer"); // new tab, avoids embedding bandwidth
+    const w = window.open("", "_blank", "noopener,noreferrer");
     if (w) w.location = url;
     return !!w;
   }
 }})();
 
-const MAX_HTML_LEN = 120000; // ~120KB
+const MAX_HTML_LEN = 120000;
 
-function handleCommand(s){
-  const line = s.trim();
-  if (!line) return;
-  printLine("> " + line);
+function handleCommand(line){
+  const s = line.trim();
+  if (!s) return;
+  printLine("> " + s);
 
-  if (line === ";help"){
+  if (s === ";help"){
     printLine("Commands:");
     printLine("  ;help / ;clear");
     printLine("  ;panic");
     printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
     printLine("  ;open tools   /  ;close tools");
     printLine("  ;open browser /  ;close browser / ;browser newtab / ;browser fullscreen");
-    printLine("  ;run html <HTML>       (opens in new tab)");
-    printLine("  ;run html offline <HTML>  (blocks all network)");
+    printLine("  ;run html <HTML>         (opens in new tab)");
+    printLine("  ;run html offline <HTML> (no network in that tab)");
     return;
   }
-  if (line === ";clear"){ clearTerm(); return; }
-  if (line === ";panic"){ triggerPanic(); return; }
+  if (s === ";clear"){ clearTerm(); return; }
+  if (s === ";panic"){ triggerPanic(); return; }
 
-  if (line.startsWith(";cloak ")){
-    const arg = line.slice(7).trim().toLowerCase();
+  if (s.startsWith(";cloak ")){
+    const arg = s.slice(7).trim().toLowerCase();
     const map = {
       google:["Google","google-favicon.png"],
       calculator:["Calculator","calculator-icon.png"],
@@ -567,24 +605,24 @@ function handleCommand(s){
     return;
   }
 
-  if (line === ";open tools"){ openTools(); return; }
-  if (line === ";close tools"){ closeTools(); return; }
+  if (s === ";open tools"){ openTools(); return; }
+  if (s === ";close tools"){ closeTools(); return; }
 
-  if (line === ";open browser"){ openDesk(); if (!tabs.length) newTab(); return; }
-  if (line === ";close browser"){ closeDesk(); return; }
-  if (line === ";browser newtab"){ if (browserDesk.style.display!=="block") openDesk(); newTab(); return; }
-  if (line === ";browser fullscreen"){ document.getElementById("browserWin").classList.toggle("full"); return; }
+  if (s === ";open browser"){ if (!IS_ADMIN){ printLine("Admin only."); return; } openDesk(); if (!tabs.length) newTab(); return; }
+  if (s === ";close browser"){ closeDesk(); return; }
+  if (s === ";browser newtab"){ if (!IS_ADMIN){ printLine("Admin only."); return; } if (browserDesk.style.display!=="block") openDesk(); newTab(); return; }
+  if (s === ";browser fullscreen"){ document.getElementById("browserWin").classList.toggle("full"); return; }
 
-  if (line.startsWith(";run html offline ")){
-    const html = line.slice(";run html offline ".length);
+  if (s.startsWith(";run html offline ")){
+    const html = s.slice(";run html offline ".length);
     if (!html){ printLine("No HTML provided."); return; }
     if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
     const ok = runFrameURL.open(html, true);
     printLine(ok ? "Opened offline HTML in new tab." : "Popup blocked. Allow popups for this site.");
     return;
   }
-  if (line.startsWith(";run html ")){
-    const html = line.slice(";run html ".length);
+  if (s.startsWith(";run html ")){
+    const html = s.slice(";run html ".length);
     if (!html){ printLine("No HTML provided."); return; }
     if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
     const ok = runFrameURL.open(html, false);
@@ -594,16 +632,16 @@ function handleCommand(s){
 
   printLine("Unknown command. Try ;help");
 }
-termIn.addEventListener("keydown",(e)=>{
+document.getElementById("termIn").addEventListener("keydown",(e)=>{
   if (e.key === "Enter"){ handleCommand(e.target.value); e.target.value=""; }
 });
 
-/* ======= Admin panel visibility only after admin unlock ======= */
-document.getElementById("openTerminal").addEventListener("click", openTerm);
-
-/* ======= Initial state: down look ======= */
-removeFavicons(); addIcon("page-broken-icon.png");
-document.title = "Math Help - Down";
+/* ======= Initial state: multi-size DOWN favicon set ======= */
+setTab("Math Help - Down", {
+  "16x16": "down-favicon-16.png",
+  "32x32": "down-favicon-32.png",
+  "64x64": "down-favicon-64.png"
+});
 </script>
 </body>
 </html>
