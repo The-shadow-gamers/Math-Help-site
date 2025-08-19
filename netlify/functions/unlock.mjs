@@ -1,35 +1,35 @@
-// Functions v2 (ESM)
+// Netlify Functions v2 (ESM)
 export default async (req, context) => {
-  const { password } = await req.json();
   const headers = { "content-type": "application/json" };
 
+  let body = {};
+  try { body = await req.json(); } catch {}
+  const password = (body?.password || "").trim();
   if (!password) return new Response(JSON.stringify({ ok: false, error: "Missing password" }), { status: 400, headers });
 
-  if (password === process.env.ADMIN_PASSWORD) {
-    // Admin session cookie
+  const ADMIN = process.env.ADMIN_PASSWORD || "";
+  const USER  = process.env.USER_PASSWORD  || "";
+
+  const secure = (req.headers.get("x-forwarded-proto") || "").toLowerCase() === "https";
+
+  function setCookie(name, value, maxAgeSeconds) {
     context.cookies.set({
-      name: "mh_admin",
-      value: "1",
+      name, value,
       httpOnly: true,
       sameSite: "Lax",
-      secure: true,
+      secure,
       path: "/",
-      maxAge: 60 * 60 * 12, // 12h
+      maxAge: maxAgeSeconds
     });
+  }
+
+  if (ADMIN && password === ADMIN) {
+    setCookie("mh_admin", "1", 60 * 60 * 12); // 12h
     return new Response(JSON.stringify({ ok: true, role: "admin" }), { headers });
   }
 
-  if (password === process.env.USER_PASSWORD) {
-    // Mark as user (mostly symbolic; bans are checked separately)
-    context.cookies.set({
-      name: "mh_user",
-      value: "1",
-      httpOnly: true,
-      sameSite: "Lax",
-      secure: true,
-      path: "/",
-      maxAge: 60 * 60 * 12,
-    });
+  if (USER && password === USER) {
+    setCookie("mh_user", "1", 60 * 60 * 12);
     return new Response(JSON.stringify({ ok: true, role: "user" }), { headers });
   }
 
