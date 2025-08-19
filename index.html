@@ -64,6 +64,16 @@
     #bgLabel{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
     #bgClear{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
 
+    /* Tools drawer */
+    #toolsDrawer{position:fixed; top:var(--bar-h); right:0; bottom:0; width:320px; background:#0f172a; border-left:1px solid #0a0f1c;
+                 transform:translateX(100%); transition:transform .18s ease; z-index:2500; overflow:auto;}
+    #toolsDrawer.open{transform:translateX(0)}
+    #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+    #toolsHdr h3{margin:0;font-size:1rem}
+    .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
+    .toolCard h4{margin:.2rem 0 .6rem 0}
+    .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
+
     /* Mini Browser “desktop” + window */
     #browserDesk{display:none; position:fixed; inset:0; z-index:3000;
                  background:#0b1220cc; backdrop-filter:blur(2px);
@@ -71,7 +81,7 @@
     #browserWin{position:absolute; left:50%; top:50%; width:960px; height:600px; transform:translate(-50%,-50%);
                 background:#0f172a; border:1px solid #101826; border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);
                 overflow:hidden; resize:both;}
-    #browserTitle{height:42px; display:flex; align-items:center; gap:.5rem; padding:.4rem .6rem; background:linear-gradient(180deg,#131a2b,#0f1524); border-bottom:1px solid #0a0f1c}
+    #browserTitle{height:42px; display:flex; align-items:center; gap:.5rem; padding:.4rem .6rem; background:linear-gradient(180deg,#131a2b,#0f1524); border-bottom:1px solid #0a0f1c; cursor:move;}
     #browserTitle .title{font-weight:700; color:#cbd5e1}
     .title-spacer{flex:1}
     .win-btn{background:#111827; border:1px solid #1f2937; color:#e5e7eb; border-radius:8px; padding:.35rem .55rem; cursor:pointer}
@@ -92,10 +102,45 @@
 
     /* Fullscreen flag */
     #browserWin.full { left:10px; top:10px; transform:none; width:calc(100vw - 20px); height:calc(100vh - 20px); border-radius:12px; }
+
+    /* Whiteboard overlay */
+    #wbDesk{display:none;position:fixed;inset:0;z-index:3500;background:#0b1220;cursor:crosshair}
+    #wbToolbar{
+      position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3510;
+      display:flex;gap:.5rem;align-items:center;background:#0f172a;border:1px solid #101826;
+      padding:.5rem .6rem;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)
+    }
+    #wbToolbar .btn{padding:.35rem .6rem}
+    #wbCanvas{position:absolute;inset:0}
+
+    /* Command Palette */
+    #cmdPal{display:none;position:fixed;inset:0;z-index:3600;background:rgba(0,0,0,.45)}
+    #cmdBox{position:absolute;left:50%;top:15%;transform:translateX(-50%);width:min(800px,92vw);
+      background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+    #cmdInput{width:100%;border:0;outline:0;background:#0b1220;color:#e5e7eb;padding:14px 16px;border-radius:14px 14px 0 0}
+    #cmdList{max-height:50vh;overflow:auto}
+    .cmdItem{padding:.6rem .9rem;border-top:1px solid #0a0f1c;cursor:pointer}
+    .cmdItem:hover,.cmdItem.active{background:#131b2d}
+    .cmdHint{color:#9ca3af;font-size:.85rem;margin-left:.5rem}
+
+    /* Terminal overlay (admin only) */
+    #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.4)}
+    #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);
+      background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
+    #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+    #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;background:#0c1426}
+    #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
+    #termIn{flex:1} .termHelp{color:#9ca3af;font-size:.85rem}
+
+    /* Canvas Runner overlay */
+    #runDesk{display:none;position:fixed;inset:0;z-index:3450;background:#0b1220}
+    #runBar{position:absolute;left:50%;transform:translateX(-50%);top:10px;display:flex;gap:.5rem;align-items:center;
+      background:#0f172a;border:1px solid #101826;border-radius:12px;padding:.4rem .6rem;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+    #runFrame{position:absolute;inset:0;border:0;background:#111}
   </style>
 </head>
 <body>
-  <!-- Invisible unlock area (top-left corner) -->
+  <!-- Invisible unlock area (top-left) -->
   <div id="hotspot" aria-label="Open panel"></div>
 
   <!-- Down / login screen -->
@@ -136,10 +181,14 @@
         <button id="panicFire" class="btn" type="button" title="Trigger panic now">Panic</button>
       </div>
 
+      <!-- Tools (everyone) -->
+      <button id="toolsBtn" class="btn">Tools</button>
+
       <!-- Admin only controls -->
       <div id="adminPanel">
         <span class="kbd">ADMIN</span>
         <button id="openBrowser" class="btn">Browser</button>
+        <button id="openTerminal" class="btn">Terminal</button>
         <label style="color:#9ca3af">BG:
           <input id="bgPick" type="color" value="#0b1220">
         </label>
@@ -152,6 +201,55 @@
     <!-- Main app (proxy target) -->
     <iframe id="app" title="Math Help"></iframe>
   </div>
+
+  <!-- Tools Drawer -->
+  <aside id="toolsDrawer" aria-hidden="true">
+    <div id="toolsHdr">
+      <h3>Tools</h3>
+      <button id="toolsClose" class="btn" type="button">Close</button>
+    </div>
+
+    <div class="toolCard" id="noteTool">
+      <h4>Notepad</h4>
+      <textarea id="noteArea" class="input" style="height:140px; resize:vertical;" placeholder="Type notes..."></textarea>
+      <div class="toolRow" style="justify-content:flex-end;">
+        <span id="noteSaved" style="color:#9ca3af;font-size:.85rem;"></span>
+      </div>
+    </div>
+
+    <div class="toolCard" id="timerTool">
+      <h4>Timer</h4>
+      <div class="toolRow">
+        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
+        <button id="timerStart" class="btn" type="button">Start</button>
+        <button id="timerStop" class="btn" type="button">Stop</button>
+        <button id="timerReset" class="btn" type="button">Reset</button>
+      </div>
+      <div class="toolRow">
+        <div id="timerReadout" style="font-size:1.4rem;font-weight:700;">25:00</div>
+      </div>
+    </div>
+
+    <div class="toolCard" id="unitTool">
+      <h4>Unit Converter</h4>
+      <div class="toolRow">
+        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
+        <span>↔</span>
+        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
+      </div>
+      <div class="toolRow">
+        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
+        <span>↔</span>
+        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
+      </div>
+    </div>
+
+    <div class="toolCard" id="wbTool">
+      <h4>Whiteboard</h4>
+      <button id="wbOpen" class="btn" type="button">Open Whiteboard</button>
+      <span class="cmdHint">Tip: Ctrl/⌘+K → “Whiteboard”</span>
+    </div>
+  </aside>
 
   <!-- Password Modal -->
   <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
@@ -174,7 +272,7 @@
   <!-- ===== Mini Browser Desktop & Window ===== -->
   <div id="browserDesk">
     <div id="browserWin">
-      <div id="browserTitle">
+      <div id="browserTitle" title="Drag • Double-click fullscreen">
         <span class="title">Shadow Browser</span>
         <div class="title-spacer"></div>
         <button id="tabAdd" class="win-btn" title="New Tab (+)">＋</button>
@@ -195,6 +293,52 @@
     </div>
   </div>
 
+  <!-- Fullscreen Whiteboard -->
+  <div id="wbDesk" aria-hidden="true">
+    <canvas id="wbCanvas"></canvas>
+    <div id="wbToolbar" role="toolbar" aria-label="Whiteboard tools">
+      <label style="color:#cbd5e1">Color <input id="wbColor" type="color" value="#ffffff" /></label>
+      <label style="color:#cbd5e1">Size <input id="wbSize" type="range" min="1" max="40" value="6" /></label>
+      <button id="wbEraser" class="btn" type="button" title="Eraser (E)">Eraser</button>
+      <button id="wbClear"  class="btn" type="button" title="Clear">Clear</button>
+      <button id="wbSave"   class="btn" type="button" title="Save PNG (Ctrl/⌘+S)">Save</button>
+      <button id="wbClose"  class="btn" type="button" title="Close (Esc)">Close</button>
+    </div>
+  </div>
+
+  <!-- Command Palette -->
+  <div id="cmdPal" aria-hidden="true">
+    <div id="cmdBox">
+      <input id="cmdInput" type="text" placeholder="Type a command… (↑/↓, Enter, Esc)" />
+      <div id="cmdList"></div>
+    </div>
+  </div>
+
+  <!-- Terminal (admin) -->
+  <div id="termDesk" aria-hidden="true">
+    <div id="termBox">
+      <div id="termTop">
+        <strong>Terminal (local)</strong>
+        <button id="termClose" class="btn" type="button">Close</button>
+      </div>
+      <pre id="termOut"></pre>
+      <div id="termInRow">
+        <input id="termIn" class="input" type="text" placeholder="Type ;help — or ;sudo run canvas code generation &lt;html...&gt;" />
+        <span class="termHelp">Enter ↵</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas Runner -->
+  <div id="runDesk" aria-hidden="true">
+    <div id="runBar">
+      <span>Canvas Runner (sandboxed)</span>
+      <button id="runKill" class="btn" type="button" title="Stop">Kill</button>
+      <button id="runClose" class="btn" type="button">Close</button>
+    </div>
+    <iframe id="runFrame" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
+  </div>
+
   <script>
     /* ---------- constants / storage keys ---------- */
     const DEFAULT_TITLE = "Math Help";
@@ -203,6 +347,9 @@
     const LS_BG_COLOR  = "mh_bg_color";
     const LS_BG_IMAGE  = "mh_bg_img";
     const LS_PANIC     = "mh_panic";
+    const LS_NOTE      = "mh_note";
+    const LS_BROWSER_POS = "mh_browser_pos";
+    let IS_ADMIN = false;
 
     /* ---------- elements ---------- */
     const panel = document.getElementById("panel");
@@ -252,7 +399,8 @@
       if(!frame.src) frame.src = "/app";
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
-      if (role === "admin") adminPanel.style.display = "inline-flex";
+      IS_ADMIN = (role === "admin");
+      if (IS_ADMIN) adminPanel.style.display = "inline-flex";
     }
 
     /* hotspot + cloak handlers */
@@ -273,10 +421,8 @@
     /* ======================= PANIC (dropdown + key + button) ======================= */
     const panicSelect = document.getElementById("panicSelect");
     const panicFire   = document.getElementById("panicFire");
-
     function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
     function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
-
     (function initPanic(){
       const saved = loadPanic();
       if (saved) {
@@ -287,29 +433,79 @@
         savePanic(JSON.parse(panicSelect.value));
       }
     })();
-
-    panicSelect.addEventListener("change", () => {
-      savePanic(JSON.parse(panicSelect.value));
-    });
-
+    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
     function triggerPanic(){
       const sel = loadPanic() || JSON.parse(panicSelect.value);
       setTab(sel.title, sel.icon);
       saveCloak(sel.title, sel.icon);
     }
     panicFire.addEventListener("click", triggerPanic);
-
     document.addEventListener("keydown", (e) => {
       const el = document.activeElement;
       const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
       if (typing) return;
-      if (e.key === "-" || e.key === "_" || e.code === "Minus") {
-        triggerPanic();
-      }
+      if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
     });
 
-    /* ======================= ADMIN: MINI BROWSER ======================= */
+    /* ======================= TOOLS (Notepad, Timer, Converter) ======================= */
+    const toolsBtn   = document.getElementById("toolsBtn");
+    const toolsClose = document.getElementById("toolsClose");
+    const toolsDrawer= document.getElementById("toolsDrawer");
+    function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
+    function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
+    toolsBtn.addEventListener("click", openTools);
+    toolsClose.addEventListener("click", closeTools);
 
+    // Notepad (autosave)
+    const noteArea = document.getElementById("noteArea");
+    const noteSaved= document.getElementById("noteSaved");
+    noteArea.value = localStorage.getItem(LS_NOTE) || "";
+    function saveNote(){
+      try { localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent = "Saved"; setTimeout(()=>noteSaved.textContent="", 900); }
+      catch { noteSaved.textContent = "Save failed"; }
+    }
+    noteArea.addEventListener("input", () => { saveNote(); });
+
+    // Timer
+    const timerMin = document.getElementById("timerMin");
+    const timerStart = document.getElementById("timerStart");
+    const timerStop  = document.getElementById("timerStop");
+    const timerReset = document.getElementById("timerReset");
+    const timerReadout = document.getElementById("timerReadout");
+    let timerLeft = Number(timerMin.value) * 60;
+    let timerId = null;
+    function renderTimer(){
+      const m = Math.floor(timerLeft/60).toString().padStart(2,"0");
+      const s = Math.floor(timerLeft%60).toString().padStart(2,"0");
+      timerReadout.textContent = `${m}:${s}`;
+    }
+    function startTimer(){
+      if (timerId) return;
+      timerId = setInterval(()=>{
+        if (timerLeft>0){ timerLeft--; renderTimer(); }
+        else { stopTimer(); alert("Time!"); }
+      }, 1000);
+    }
+    function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
+    function resetTimer(){ stopTimer(); timerLeft = Math.max(0, Math.min(180, Number(timerMin.value))) * 60; renderTimer(); }
+    timerStart.addEventListener("click", startTimer);
+    timerStop.addEventListener("click", stopTimer);
+    timerReset.addEventListener("click", resetTimer);
+    timerMin.addEventListener("change", resetTimer);
+    renderTimer();
+
+    // Unit converter
+    const cm   = document.getElementById("cm");
+    const inch = document.getElementById("inch");
+    const kg   = document.getElementById("kg");
+    const lb   = document.getElementById("lb");
+    function round(x){ return Math.round(x * 1000) / 1000; }
+    cm.addEventListener("input", ()=> { const v = Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
+    inch.addEventListener("input",()=> { const v = Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
+    kg.addEventListener("input",  ()=> { const v = Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
+    lb.addEventListener("input",  ()=> { const v = Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
+
+    /* ======================= ADMIN: MINI BROWSER ======================= */
     const browserDesk  = document.getElementById("browserDesk");
     const browserWin   = document.getElementById("browserWin");
     const browserTabs  = document.getElementById("browserTabs");
@@ -345,38 +541,26 @@
       }
       bgPick.value = color;
     }
-
     function setBgColor(c){
       localStorage.setItem(LS_BG_COLOR, c);
       if (!localStorage.getItem(LS_BG_IMAGE)) applyBackground();
     }
     bgPick.addEventListener("input", ()=> setBgColor(bgPick.value));
-
     bgUpload.addEventListener("change", (e)=>{
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-      if (file.size > 4 * 1024 * 1024) {
-        alert("Image is large; try a smaller one (<4MB) to save space.");
-      }
+      if (file.size > 4 * 1024 * 1024) alert("Image is large; try a smaller one (<4MB).");
       const reader = new FileReader();
       reader.onload = () => {
-        try {
-          localStorage.setItem(LS_BG_IMAGE, reader.result);
-          applyBackground();
-        } catch {
-          alert("Could not save image (storage limit).");
-        }
+        try { localStorage.setItem(LS_BG_IMAGE, reader.result); applyBackground(); }
+        catch { alert("Could not save image (storage limit)."); }
       };
       reader.readAsDataURL(file);
       e.target.value = "";
     });
+    bgClear.addEventListener("click", ()=>{ localStorage.removeItem(LS_BG_IMAGE); applyBackground(); });
 
-    bgClear.addEventListener("click", ()=>{
-      localStorage.removeItem(LS_BG_IMAGE);
-      applyBackground();
-    });
-
-    function openDesk(){ applyBackground(); browserDesk.style.display="block"; }
+    function openDesk(){ applyBackground(); browserDesk.style.display="block"; restoreBrowserPos(); }
     function closeDesk(){ browserDesk.style.display="none"; }
 
     function selectTab(idx){
@@ -406,7 +590,6 @@
         browserTabs.appendChild(b);
       });
     }
-
     function closeTab(idx){
       if (idx<0 || idx>=tabs.length) return;
       tabs.splice(idx,1);
@@ -414,12 +597,7 @@
       if (active >= tabs.length) active = tabs.length-1;
       selectTab(active);
     }
-
-    function newTab(){
-      tabs.push({ id: Date.now() });
-      selectTab(tabs.length-1);
-    }
-
+    function newTab(){ tabs.push({ id: Date.now() }); selectTab(tabs.length-1); }
     function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
     browserFrame.addEventListener("load", ()=> showLoader(false));
 
@@ -427,13 +605,321 @@
     openBrowser.addEventListener("click", ()=>{ openDesk(); if (!tabs.length) newTab(); });
     closeBtn.addEventListener("click", closeDesk);
     fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
+    document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
 
-    // keyboard shortcuts when window is open
+    // ---- drag window by titlebar + persist pos/size ----
+    (function enableDrag(){
+      const title = document.getElementById("browserTitle");
+      const win = document.getElementById("browserWin");
+      let dragging = false, startX=0, startY=0, startL=0, startT=0;
+
+      function onDown(e){
+        if (win.classList.contains("full")) return;
+        dragging = true;
+        const rect = win.getBoundingClientRect();
+        startX = (e.touches? e.touches[0].clientX : e.clientX);
+        startY = (e.touches? e.touches[0].clientY : e.clientY);
+        startL = rect.left; startT = rect.top;
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+        document.addEventListener("touchmove", onMove, {passive:false});
+        document.addEventListener("touchend", onUp);
+      }
+      function onMove(e){
+        if (!dragging) return;
+        const x = (e.touches? e.touches[0].clientX : e.clientX);
+        const y = (e.touches? e.touches[0].clientY : e.clientY);
+        const dx = x - startX, dy = y - startY;
+        const nl = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, startL + dx));
+        const nt = Math.max(0, Math.min(window.innerHeight - win.offsetHeight, startT + dy));
+        win.style.left = nl + "px";
+        win.style.top  = nt + "px";
+        win.style.transform = "none";
+      }
+      function onUp(){
+        dragging = false;
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.removeEventListener("touchmove", onMove);
+        document.removeEventListener("touchend", onUp);
+        saveBrowserPos();
+      }
+      title.addEventListener("mousedown", onDown);
+      title.addEventListener("touchstart", onDown, {passive:true});
+      window.addEventListener("resize", saveBrowserPos);
+    })();
+
+    function saveBrowserPos(){
+      const win = document.getElementById("browserWin");
+      const rect = win.getBoundingClientRect();
+      const data = {
+        full: win.classList.contains("full"),
+        left: rect.left, top: rect.top,
+        width: rect.width, height: rect.height
+      };
+      try { localStorage.setItem(LS_BROWSER_POS, JSON.stringify(data)); } catch {}
+    }
+    function restoreBrowserPos(){
+      const win = document.getElementById("browserWin");
+      try {
+        const d = JSON.parse(localStorage.getItem(LS_BROWSER_POS) || "null");
+        if (!d) return;
+        if (d.full) win.classList.add("full");
+        else {
+          win.classList.remove("full");
+          win.style.left = Math.max(0, Math.min(window.innerWidth - d.width, d.left)) + "px";
+          win.style.top  = Math.max(0, Math.min(window.innerHeight - d.height, d.top)) + "px";
+          win.style.width = d.width + "px";
+          win.style.height= d.height + "px";
+          win.style.transform = "none";
+        }
+      } catch {}
+    }
+
+    /* ===== Whiteboard ===== */
+    const wbDesk   = document.getElementById("wbDesk");
+    const wbCanvas = document.getElementById("wbCanvas");
+    const wbColor  = document.getElementById("wbColor");
+    const wbSize   = document.getElementById("wbSize");
+    const wbEraser = document.getElementById("wbEraser");
+    const wbClear  = document.getElementById("wbClear");
+    const wbSave   = document.getElementById("wbSave");
+    const wbClose  = document.getElementById("wbClose");
+    const wbOpen   = document.getElementById("wbOpen");
+    const LS_WB_IMG = "mh_whiteboard_img";
+
+    let wbCtx, drawing=false, lastX=0, lastY=0, erasing=false;
+
+    function wbResize(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      wbCanvas.width  = Math.floor(wbDesk.clientWidth  * dpr);
+      wbCanvas.height = Math.floor(wbDesk.clientHeight * dpr);
+      wbCanvas.style.width  = wbDesk.clientWidth  + "px";
+      wbCanvas.style.height = wbDesk.clientHeight + "px";
+      wbCtx = wbCanvas.getContext("2d");
+      wbCtx.scale(dpr, dpr);
+      wbCtx.lineCap = "round";
+      wbCtx.lineJoin = "round";
+      const saved = localStorage.getItem(LS_WB_IMG);
+      if (saved) { const img = new Image(); img.onload = ()=> wbCtx.drawImage(img,0,0,wbDesk.clientWidth,wbDesk.clientHeight); img.src = saved; }
+    }
+    function wbOpenDesk(){ wbDesk.style.display = "block"; wbDesk.setAttribute("aria-hidden","false"); wbResize(); }
+    function wbCloseDesk(){
+      try { localStorage.setItem(LS_WB_IMG, wbCanvas.toDataURL("image/png")); } catch {}
+      wbDesk.style.display = "none";
+      wbDesk.setAttribute("aria-hidden","true");
+    }
+    function pos(e){
+      const r = wbCanvas.getBoundingClientRect();
+      const p = e.touches ? e.touches[0] : e;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    function drawTo(x,y){
+      wbCtx.strokeStyle = erasing ? "rgba(0,0,0,1)" : wbColor.value;
+      wbCtx.lineWidth   = Number(wbSize.value);
+      wbCtx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
+      wbCtx.beginPath(); wbCtx.moveTo(lastX,lastY); wbCtx.lineTo(x,y); wbCtx.stroke();
+      lastX = x; lastY = y;
+    }
+    function startDraw(e){ drawing = true; const p = pos(e); lastX = p.x; lastY = p.y; }
+    function moveDraw(e){ if(!drawing) return; const p = pos(e); drawTo(p.x,p.y); e.preventDefault(); }
+    function endDraw(){ drawing = false; }
+    wbCanvas.addEventListener("mousedown", startDraw);
+    wbCanvas.addEventListener("mousemove", moveDraw);
+    window.addEventListener("mouseup", endDraw);
+    wbCanvas.addEventListener("touchstart", startDraw, {passive:true});
+    wbCanvas.addEventListener("touchmove",  moveDraw,  {passive:false});
+    window.addEventListener("touchend", endDraw);
+    window.addEventListener("resize", ()=>{ if (wbDesk.style.display==="block") wbResize(); });
+    wbEraser.addEventListener("click", ()=>{ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; });
+    wbClear.addEventListener("click", ()=>{ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); localStorage.removeItem(LS_WB_IMG); });
+    wbSave.addEventListener("click", ()=>{
+      const url = wbCanvas.toDataURL("image/png");
+      const a = document.createElement("a"); a.href = url; a.download = "whiteboard.png"; a.click();
+    });
+    wbClose.addEventListener("click", wbCloseDesk);
+    wbOpen?.addEventListener("click", wbOpenDesk);
+    document.addEventListener("keydown", (e)=>{
+      if (wbDesk.style.display==="block"){
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="s"){ e.preventDefault(); wbSave.click(); }
+        if (e.key==="Escape"){ e.preventDefault(); wbCloseDesk(); }
+        if (e.key.toLowerCase()==="e"){ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; }
+      }
+    });
+
+    /* ===== Command Palette (Ctrl/Cmd+K) ===== */
+    const cmdPal   = document.getElementById("cmdPal");
+    const cmdInput = document.getElementById("cmdInput");
+    const cmdList  = document.getElementById("cmdList");
+    const actions = [
+      { id:"tools",  label:"Open Tools drawer", run: ()=> document.getElementById("toolsBtn").click() },
+      { id:"wb",     label:"Open Whiteboard",    run: ()=> wbOpenDesk() },
+      { id:"browser",label:"Open Browser (admin)", run: ()=> document.getElementById("openBrowser").click() },
+      { id:"terminal",label:"Open Terminal (admin)", run: ()=> openTerm() },
+      { id:"panic",  label:"Panic cloak",        run: ()=> triggerPanic() },
+      { id:"cloak:g",label:"Set cloak → Google", run: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); } },
+      { id:"cloak:c",label:"Set cloak → Calculator", run: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); } },
+      { id:"cloak:d",label:"Set cloak → Google Docs", run: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); } },
+      { id:"logout", label:"Lock page (logout)", run: ()=> { fetch("/.netlify/functions/logout",{credentials:"include"}).finally(()=>location.reload()); } },
+    ];
+    function openCmd(){
+      cmdPal.style.display = "block";
+      cmdPal.setAttribute("aria-hidden","false");
+      cmdInput.value = "";
+      renderCmd("");
+      setTimeout(()=>cmdInput.focus(),0);
+    }
+    function closeCmd(){
+      cmdPal.style.display = "none";
+      cmdPal.setAttribute("aria-hidden","true");
+    }
+    function renderCmd(q){
+      const qq = q.trim().toLowerCase();
+      const hits = actions.filter(a => a.label.toLowerCase().includes(qq) && (a.id.includes("admin") ? IS_ADMIN : true));
+      cmdList.innerHTML = "";
+      hits.forEach((a,i)=>{
+        const div = document.createElement("div");
+        div.className = "cmdItem" + (i===0 ? " active" : "");
+        div.textContent = a.label;
+        div.dataset.idx = i;
+        div.onclick = ()=> { a.run(); closeCmd(); };
+        cmdList.appendChild(div);
+      });
+    }
+    let cmdSel = 0;
+    cmdInput.addEventListener("input", ()=>{ cmdSel = 0; renderCmd(cmdInput.value); });
+    document.addEventListener("keydown", (e)=>{
+      const mac = navigator.platform.toLowerCase().includes("mac");
+      const mod = mac ? e.metaKey : e.ctrlKey;
+      if (mod && e.key.toLowerCase()==="k"){ e.preventDefault(); openCmd(); }
+      if (cmdPal.style.display==="block"){
+        if (e.key==="Escape"){ e.preventDefault(); closeCmd(); return; }
+        const items = Array.from(cmdList.querySelectorAll(".cmdItem"));
+        if (!items.length) return;
+        if (e.key==="ArrowDown"){ e.preventDefault(); cmdSel = Math.min(items.length-1, cmdSel+1); }
+        if (e.key==="ArrowUp"){ e.preventDefault(); cmdSel = Math.max(0, cmdSel-1); }
+        items.forEach((el,i)=> el.classList.toggle("active", i===cmdSel));
+        if (e.key==="Enter"){ e.preventDefault(); items[cmdSel].click(); }
+      }
+    });
+
+    /* ===== Terminal (admin-only) + Canvas Runner ===== */
+    const termDesk  = document.getElementById("termDesk");
+    const termOut   = document.getElementById("termOut");
+    const termIn    = document.getElementById("termIn");
+    const termClose = document.getElementById("termClose");
+    const openTermBtn = document.getElementById("openTerminal");
+
+    const runDesk  = document.getElementById("runDesk");
+    const runFrame = document.getElementById("runFrame");
+    const runClose = document.getElementById("runClose");
+    const runKill  = document.getElementById("runKill");
+
+    const CMD_PREFIX = ";sudo run canvas code generation ";
+    const MAX_HTML_LEN = 120000; // ~120 KB safety cap
+
+    function openTerm(){
+      if (!IS_ADMIN){ alert("Admin only."); return; }
+      termDesk.style.display = "block";
+      termDesk.setAttribute("aria-hidden","false");
+      termIn.value = "";
+      termIn.focus();
+      if (!termOut.textContent) {
+        printLine("Terminal ready. Type ;help");
+      }
+    }
+    function closeTerm(){
+      termDesk.style.display = "none";
+      termDesk.setAttribute("aria-hidden","true");
+    }
+    openTermBtn.addEventListener("click", openTerm);
+    termClose.addEventListener("click", closeTerm);
+
+    function printLine(txt=""){
+      const escaped = txt.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      termOut.innerHTML += escaped + "\n";
+      termOut.scrollTop = termOut.scrollHeight;
+    }
+    function clearTerm(){ termOut.textContent = ""; }
+
+    function openRunner(html){
+      runDesk.style.display = "block";
+      runDesk.setAttribute("aria-hidden","false");
+      runFrame.srcdoc = html;
+    }
+    function closeRunner(){
+      runFrame.srcdoc = "<!doctype html><title>Closed</title>";
+      runDesk.style.display = "none";
+      runDesk.setAttribute("aria-hidden","true");
+    }
+    runClose.addEventListener("click", closeRunner);
+    runKill.addEventListener("click", ()=>{ runFrame.srcdoc = "<!doctype html><title>Killed</title>"; });
+
+    function handleCommand(line){
+      const s = line.trim();
+      if (!s) return;
+
+      // echo
+      printLine("> " + s);
+
+      if (s === ";help"){
+        printLine("Commands:");
+        printLine("  ;help");
+        printLine("  ;clear");
+        printLine("  ;panic");
+        printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
+        printLine("  ;sudo run canvas code generation <HTML>");
+        return;
+      }
+      if (s === ";clear"){ clearTerm(); return; }
+      if (s === ";panic"){ triggerPanic(); return; }
+
+      if (s.startsWith(";cloak ")){
+        const arg = s.slice(7).trim().toLowerCase();
+        const map = {
+          "google": ["Google","google-favicon.png"],
+          "calculator": ["Calculator","calculator-icon.png"],
+          "docs": ["Google Docs","google-docs-icon.png"],
+          "classroom": ["Google Classroom","classroom-favicon.png"],
+          "khan": ["Khan Academy","khan-favicon.png"],
+          "wikipedia": ["Wikipedia","wikipedia-favicon.png"]
+        };
+        if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
+        else printLine("Unknown cloak target.");
+        return;
+      }
+
+      if (s.startsWith(CMD_PREFIX)){
+        const html = s.slice(CMD_PREFIX.length);
+        if (!html){ printLine("No HTML provided."); return; }
+        if (html.length > MAX_HTML_LEN){
+          printLine("HTML too large ("+html.length+" bytes). Keep under "+MAX_HTML_LEN+" bytes.");
+          return;
+        }
+        try {
+          openRunner(html);
+          printLine("Canvas Runner opened.");
+        } catch (e){
+          printLine("Failed to run: " + (e?.message || e));
+        }
+        return;
+      }
+
+      printLine("Unknown command. Try ;help");
+    }
+
+    termIn.addEventListener("keydown",(e)=>{
+      if (e.key === "Enter"){
+        handleCommand(termIn.value);
+        termIn.value = "";
+      } else if (e.key === "Escape"){
+        closeTerm();
+      }
+    });
+
     document.addEventListener("keydown",(e)=>{
-      if (browserDesk.style.display!=="block") return;
-      if (e.key==="Escape") closeDesk();
-      if (e.key.toLowerCase()==="f") fullBtn.click();
-      if (e.key==="+") tabAdd.click();
+      if (runDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeRunner(); }
+      if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
     });
   </script>
 </body>
