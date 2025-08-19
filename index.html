@@ -149,7 +149,7 @@
   <!-- Down / login screen -->
   <div id="locked-cover">
     <div id="locked-inner">
-      <img id="locked-icon" src="down-favicon-64.png" alt="">
+      <img id="locked-icon" src="page-broken-icon.png" alt="">
       <div id="locked-title">Math Help is down right now</div>
       <div id="locked-sub">Please come back later.</div>
     </div>
@@ -208,8 +208,8 @@
       </div>
     </div>
 
-    <!-- Main app (proxy target) -->
-    <iframe id="app" title="Math Help"></iframe>
+    <!-- Main app (kept blank to save bandwidth) -->
+    <iframe id="app" title="Math Help" src="about:blank"></iframe>
   </div>
 
   <!-- Tools Drawer -->
@@ -474,7 +474,7 @@
           const j = await checkBan(email);
           if (j?.banned) showBan(j.banUntil);
         } catch {}
-      }, 60000); // 60s
+      }, 300000); // 5 minutes (reduced bandwidth)
     }
     function stopBanPolling(){ if (BAN_POLL_ID){ clearInterval(BAN_POLL_ID); BAN_POLL_ID = null; } }
 
@@ -509,7 +509,8 @@
     function reveal(role){
       cover.style.display="none";
       panel.classList.add("unlocked");
-      if(!frame.src) frame.src = "/app";
+      // Keep the main iframe empty to reduce bandwidth
+      if (!frame.src) frame.src = "about:blank";
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
       IS_ADMIN = (role === "admin");
@@ -517,9 +518,9 @@
       else { startBanPolling(); }
     }
 
-    /* always start locked & set “down” favicons */
+    /* always start locked & set “down” favicon */
     fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
-      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
+      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); addIcon("page-broken-icon.png"); });
 
     /* hotspot + cloak handlers */
     document.querySelectorAll('.btn[data-title]').forEach(btn=>{
@@ -1092,7 +1093,7 @@
     }
 
     /* Initialize title/favicons to down-mode on load */
-    removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h));
+    removeFavicons(); addIcon("page-broken-icon.png");
     document.title="Math Help - Down";
   </script>
 </body>
