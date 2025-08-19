@@ -1,6 +1,8 @@
-[functions]
-  node_bundler = "esbuild"
-  external_node_modules = ["@netlify/blobs"]
+[build]
+  functions = "netlify/functions"
 
-# (optional) set the functions directory explicitly if you moved it
-# functions = "netlify/functions"
+[[redirects]]
+  from = "/app"
+  to = "https://videogamenerds.wixstudio.com/math-help"
+  status = 200
+  force = true
