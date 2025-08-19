@@ -1,122 +1,109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Math Help</title>
-<link rel="icon" href="icon.png" type="image/png" />
-<style>
-  :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Help</title>
 
-  /* Invisible unlock hotspot */
-  #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
 
-  /* Locked cover */
-  #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
-  #lockedInner{max-width:720px}
-  #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
-  #locked p{margin:0;opacity:.9}
-  #lockedIcon{width:64px;height:64px;display:block;margin:0 auto 10px;border-radius:12px}
+  <!-- Default favicon (will be replaced programmatically) -->
+  <link rel="icon" type="image/png" href="icon.png" />
 
-  /* Top bar */
-  .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
-  .bar.unlocked{display:flex}
-  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
-  .brand img{width:22px;height:22px;border-radius:6px}
-  .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:var(--text);padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
-  .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
-  .btn img{width:18px;height:18px;border-radius:4px}
-  .btn.clear{color:#fca5a5;border-color:#4b1010}
-  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
-  .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
-  @media (max-width:900px){.hint{display:none}}
+  <style>
+    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; --blue:#1e40af; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
 
-  /* Tools drawer */
-  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:320px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
-  #toolsDrawer.open{transform:translateX(0)}
-  #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-  .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
-  .toolCard h4{margin:.2rem 0 .6rem}
-  .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
-  .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
+    /* Invisible unlock hotspot (top-left) */
+    #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
 
-  /* Modal (password) */
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
-  .modal.show{display:flex}
-  .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-  .modal .card{position:relative;width:min(92vw,440px);background:#0f172a;border:1px solid #0b1220;border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-  .modal h2{margin:.4rem 0 0;font-size:1.1rem;color:#c7d2fe}
-  .modal p{margin:.25rem 0 1rem;color:#94a3b8;font-size:.95rem}
-  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
-  .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
-  .primary{background:#1f2937;border:1px solid #2b3443;color:#e5e7eb;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
-  .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
-  .err{color:#fca5a5;font-size:.9rem;min-height:1em}
+    /* Locked cover (blue screen) */
+    #locked-cover{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, #0a49c4, #053a97);
+      color:#dbeafe; text-align:center; z-index:1000; padding:2rem;
+    }
+    #locked-inner{max-width:720px}
+    #locked-title{font-size:2rem; font-weight:800; letter-spacing:.2px; margin-bottom:.5rem}
+    #locked-sub{opacity:.9}
+    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px; }
 
-  /* Mini Browser */
-  #browserDesk{display:none;position:fixed;inset:0;z-index:3000;background:#0b1220cc;backdrop-filter:blur(2px)}
-  #browserWin{position:absolute;left:50%;top:50%;width:960px;height:600px;transform:translate(-50%,-50%);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;resize:both}
-  #browserTitle{height:42px;display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:linear-gradient(180deg,#131a2b,#0f1524);border-bottom:1px solid #0a0f1c;cursor:move}
-  #browserTitle .title{font-weight:700;color:#cbd5e1}
-  .title-spacer{flex:1}
-  .win-btn{background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:8px;padding:.35rem .55rem;cursor:pointer}
-  .win-btn:hover{background:#1f2937}
-  #browserTabs{display:flex;gap:.35rem;padding:.35rem .6rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-  .tab{background:#0f172a;border:1px solid #1b2233;color:#cbd5e1;border-radius:10px;padding:.25rem .5rem;cursor:pointer}
-  .tab.active{background:#1a2336;border-color:#2a3a55}
-  #browserView{position:absolute;inset:90px 0 0 0}
-  #browserFrame{width:100%;height:100%;border:0;background:#000}
-  #loader{position:absolute;inset:90px 0 0 0;display:flex;align-items:center;justify-content:center;background:#0b1220}
-  #loaderBox{text-align:center;max-width:320px}
-  #loaderLogo{width:160px;height:auto;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-  #prog{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden;margin-top:12px}
-  #prog>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#38bdf8);animation:loading 2.2s infinite}
-  @keyframes loading {0%{width:0%}50%{width:85%}100%{width:0%}}
-  #browserWin.full{left:10px;top:10px;transform:none;width:calc(100vw - 20px);height:calc(100vh - 20px);border-radius:12px}
+    /* Panel (hidden until unlocked) */
+    .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;
+         background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
+    .bar.unlocked{display:flex}
+    .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;
+           border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
+    .brand img{width:24px;height:24px;border-radius:6px}
 
-  /* Terminal */
-  #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.45)}
-  #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
-  #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-  #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1426}
-  #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
-  #termIn{flex:1}
-</style>
+    .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:var(--text);
+         padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
+    .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
+    .btn img{width:18px;height:18px;border-radius:4px}
+    .btn.clear{color:#fca5a5;border-color:#4b1010}
+    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
+    @media (max-width:900px){.hint{display:none}}
+
+    iframe{width:100%;height:100%;border:none;background:#000}
+
+    /* Modal */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
+    .modal.show{display:flex;}
+    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+    .modal .card{
+      position:relative; width:min(92vw,420px); background:#0f172a; border:1px solid #0b1220;
+      border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45);
+    }
+    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
+    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
+    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
+    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
+    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
+    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
+    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+         background:#0b1220; border:1px solid #1f2937; padding:.15rem .4rem; border-radius:6px; color:#cbd5e1}
+    select{background:#0b1220; color:#e5e7eb; border:1px solid #1f2937; border-radius:10px; padding:.4rem .6rem}
+    label{color:#9ca3af; font-size:.9rem}
+  </style>
 </head>
 <body>
-  <!-- Invisible unlock area -->
-  <div id="hotspot" aria-label="Open password"></div>
+  <!-- Invisible unlock area (top-left corner) -->
+  <div id="hotspot" aria-label="Open panel"></div>
 
-  <!-- Locked screen -->
-  <div id="locked">
-    <div id="lockedInner">
-      <img id="lockedIcon" src="page-broken-icon.png" alt="">
-      <h1>Math Help is down right now</h1>
-      <p>Please come back later.</p>
+  <!-- Blue "down" cover (visible until unlocked) -->
+  <div id="locked-cover">
+    <div id="locked-inner">
+      <img id="locked-icon" src="down-favicon-64.png" alt="">
+      <div id="locked-title">Math Help is down right now</div>
+      <div id="locked-sub">Please come back later.</div>
     </div>
   </div>
 
   <div class="wrap">
-    <!-- Top bar -->
+    <!-- Panel -->
     <div class="bar" id="panel">
-      <span class="brand"><img src="icon.png" alt="">Math Help</span>
+      <span class="brand"><img src="icon.png" alt=""/>Math Help</span>
 
-      <!-- Cloak buttons -->
-      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+      <!-- Logo buttons -->
+      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt=""/>Calculator</button>
+      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt=""/>Google</button>
+      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt=""/>Docs</button>
+      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt=""/>Classroom</button>
+      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt=""/>Khan</button>
+      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt=""/>Wikipedia</button>
+
       <button class="btn clear" id="clearCloak">Clear</button>
 
-      <!-- Panic -->
-      <div class="hint" style="display:flex;align-items:center;gap:.5rem;margin-left:1rem">
-        <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-        <select id="panicSelect" title="Choose panic cloak">
+      <!-- Panic key selector -->
+      <div class="hint" style="display:flex; align-items:center; gap:.5rem; margin-left:1rem;">
+        <label for="panicSelect">Panic (press <span class="kbd">Alt+Q</span>):</label>
+        <select id="panicSelect" title="Choose cloak for panic key">
           <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
           <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
           <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
@@ -124,73 +111,21 @@
           <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
           <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
         </select>
-        <button id="panicFire" class="btn" type="button">Panic</button>
-      </div>
-
-      <!-- Tools -->
-      <button id="toolsBtn" class="btn">Tools</button>
-
-      <!-- Admin only -->
-      <div id="adminPanel" style="display:none;gap:.5rem;align-items:center;margin-left:.6rem">
-        <span class="kbd">ADMIN</span>
-        <button id="openBrowser" class="btn">Browser</button>
-        <button id="openTerminal" class="btn">Terminal</button>
       </div>
     </div>
 
-    <!-- Main area intentionally empty -->
-    <div></div>
+    <!-- App (proxied) loads after unlock -->
+    <iframe id="app" title="Math Help"></iframe>
   </div>
 
-  <!-- Tools Drawer -->
-  <aside id="toolsDrawer" aria-hidden="true">
-    <div id="toolsHdr">
-      <h3 style="margin:0">Tools</h3>
-      <button id="toolsClose" class="btn" type="button">Close</button>
-    </div>
-
-    <div class="toolCard">
-      <h4>Notepad</h4>
-      <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
-      <div class="toolRow" style="justify-content:flex-end">
-        <span id="noteSaved" style="color:#9ca3af;font-size:.85rem"></span>
-      </div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Timer</h4>
-      <div class="toolRow">
-        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
-        <button id="timerStart" class="btn" type="button">Start</button>
-        <button id="timerStop" class="btn" type="button">Stop</button>
-        <button id="timerReset" class="btn" type="button">Reset</button>
-      </div>
-      <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Unit Converter</h4>
-      <div class="toolRow">
-        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
-        <span>↔</span>
-        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
-      </div>
-      <div class="toolRow">
-        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
-        <span>↔</span>
-        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
-      </div>
-    </div>
-  </aside>
-
-  <!-- Password Modal -->
-  <div id="pwModal" class="modal" aria-hidden="true">
+  <!-- Custom Password Modal -->
+  <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-close></div>
     <div class="card">
       <h2>Enter password</h2>
-      <p>Enter your password to unlock the page.</p>
-      <div class="toolRow">
-        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
+      <p>This unlocks the page.</p>
+      <div class="row">
+        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="current-password" />
         <button id="togglePw" class="toggle" type="button">Show</button>
       </div>
       <div id="pwErr" class="err"></div>
@@ -201,447 +136,149 @@
     </div>
   </div>
 
-  <!-- Mini Browser -->
-  <div id="browserDesk">
-    <div id="browserWin">
-      <div id="browserTitle" title="Drag • Double-click fullscreen">
-        <span class="title">Shadow Browser</span>
-        <div class="title-spacer"></div>
-        <button id="tabAdd" class="win-btn" title="New Tab (+)">＋</button>
-        <button id="fullBtn" class="win-btn" title="Fullscreen (F)">⛶</button>
-        <button id="closeBtn" class="win-btn" title="Close (Esc)">✕</button>
-      </div>
-      <div id="browserTabs"></div>
-      <div id="browserView">
-        <iframe id="browserFrame" title="Shadow Browser"></iframe>
-      </div>
-      <div id="loader">
-        <div id="loaderBox">
-          <img id="loaderLogo" src="the-shadow-gamers.png" alt="">
-          <div id="prog"><span></span></div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <script>
+    // ---- Config / Keys
+    const DEFAULT_TITLE = "Math Help";
+    const DEFAULT_ICON  = "icon.png";
+    const DOWN_ICONS = [
+      { href: "down-favicon-16.png", sizes: "16x16" },
+      { href: "down-favicon-32.png", sizes: "32x32" },
+      { href: "down-favicon-64.png", sizes: "64x64" }
+    ];
+    const LS_CLOAK = "mh_cloak";
+    const LS_PANIC = "mh_panic";
 
-  <!-- Terminal -->
-  <div id="termDesk" aria-hidden="true">
-    <div id="termBox">
-      <div id="termTop">
-        <strong>Terminal</strong>
-        <button id="termClose" class="btn" type="button">Close</button>
-      </div>
-      <pre id="termOut"></pre>
-      <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help — try ;open tools or ;open browser" />
-        <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
-      </div>
-    </div>
-  </div>
+    // ---- Elements
+    const panel = document.getElementById("panel");
+    const frame = document.getElementById("app");
+    const cover = document.getElementById("locked-cover");
+    const hotspot = document.getElementById("hotspot");
+    const modal = document.getElementById("pwModal");
+    const pwInput = document.getElementById("pwInput");
+    const pwErr = document.getElementById("pwErr");
+    const panicSelect = document.getElementById("panicSelect");
 
-<script>
-/* ========= Client-side passwords ========= */
-const ADMIN_PASSWORD = "imadmin";
-const USER_PASSWORD  = "gamerzforever";
-
-/* ========= Storage keys ========= */
-const LS_CLOAK = "mh_cloak";
-const LS_PANIC = "mh_panic";
-const LS_NOTE  = "mh_note";
-const LS_BROWSER_POS = "mh_browser_pos";
-
-/* ========= Elements ========= */
-const hotspot = document.getElementById("hotspot");
-const locked  = document.getElementById("locked");
-const panel   = document.getElementById("panel");
-
-/* ---------- FAVICON HELPERS (supports single file OR multi-size map) ---------- */
-let __iconVer = 0;
-function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
-function removeFavicons(){
-  document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(n=>n.remove());
-}
-function addIconWithSizes(href, sizes){
-  const l = document.createElement('link');
-  l.rel = 'icon';
-  l.type = 'image/png';
-  if (sizes) l.sizes = sizes;
-  l.href = __v(href);
-  document.head.appendChild(l);
-}
-function addShortcutIcon(href){
-  const s = document.createElement('link');
-  s.rel = 'shortcut icon';
-  s.href = __v(href);
-  document.head.appendChild(s);
-}
-function setFaviconsMulti(icon){
-  removeFavicons();
-  if (typeof icon === 'string'){
-    addIconWithSizes(icon, '');
-    addShortcutIcon(icon);
-  } else if (icon && typeof icon === 'object'){
-    let first = null;
-    for (const [sizes, href] of Object.entries(icon)){
-      addIconWithSizes(href, sizes);
-      if (!first) first = href;
+    // ---- Favicon helpers
+    function removeFavicons(){
+      document.querySelectorAll('link[rel~="icon"]').forEach(el => el.parentNode.removeChild(el));
     }
-    if (first) addShortcutIcon(first);
-  }
-}
-function setTab(title, icon){
-  document.title = title;
-  setFaviconsMulti(icon);
-}
-function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({ title, icon })); }
-function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); } catch { return null; } }
-function clearTab(){
-  localStorage.removeItem(LS_CLOAK);
-  setTab("Math Help", "icon.png");  // default single-file favicon
-}
-
-/* ======= Password Modal ======= */
-const pwModal = document.getElementById("pwModal");
-const pwInput = document.getElementById("pwInput");
-const pwErr   = document.getElementById("pwErr");
-document.getElementById("togglePw").addEventListener("click", (e)=>{
-  pwInput.type = pwInput.type === "password" ? "text" : "password";
-  e.target.textContent = pwInput.type === "password" ? "Show" : "Hide";
-});
-function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
-function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
-pwModal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closePw(); });
-document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && pwModal.classList.contains("show")) closePw(); });
-hotspot.addEventListener("click", openPw);
-
-/* ======= Unlock flow ======= */
-let IS_ADMIN = false;
-function reveal(role){
-  locked.style.display = "none";
-  panel.classList.add("unlocked");
-  const saved = loadCloak();
-  if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
-  else setTab("Math Help", "icon.png");
-  IS_ADMIN = (role === "admin");
-  document.getElementById("adminPanel").style.display = IS_ADMIN ? "inline-flex" : "none";
-}
-function submitPassword(){
-  const pass = pwInput.value.trim();
-  if (!pass){ pwErr.textContent = "Password required."; return; }
-  if (pass === ADMIN_PASSWORD){ closePw(); reveal("admin"); return; }
-  if (pass === USER_PASSWORD){  closePw(); reveal("user");  return; }
-  pwErr.textContent = "Incorrect password.";
-}
-document.getElementById("pwSubmit").addEventListener("click", submitPassword);
-pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
-
-/* ======= Cloak buttons + Clear ======= */
-document.querySelectorAll('.btn[data-title]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const t = btn.getAttribute('data-title');
-    const i = btn.getAttribute('data-favicon');
-    setTab(t,i); saveCloak(t,i);
-  });
-});
-document.getElementById('clearCloak').addEventListener('click', clearTab);
-
-/* ======= Panic selection + hotkey '-' ======= */
-const panicSelect = document.getElementById("panicSelect");
-const panicFire   = document.getElementById("panicFire");
-function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
-function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
-(function initPanic(){
-  const saved = loadPanic();
-  if (saved) {
-    for (const opt of panicSelect.options) {
-      if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
+    function addIcon(href, sizes){
+      const link = document.createElement("link");
+      link.rel = "icon";
+      link.type = "image/png";
+      if (sizes) link.sizes = sizes;
+      link.href = href;
+      document.head.appendChild(link);
     }
-  } else {
-    savePanic(JSON.parse(panicSelect.value));
-  }
-})();
-panicSelect.addEventListener("change", ()=> savePanic(JSON.parse(panicSelect.value)));
-function triggerPanic(){
-  const sel = loadPanic() || JSON.parse(panicSelect.value);
-  setTab(sel.title, sel.icon);
-  saveCloak(sel.title, sel.icon);
-}
-panicFire.addEventListener("click", triggerPanic);
-document.addEventListener("keydown", (e)=>{
-  const el = document.activeElement;
-  const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
-  if (typing) return;
-  if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
-});
+    function setFaviconSingle(href){ removeFavicons(); addIcon(href); }
+    function setFaviconGroup(group){ removeFavicons(); group.forEach(({href, sizes}) => addIcon(href, sizes)); }
 
-/* ======= Tools drawer ======= */
-const toolsBtn = document.getElementById("toolsBtn");
-const toolsClose = document.getElementById("toolsClose");
-const toolsDrawer= document.getElementById("toolsDrawer");
-function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
-function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
-toolsBtn.addEventListener("click", openTools);
-toolsClose.addEventListener("click", closeTools);
-
-/* Notepad */
-const noteArea = document.getElementById("noteArea");
-const noteSaved= document.getElementById("noteSaved");
-noteArea.value = localStorage.getItem(LS_NOTE) || "";
-function saveNote(){ try{ localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900);}catch{noteSaved.textContent="Save failed";}}
-noteArea.addEventListener("input", saveNote);
-
-/* Timer */
-const timerMin = document.getElementById("timerMin");
-const timerStart = document.getElementById("timerStart");
-const timerStop  = document.getElementById("timerStop");
-const timerReset = document.getElementById("timerReset");
-const timerReadout = document.getElementById("timerReadout");
-let timerLeft = Number(timerMin.value) * 60;
-let timerId = null;
-function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(Math.floor(timerLeft%60)).padStart(2,"0"); timerReadout.textContent = `${m}:${s}`; }
-function startTimer(){ if (timerId) return; timerId = setInterval(()=>{ if (timerLeft>0){ timerLeft--; renderTimer(); } else { stopTimer(); alert("Time!"); } },1000); }
-function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
-function resetTimer(){ stopTimer(); timerLeft = Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
-timerStart.addEventListener("click", startTimer);
-timerStop.addEventListener("click", stopTimer);
-timerReset.addEventListener("click", resetTimer);
-timerMin.addEventListener("change", resetTimer);
-renderTimer();
-
-/* Unit converter */
-const cm   = document.getElementById("cm");
-const inch = document.getElementById("inch");
-const kg   = document.getElementById("kg");
-const lb   = document.getElementById("lb");
-const round=(x)=>Math.round(x*1000)/1000;
-cm.addEventListener("input", ()=>{ const v=Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
-inch.addEventListener("input",()=>{ const v=Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
-kg.addEventListener("input",  ()=>{ const v=Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
-lb.addEventListener("input",  ()=>{ const v=Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
-
-/* ======= Admin: Browser ======= */
-const browserDesk  = document.getElementById("browserDesk");
-const browserWin   = document.getElementById("browserWin");
-const browserTabs  = document.getElementById("browserTabs");
-const browserFrame = document.getElementById("browserFrame");
-const loader       = document.getElementById("loader");
-const tabAdd       = document.getElementById("tabAdd");
-const fullBtn      = document.getElementById("fullBtn");
-const closeBtn     = document.getElementById("closeBtn");
-const openBrowser  = document.getElementById("openBrowser");
-
-const TAB_URL = "https://win11-emu-react.vercel.app/";
-let tabs = []; // {id, src}
-let active = -1;
-
-function openDesk(){ browserDesk.style.display="block"; restoreBrowserPos(); }
-function closeDesk(){ browserDesk.style.display="none"; }
-function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
-
-function selectTab(idx){
-  if (idx<0 || idx>=tabs.length) return;
-  active = idx; renderTabs();
-  const url = tabs[idx].src;
-  if (browserFrame.src !== url){ showLoader(true); browserFrame.src = url; }
-}
-function renderTabs(){
-  browserTabs.innerHTML = "";
-  tabs.forEach((t,i)=>{
-    const b = document.createElement("button");
-    b.className = "tab"+(i===active?" active":"");
-    b.textContent = "Tab "+(i+1);
-    b.onclick = ()=> selectTab(i);
-    const x = document.createElement("span");
-    x.textContent = " ✕"; x.style.marginLeft=".35rem"; x.style.opacity=".85"; x.style.cursor="pointer";
-    x.onclick = (ev)=>{ ev.stopPropagation(); closeTab(i); };
-    b.appendChild(x);
-    browserTabs.appendChild(b);
-  });
-}
-function closeTab(i){
-  if (i<0 || i>=tabs.length) return;
-  tabs.splice(i,1);
-  if (!tabs.length){ closeDesk(); return; }
-  if (active>=tabs.length) active = tabs.length-1;
-  selectTab(active);
-}
-function newTab(){ tabs.push({id:Date.now(), src:TAB_URL}); selectTab(tabs.length-1); }
-
-browserFrame.addEventListener("load", ()=> showLoader(false));
-tabAdd.addEventListener("click", newTab);
-openBrowser.addEventListener("click", ()=>{ if (!IS_ADMIN){ alert("Admin only."); return; } openDesk(); if (!tabs.length) newTab(); });
-closeBtn.addEventListener("click", closeDesk);
-fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
-document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
-
-/* drag window */
-(function enableDrag(){
-  const title = document.getElementById("browserTitle");
-  const win = browserWin;
-  let dragging=false,startX=0,startY=0,startL=0,startT=0;
-  function onDown(e){
-    if (win.classList.contains("full")) return;
-    dragging=true;
-    const r = win.getBoundingClientRect();
-    startX = (e.touches? e.touches[0].clientX : e.clientX);
-    startY = (e.touches? e.touches[0].clientY : e.clientY);
-    startL = r.left; startT = r.top;
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchmove", onMove, {passive:false});
-    document.addEventListener("touchend", onUp);
-  }
-  function onMove(e){
-    if (!dragging) return;
-    const x = (e.touches? e.touches[0].clientX : e.clientX);
-    const y = (e.touches? e.touches[0].clientY : e.clientY);
-    const nl = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, startL + (x-startX)));
-    const nt = Math.max(0, Math.min(window.innerHeight - win.offsetHeight, startT + (y-startY)));
-    win.style.left = nl + "px"; win.style.top = nt + "px"; win.style.transform="none";
-  }
-  function onUp(){
-    dragging=false;
-    document.removeEventListener("mousemove", onMove);
-    document.removeEventListener("mouseup", onUp);
-    document.removeEventListener("touchmove", onMove);
-    document.removeEventListener("touchend", onUp);
-    saveBrowserPos();
-  }
-  title.addEventListener("mousedown", onDown);
-  title.addEventListener("touchstart", onDown, {passive:true});
-  window.addEventListener("resize", saveBrowserPos);
-})();
-function saveBrowserPos(){
-  const r = browserWin.getBoundingClientRect();
-  const d = { full: browserWin.classList.contains("full"), left:r.left, top:r.top, width:r.width, height:r.height };
-  try{ localStorage.setItem(LS_BROWSER_POS, JSON.stringify(d)); }catch{}
-}
-function restoreBrowserPos(){
-  try{
-    const d = JSON.parse(localStorage.getItem(LS_BROWSER_POS)||"null");
-    if (!d) return;
-    if (d.full) browserWin.classList.add("full");
-    else{
-      browserWin.classList.remove("full");
-      browserWin.style.left = Math.max(0, Math.min(window.innerWidth - d.width, d.left)) + "px";
-      browserWin.style.top  = Math.max(0, Math.min(window.innerHeight - d.height, d.top)) + "px";
-      browserWin.style.width = d.width + "px";
-      browserWin.style.height= d.height + "px";
-      browserWin.style.transform = "none";
+    function setTitle(t){ document.title = t; }
+    function setTab(title, iconHref){ setTitle(title); setFaviconSingle(iconHref); }
+    function clearTab(){
+      localStorage.removeItem(LS_CLOAK);
+      setTab(DEFAULT_TITLE, DEFAULT_ICON);
     }
-  }catch{}
-}
+    function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
+    function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK) || "null"); }catch{ return null; } }
+    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); }catch{ return null; } }
 
-/* ======= Terminal (Admin) ======= */
-const termDesk  = document.getElementById("termDesk");
-const termOut   = document.getElementById("termOut");
-const termIn    = document.getElementById("termIn");
-const termClose = document.getElementById("termClose");
-const openTerminal = document.getElementById("openTerminal");
+    // ---- Modal controls
+    function openModal(){
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+      pwErr.textContent = "";
+      pwInput.value = "";
+      setTimeout(()=>pwInput.focus(), 0);
+    }
+    function closeModal(){
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+      pwInput.blur();
+    }
+    document.getElementById("togglePw").addEventListener("click", (event) => {
+      pwInput.type = (pwInput.type === "password" ? "text" : "password");
+      event.target.textContent = pwInput.type === "password" ? "Show" : "Hide";
+    });
+    modal.addEventListener("click", (e) => { if (e.target.dataset.close !== undefined) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
 
-function openTerm(){
-  if (!IS_ADMIN){ alert("Admin only."); return; }
-  termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false");
-  termIn.value=""; termIn.focus();
-  if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n";
-}
-function closeTerm(){ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); }
-openTerminal.addEventListener("click", openTerm);
-termClose.addEventListener("click", closeTerm);
-document.addEventListener("keydown",(e)=>{
-  if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
-});
+    async function submitPassword(){
+      const pass = pwInput.value.trim();
+      if(!pass){ pwErr.textContent = "Password required."; return; }
+      try{
+        const r = await fetch("/.netlify/functions/unlock", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          credentials:"include",
+          body: JSON.stringify({ password: pass })
+        });
+        const j = await r.json();
+        if (j.ok){
+          closeModal();
+          reveal();
+        } else {
+          pwErr.textContent = "Incorrect password.";
+        }
+      }catch{
+        pwErr.textContent = "Network error. Try again.";
+      }
+    }
+    document.getElementById("pwSubmit").addEventListener("click", submitPassword);
+    pwInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitPassword(); });
 
-function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
-function clearTerm(){ termOut.textContent = ""; }
+    // ---- Unlock flow
+    function reveal(){
+      cover.style.display = "none";
+      panel.classList.add("unlocked");
+      if(!frame.src) frame.src = "/app";
+      const saved = loadCloak();
+      if (saved && saved.title && saved.icon) { setTab(saved.title, saved.icon); }
+      else { setTab(DEFAULT_TITLE, DEFAULT_ICON); }
+    }
 
-/* Simple runner: open HTML in a new tab via Blob (optional) */
-const runFrameURL = (()=>{ let url=null; return {
-  open(html, offline=false){
-    const csp = offline ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">" : "";
-    const doc = `<!doctype html><meta charset="utf-8">${csp}${html}`;
-    const blob = new Blob([doc], {type:"text/html"});
-    if (url) URL.revokeObjectURL(url);
-    url = URL.createObjectURL(blob);
-    const w = window.open("", "_blank", "noopener,noreferrer");
-    if (w) w.location = url;
-    return !!w;
-  }
-}})();
+    hotspot.addEventListener("click", () => { openModal(); });
 
-const MAX_HTML_LEN = 120000;
+    document.querySelectorAll('.btn[data-title]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const title = btn.getAttribute('data-title');
+        const icon  = btn.getAttribute('data-favicon');
+        setTab(title, icon);
+        saveCloak(title, icon);
+      });
+    });
 
-function handleCommand(line){
-  const s = line.trim();
-  if (!s) return;
-  printLine("> " + s);
+    document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-  if (s === ";help"){
-    printLine("Commands:");
-    printLine("  ;help / ;clear");
-    printLine("  ;panic");
-    printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
-    printLine("  ;open tools   /  ;close tools");
-    printLine("  ;open browser /  ;close browser / ;browser newtab / ;browser fullscreen");
-    printLine("  ;run html <HTML>         (opens in new tab)");
-    printLine("  ;run html offline <HTML> (no network in that tab)");
-    return;
-  }
-  if (s === ";clear"){ clearTerm(); return; }
-  if (s === ";panic"){ triggerPanic(); return; }
+    // Panic key: Alt+Q
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "q" || e.key === "Q")) {
+        const sel = loadPanic() || JSON.parse(panicSelect.value);
+        setTab(sel.title, sel.icon);
+        saveCloak(sel.title, sel.icon);
+      }
+    });
 
-  if (s.startsWith(";cloak ")){
-    const arg = s.slice(7).trim().toLowerCase();
-    const map = {
-      google:["Google","google-favicon.png"],
-      calculator:["Calculator","calculator-icon.png"],
-      docs:["Google Docs","google-docs-icon.png"],
-      classroom:["Google Classroom","classroom-favicon.png"],
-      khan:["Khan Academy","khan-favicon.png"],
-      wikipedia:["Wikipedia","wikipedia-favicon.png"]
-    };
-    if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
-    else printLine("Unknown cloak target.");
-    return;
-  }
+    // Persist panic selection
+    const panicSaved = loadPanic();
+    if (panicSaved) {
+      for (const opt of panicSelect.options) {
+        if (opt.value === JSON.stringify(panicSaved)) { panicSelect.value = opt.value; break; }
+      }
+    }
+    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
 
-  if (s === ";open tools"){ openTools(); return; }
-  if (s === ";close tools"){ closeTools(); return; }
+    // ---- Force login every load:
+    // 1) clear cookie server-side, then
+    fetch("/.netlify/functions/logout", { credentials:"include", cache:"no-store" })
+      .finally(() => {
+        // 2) show locked-state title + multi-size favicon group
+        setTitle("Math Help - Down");
+        setFaviconGroup(DOWN_ICONS);
+      });
 
-  if (s === ";open browser"){ if (!IS_ADMIN){ printLine("Admin only."); return; } openDesk(); if (!tabs.length) newTab(); return; }
-  if (s === ";close browser"){ closeDesk(); return; }
-  if (s === ";browser newtab"){ if (!IS_ADMIN){ printLine("Admin only."); return; } if (browserDesk.style.display!=="block") openDesk(); newTab(); return; }
-  if (s === ";browser fullscreen"){ document.getElementById("browserWin").classList.toggle("full"); return; }
-
-  if (s.startsWith(";run html offline ")){
-    const html = s.slice(";run html offline ".length);
-    if (!html){ printLine("No HTML provided."); return; }
-    if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
-    const ok = runFrameURL.open(html, true);
-    printLine(ok ? "Opened offline HTML in new tab." : "Popup blocked. Allow popups for this site.");
-    return;
-  }
-  if (s.startsWith(";run html ")){
-    const html = s.slice(";run html ".length);
-    if (!html){ printLine("No HTML provided."); return; }
-    if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
-    const ok = runFrameURL.open(html, false);
-    printLine(ok ? "Opened HTML in new tab." : "Popup blocked. Allow popups for this site.");
-    return;
-  }
-
-  printLine("Unknown command. Try ;help");
-}
-document.getElementById("termIn").addEventListener("keydown",(e)=>{
-  if (e.key === "Enter"){ handleCommand(e.target.value); e.target.value=""; }
-});
-
-/* ======= Initial state: multi-size DOWN favicon set ======= */
-setTab("Math Help - Down", {
-  "16x16": "down-favicon-16.png",
-  "32x32": "down-favicon-32.png",
-  "64x64": "down-favicon-64.png"
-});
-</script>
+    // (User must open modal and sign in each visit)
+  </script>
 </body>
 </html>
