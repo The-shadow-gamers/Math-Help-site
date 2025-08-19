@@ -208,7 +208,7 @@
       </div>
     </div>
 
-    <!-- Main app (kept blank to save bandwidth) -->
+    <!-- Main app kept blank to avoid idle bandwidth -->
     <iframe id="app" title="Math Help" src="about:blank"></iframe>
   </div>
 
@@ -474,7 +474,7 @@
           const j = await checkBan(email);
           if (j?.banned) showBan(j.banUntil);
         } catch {}
-      }, 300000); // 5 minutes (reduced bandwidth)
+      }, 300000); // 5 minutes
     }
     function stopBanPolling(){ if (BAN_POLL_ID){ clearInterval(BAN_POLL_ID); BAN_POLL_ID = null; } }
 
@@ -509,7 +509,7 @@
     function reveal(role){
       cover.style.display="none";
       panel.classList.add("unlocked");
-      // Keep the main iframe empty to reduce bandwidth
+      // Keep main iframe empty (saves idle bandwidth)
       if (!frame.src) frame.src = "about:blank";
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
@@ -682,7 +682,7 @@
       const url = tabs[idx].src;
       if (browserFrame.src !== url) {
         showLoader(true);
-        browserFrame.src = url; // allow browser caching, no cache-buster
+        browserFrame.src = url; // uses bandwidth only when opened
       }
     }
 
