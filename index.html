@@ -42,7 +42,7 @@
 
     iframe{width:100%;height:100%;border:none;background:#000}
 
-    /* Modal (password) */
+    /* Modal (password & email) */
     .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
     .modal.show{display:flex;}
     .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
@@ -137,6 +137,9 @@
     #runBar{position:absolute;left:50%;transform:translateX(-50%);top:10px;display:flex;gap:.5rem;align-items:center;
       background:#0f172a;border:1px solid #101826;border-radius:12px;padding:.4rem .6rem;box-shadow:0 10px 30px rgba(0,0,0,.5)}
     #runFrame{position:absolute;inset:0;border:0;background:#111}
+
+    /* Banned cover */
+    #banCover{display:none;position:fixed;inset:0;z-index:1500;background:#111827;color:#e5e7eb;align-items:center;justify-content:center;text-align:center;padding:2rem;}
   </style>
 </head>
 <body>
@@ -151,6 +154,12 @@
       <div id="locked-sub">Please come back later.</div>
     </div>
   </div>
+
+  <!-- Banned cover -->
+  <div id="banCover"><div>
+    <h1 style="margin:.2rem 0">Access blocked</h1>
+    <p id="banCopy" style="opacity:.85;margin:0">You have been banned.</p>
+  </div></div>
 
   <div class="wrap">
     <!-- Top bar -->
@@ -189,6 +198,7 @@
         <span class="kbd">ADMIN</span>
         <button id="openBrowser" class="btn">Browser</button>
         <button id="openTerminal" class="btn">Terminal</button>
+        <button id="openUsers" class="btn">Users</button>
         <label style="color:#9ca3af">BG:
           <input id="bgPick" type="color" value="#0b1220">
         </label>
@@ -245,6 +255,32 @@
     </div>
   </aside>
 
+  <!-- Email capture modal (shown to regular users once) -->
+  <div id="emailModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="backdrop" data-close></div>
+    <div class="card">
+      <h2>One-time email</h2>
+      <p>Enter your email so we can remember this device. By continuing you agree this email may be used to manage access.</p>
+      <div class="row">
+        <input id="emailInput" class="input" type="email" placeholder="you@example.com" />
+      </div>
+      <div id="emailErr" class="err"></div>
+      <div class="actions">
+        <button class="secondary" data-close type="button">Cancel</button>
+        <button id="emailSubmit" class="primary" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Users Drawer -->
+  <aside id="usersDrawer" aria-hidden="true" style="position:fixed;top:var(--bar-h);right:0;bottom:0;width:380px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2600;overflow:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c">
+      <h3 style="margin:0;font-size:1rem">Users</h3>
+      <button id="usersClose" class="btn" type="button">Close</button>
+    </div>
+    <div id="usersList" style="padding:.6rem"></div>
+  </aside>
+
   <!-- Password Modal -->
   <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="backdrop" data-close></div>
@@ -287,7 +323,7 @@
     </div>
   </div>
 
-  <!-- Fullscreen Whiteboard (unchanged UI; auto-closes when runner opens) -->
+  <!-- Fullscreen Whiteboard -->
   <div id="wbDesk" aria-hidden="true">
     <canvas id="wbCanvas"></canvas>
     <div id="wbToolbar" role="toolbar" aria-label="Whiteboard tools">
@@ -343,7 +379,9 @@
     const LS_PANIC     = "mh_panic";
     const LS_NOTE      = "mh_note";
     const LS_BROWSER_POS = "mh_browser_pos";
+    const LS_EMAIL = "mh_email";
     let IS_ADMIN = false;
+    let BAN_POLL_ID = null;
 
     /* ---------- elements ---------- */
     const panel = document.getElementById("panel");
@@ -354,6 +392,8 @@
     const pwInput = document.getElementById("pwInput");
     const pwErr = document.getElementById("pwErr");
     const adminPanel = document.getElementById("adminPanel");
+    const banCover = document.getElementById("banCover");
+    const banCopy = document.getElementById("banCopy");
 
     /* favicon helpers */
     function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
@@ -363,13 +403,82 @@
     function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); }catch{ return null; } }
     function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab(DEFAULT_TITLE, DEFAULT_ICON); }
 
-    /* modal controls */
+    /* modal controls (password) */
     function openModal(){ modal.classList.add("show"); modal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
     function closeModal(){ modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); pwInput.blur(); }
     document.getElementById("togglePw").addEventListener("click",(e)=>{ pwInput.type = pwInput.type==="password"?"text":"password"; e.target.textContent = pwInput.type==="password"?"Show":"Hide"; });
     modal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closeModal(); });
     document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && modal.classList.contains("show")) closeModal(); });
+    hotspot.addEventListener("click", openModal);
 
+    /* Email modal + helpers */
+    const emailModal = document.getElementById("emailModal");
+    const emailInput = document.getElementById("emailInput");
+    const emailErr   = document.getElementById("emailErr");
+    const emailSubmit= document.getElementById("emailSubmit");
+
+    function showEmailModal(){ 
+      emailErr.textContent = ""; emailInput.value = "";
+      emailModal.classList.add("show"); emailModal.setAttribute("aria-hidden","false");
+      setTimeout(()=>emailInput.focus(),0);
+    }
+    function hideEmailModal(){
+      emailModal.classList.remove("show"); emailModal.setAttribute("aria-hidden","true");
+    }
+    emailModal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) hideEmailModal(); });
+
+    async function askEmailOnce(){
+      return new Promise((resolve)=>{
+        function submit(){
+          const v = (emailInput.value||"").trim();
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emailErr.textContent = "Please enter a valid email."; return; }
+          hideEmailModal();
+          emailSubmit.removeEventListener("click", submit);
+          emailInput.removeEventListener("keydown", onKey);
+          resolve(v);
+        }
+        function onKey(e){ if (e.key==="Enter") submit(); }
+        emailSubmit.addEventListener("click", submit);
+        emailInput.addEventListener("keydown", onKey);
+        showEmailModal();
+      });
+    }
+
+    async function registerEmail(email){
+      const r = await fetch("/.netlify/functions/users?op=register", {
+        method:"POST", headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ email })
+      });
+      return r.json();
+    }
+    async function checkBan(email){
+      const r = await fetch("/.netlify/functions/users?op=check&email="+encodeURIComponent(email), { method:"GET" });
+      return r.json();
+    }
+    function showBan(banUntil){
+      banCover.style.display = "flex";
+      let msg = "You have been banned.";
+      if (banUntil === -1) msg = "You have been permanently banned.";
+      else if (typeof banUntil === "number") {
+        const d = new Date(banUntil);
+        msg = "You are temporarily banned until " + d.toLocaleString();
+      }
+      banCopy.textContent = msg;
+    }
+    function startBanPolling(){
+      stopBanPolling();
+      const email = localStorage.getItem(LS_EMAIL);
+      if (!email) return;
+      BAN_POLL_ID = setInterval(async ()=>{
+        try {
+          const j = await checkBan(email);
+          if (j?.banned) showBan(j.banUntil);
+        } catch {}
+      }, 60000); // 60s
+    }
+    function stopBanPolling(){ if (BAN_POLL_ID){ clearInterval(BAN_POLL_ID); BAN_POLL_ID = null; } }
+
+    /* submit password (handles admin vs user + email + ban) */
     async function submitPassword(){
       const pass = pwInput.value.trim();
       if(!pass){ pwErr.textContent="Password required."; return; }
@@ -379,8 +488,18 @@
           body: JSON.stringify({ password: pass })
         });
         const j = await r.json();
-        if (j.ok){ closeModal(); reveal(j.role||"user"); }
-        else pwErr.textContent = "Incorrect password.";
+        if (!j.ok){ pwErr.textContent = "Incorrect password."; return; }
+
+        if (j.role === "admin") { closeModal(); reveal("admin"); return; }
+
+        // user path: capture email once, register, check ban, then reveal
+        closeModal();
+        let email = localStorage.getItem(LS_EMAIL);
+        if (!email) { email = await askEmailOnce(); }
+        const reg = await registerEmail(email);
+        if (reg.banned){ showBan(reg.banUntil); return; }
+        localStorage.setItem(LS_EMAIL, email);
+        reveal("user");
       }catch{ pwErr.textContent = "Network error. Try again."; }
     }
     document.getElementById("pwSubmit").addEventListener("click", submitPassword);
@@ -394,11 +513,15 @@
       const saved = loadCloak();
       if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
       IS_ADMIN = (role === "admin");
-      if (IS_ADMIN) adminPanel.style.display = "inline-flex";
+      if (IS_ADMIN) { adminPanel.style.display = "inline-flex"; stopBanPolling(); }
+      else { startBanPolling(); }
     }
 
+    /* always start locked & set “down” favicons */
+    fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
+      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
+
     /* hotspot + cloak handlers */
-    hotspot.addEventListener("click", openModal);
     document.querySelectorAll('.btn[data-title]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const t = btn.getAttribute('data-title');
@@ -407,10 +530,6 @@
       });
     });
     document.getElementById('clearCloak').addEventListener('click', clearTab);
-
-    /* always start locked & set “down” favicons */
-    fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
-      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
 
     /* ======================= PANIC (dropdown + key + button) ======================= */
     const panicSelect = document.getElementById("panicSelect");
@@ -562,7 +681,7 @@
       const url = tabs[idx].src;
       if (browserFrame.src !== url) {
         showLoader(true);
-        browserFrame.src = url; // no cache-buster; browser handles caching
+        browserFrame.src = url; // allow browser caching, no cache-buster
       }
     }
 
@@ -775,7 +894,7 @@
       }
     });
 
-    /* ===== Terminal (admin-only) + Canvas Runner with blob sandbox ===== */
+    /* ===== Terminal (admin-only) + Canvas Runner (blob sandbox) ===== */
     const termDesk  = document.getElementById("termDesk");
     const termOut   = document.getElementById("termOut");
     const termIn    = document.getElementById("termIn");
@@ -798,7 +917,7 @@
       termDesk.setAttribute("aria-hidden","false");
       termIn.value = "";
       termIn.focus();
-      if (!termOut.textContent) printLine("Terminal ready. Type ;help");
+      if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n";
     }
     function closeTerm(){ termDesk.style.display = "none"; termDesk.setAttribute("aria-hidden","true"); }
     openTermBtn.addEventListener("click", openTerm);
@@ -818,7 +937,7 @@
       return `<!doctype html><meta charset="utf-8">${csp}${userHTML}`;
     }
     function openRunner(userHTML, offline=false){
-      // auto-close whiteboard so overlays don't stack
+      // Auto-close whiteboard so overlays don't stack
       if (typeof wbDesk !== "undefined" && wbDesk.style.display === "block") {
         try { wbCloseDesk(); } catch {}
       }
@@ -897,11 +1016,10 @@
       printLine("Unknown command. Try ;help");
     }
 
-    const termInEl = document.getElementById("termIn");
-    termInEl.addEventListener("keydown",(e)=>{
+    document.getElementById("termIn").addEventListener("keydown",(e)=>{
       if (e.key === "Enter"){
-        handleCommand(termInEl.value);
-        termInEl.value = "";
+        handleCommand(e.target.value);
+        e.target.value = "";
       } else if (e.key === "Escape"){
         closeTerm();
       }
@@ -911,6 +1029,71 @@
       if (runDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeRunner(); }
       if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
     });
+
+    /* ===== Admin Users drawer ===== */
+    const usersDrawer = document.getElementById("usersDrawer");
+    const usersList   = document.getElementById("usersList");
+    const openUsers   = document.getElementById("openUsers");
+    const usersClose  = document.getElementById("usersClose");
+
+    function openUsersDrawer(){ if (!IS_ADMIN) { alert("Admin only."); return; } usersDrawer.style.transform = "translateX(0)"; usersDrawer.setAttribute("aria-hidden","false"); loadUsers(); }
+    function closeUsersDrawer(){ usersDrawer.style.transform = "translateX(100%)"; usersDrawer.setAttribute("aria-hidden","true"); }
+    openUsers?.addEventListener("click", openUsersDrawer);
+    usersClose?.addEventListener("click", closeUsersDrawer);
+
+    async function loadUsers(){
+      usersList.innerHTML = "<p style='opacity:.8'>Loading…</p>";
+      const r = await fetch("/.netlify/functions/users?op=list", { credentials:"include" });
+      const j = await r.json();
+      if (!j.ok){ usersList.innerHTML = "<p style='color:#fca5a5'>Failed to load.</p>"; return; }
+
+      usersList.innerHTML = "";
+      j.users.forEach(u=>{
+        const row = document.createElement("div");
+        row.style.cssText = "border-bottom:1px solid #0a0f1c;padding:.6rem 0;";
+
+        const status = (u.banUntil === -1) ? "permanent"
+                 : (typeof u.banUntil === "number" && u.banUntil > Date.now()) ? ("until " + new Date(u.banUntil).toLocaleString())
+                 : "ok";
+
+        row.innerHTML = `
+          <div style="font-weight:700">${u.nickname ? `${u.nickname} <span style='opacity:.7;font-weight:400'>(${u.email})</span>` : u.email}</div>
+          <div style="font-size:.9rem;color:#9ca3af">status: ${status}</div>
+          <div style="display:flex;gap:.35rem;margin-top:.4rem;flex-wrap:wrap">
+            <input type="text" placeholder="nickname" value="${u.nickname || ""}" style="flex:1;min-width:120px" />
+            <button class="btn btnNick">Save Nick</button>
+            <button class="btn btnBan1h">Ban 1h</button>
+            <button class="btn btnBan1d">Ban 1d</button>
+            <button class="btn btnBan1w">Ban 1w</button>
+            <button class="btn btnBanPerm">Ban ⛔</button>
+            <button class="btn clear btnUnban">Unban</button>
+          </div>
+        `;
+        const [nickInput, bnNick, b1h, b1d, b1w, bperm, bunban] = row.querySelectorAll("input, .btnNick, .btnBan1h, .btnBan1d, .btnBan1w, .btnBanPerm, .btnUnban");
+
+        bnNick.addEventListener("click", ()=> adminAction("nickname", u.email, { nickname: nickInput.value }));
+        b1h.addEventListener("click", ()=> adminAction("ban_temp", u.email, { seconds: 3600 }));
+        b1d.addEventListener("click", ()=> adminAction("ban_temp", u.email, { seconds: 86400 }));
+        b1w.addEventListener("click", ()=> adminAction("ban_temp", u.email, { seconds: 604800 }));
+        bperm.addEventListener("click", ()=> adminAction("ban_perm", u.email));
+        bunban.addEventListener("click", ()=> adminAction("unban", u.email));
+        usersList.appendChild(row);
+      });
+    }
+
+    async function adminAction(action, email, extra={}){
+      const r = await fetch("/.netlify/functions/users?op=admin", {
+        method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include",
+        body: JSON.stringify({ action, email, ...extra })
+      });
+      const j = await r.json();
+      if (!j.ok){ alert("Action failed: "+(j.error||"")); return; }
+      loadUsers();
+    }
+
+    /* Initialize title/favicons to down-mode on load */
+    removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h));
+    document.title="Math Help - Down";
   </script>
 </body>
 </html>
