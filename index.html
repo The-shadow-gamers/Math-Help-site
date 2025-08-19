@@ -243,12 +243,6 @@
         <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
       </div>
     </div>
-
-    <div class="toolCard" id="wbTool">
-      <h4>Whiteboard</h4>
-      <button id="wbOpen" class="btn" type="button">Open Whiteboard</button>
-      <span class="cmdHint">Tip: Ctrl/⌘+K → “Whiteboard”</span>
-    </div>
   </aside>
 
   <!-- Password Modal -->
@@ -293,7 +287,7 @@
     </div>
   </div>
 
-  <!-- Fullscreen Whiteboard -->
+  <!-- Fullscreen Whiteboard (unchanged UI; auto-closes when runner opens) -->
   <div id="wbDesk" aria-hidden="true">
     <canvas id="wbCanvas"></canvas>
     <div id="wbToolbar" role="toolbar" aria-label="Whiteboard tools">
@@ -519,15 +513,13 @@
     const bgUpload     = document.getElementById("bgUpload");
     const bgClear      = document.getElementById("bgClear");
 
-    const TAB_URL = "https://win11-emu-react.vercel.app/"; // every tab loads this
-    let tabs = [];   // {id}
+    const TAB_URL = "https://win11-emu-react.vercel.app/";
+    let tabs = [];   // { id, src }
     let active = -1;
 
-    // ---- background (color or image) with persistence ----
     function applyBackground() {
       const color = localStorage.getItem(LS_BG_COLOR) || "#0b1220";
       const img   = localStorage.getItem(LS_BG_IMAGE) || null;
-
       if (img) {
         browserDesk.style.backgroundImage = `url("${img}")`;
         browserDesk.style.backgroundColor = "";
@@ -567,8 +559,11 @@
       if (idx < 0 || idx >= tabs.length) return;
       active = idx;
       renderTabs();
-      showLoader(true);
-      browserFrame.src = TAB_URL + (TAB_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
+      const url = tabs[idx].src;
+      if (browserFrame.src !== url) {
+        showLoader(true);
+        browserFrame.src = url; // no cache-buster; browser handles caching
+      }
     }
 
     function renderTabs(){
@@ -578,7 +573,6 @@
         b.className = "tab" + (i===active ? " active" : "");
         b.textContent = "Tab " + (i+1);
         b.onclick = () => selectTab(i);
-
         const x = document.createElement("span");
         x.textContent = " ✕";
         x.style.marginLeft = ".35rem";
@@ -586,7 +580,6 @@
         x.style.cursor = "pointer";
         x.onclick = (ev)=>{ ev.stopPropagation(); closeTab(i); };
         b.appendChild(x);
-
         browserTabs.appendChild(b);
       });
     }
@@ -597,7 +590,7 @@
       if (active >= tabs.length) active = tabs.length-1;
       selectTab(active);
     }
-    function newTab(){ tabs.push({ id: Date.now() }); selectTab(tabs.length-1); }
+    function newTab(){ tabs.push({ id: Date.now(), src: TAB_URL }); selectTab(tabs.length-1); }
     function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
     browserFrame.addEventListener("load", ()=> showLoader(false));
 
@@ -607,12 +600,10 @@
     fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
     document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
 
-    // ---- drag window by titlebar + persist pos/size ----
     (function enableDrag(){
       const title = document.getElementById("browserTitle");
       const win = document.getElementById("browserWin");
       let dragging = false, startX=0, startY=0, startL=0, startT=0;
-
       function onDown(e){
         if (win.classList.contains("full")) return;
         dragging = true;
@@ -652,11 +643,7 @@
     function saveBrowserPos(){
       const win = document.getElementById("browserWin");
       const rect = win.getBoundingClientRect();
-      const data = {
-        full: win.classList.contains("full"),
-        left: rect.left, top: rect.top,
-        width: rect.width, height: rect.height
-      };
+      const data = { full: win.classList.contains("full"), left: rect.left, top: rect.top, width: rect.width, height: rect.height };
       try { localStorage.setItem(LS_BROWSER_POS, JSON.stringify(data)); } catch {}
     }
     function restoreBrowserPos(){
@@ -685,9 +672,6 @@
     const wbClear  = document.getElementById("wbClear");
     const wbSave   = document.getElementById("wbSave");
     const wbClose  = document.getElementById("wbClose");
-    const wbOpen   = document.getElementById("wbOpen");
-    const LS_WB_IMG = "mh_whiteboard_img";
-
     let wbCtx, drawing=false, lastX=0, lastY=0, erasing=false;
 
     function wbResize(){
@@ -698,69 +682,60 @@
       wbCanvas.style.height = wbDesk.clientHeight + "px";
       wbCtx = wbCanvas.getContext("2d");
       wbCtx.scale(dpr, dpr);
-      wbCtx.lineCap = "round";
-      wbCtx.lineJoin = "round";
-      const saved = localStorage.getItem(LS_WB_IMG);
+      wbCtx.lineCap = "round"; wbCtx.lineJoin = "round";
+      const saved = localStorage.getItem("mh_whiteboard_img");
       if (saved) { const img = new Image(); img.onload = ()=> wbCtx.drawImage(img,0,0,wbDesk.clientWidth,wbDesk.clientHeight); img.src = saved; }
     }
     function wbOpenDesk(){ wbDesk.style.display = "block"; wbDesk.setAttribute("aria-hidden","false"); wbResize(); }
     function wbCloseDesk(){
-      try { localStorage.setItem(LS_WB_IMG, wbCanvas.toDataURL("image/png")); } catch {}
+      try { localStorage.setItem("mh_whiteboard_img", wbCanvas.toDataURL("image/png")); } catch {}
       wbDesk.style.display = "none";
       wbDesk.setAttribute("aria-hidden","true");
     }
-    function pos(e){
+    function wbPos(e){
       const r = wbCanvas.getBoundingClientRect();
       const p = e.touches ? e.touches[0] : e;
       return { x: p.clientX - r.left, y: p.clientY - r.top };
     }
-    function drawTo(x,y){
+    function wbDrawTo(x,y){
       wbCtx.strokeStyle = erasing ? "rgba(0,0,0,1)" : wbColor.value;
       wbCtx.lineWidth   = Number(wbSize.value);
       wbCtx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
       wbCtx.beginPath(); wbCtx.moveTo(lastX,lastY); wbCtx.lineTo(x,y); wbCtx.stroke();
       lastX = x; lastY = y;
     }
-    function startDraw(e){ drawing = true; const p = pos(e); lastX = p.x; lastY = p.y; }
-    function moveDraw(e){ if(!drawing) return; const p = pos(e); drawTo(p.x,p.y); e.preventDefault(); }
-    function endDraw(){ drawing = false; }
-    wbCanvas.addEventListener("mousedown", startDraw);
-    wbCanvas.addEventListener("mousemove", moveDraw);
-    window.addEventListener("mouseup", endDraw);
-    wbCanvas.addEventListener("touchstart", startDraw, {passive:true});
-    wbCanvas.addEventListener("touchmove",  moveDraw,  {passive:false});
-    window.addEventListener("touchend", endDraw);
+    function wbStart(e){ drawing = true; const p = wbPos(e); lastX=p.x; lastY=p.y; }
+    function wbMove(e){ if(!drawing) return; const p = wbPos(e); wbDrawTo(p.x,p.y); e.preventDefault(); }
+    function wbEnd(){ drawing = false; }
+    wbCanvas.addEventListener("mousedown", wbStart);
+    wbCanvas.addEventListener("mousemove", wbMove);
+    window.addEventListener("mouseup", wbEnd);
+    wbCanvas.addEventListener("touchstart", wbStart, {passive:true});
+    wbCanvas.addEventListener("touchmove",  wbMove,  {passive:false});
+    window.addEventListener("touchend", wbEnd);
     window.addEventListener("resize", ()=>{ if (wbDesk.style.display==="block") wbResize(); });
     wbEraser.addEventListener("click", ()=>{ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; });
-    wbClear.addEventListener("click", ()=>{ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); localStorage.removeItem(LS_WB_IMG); });
+    wbClear.addEventListener("click", ()=>{ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); localStorage.removeItem("mh_whiteboard_img"); });
     wbSave.addEventListener("click", ()=>{
       const url = wbCanvas.toDataURL("image/png");
       const a = document.createElement("a"); a.href = url; a.download = "whiteboard.png"; a.click();
     });
     wbClose.addEventListener("click", wbCloseDesk);
-    wbOpen?.addEventListener("click", wbOpenDesk);
-    document.addEventListener("keydown", (e)=>{
-      if (wbDesk.style.display==="block"){
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase()==="s"){ e.preventDefault(); wbSave.click(); }
-        if (e.key==="Escape"){ e.preventDefault(); wbCloseDesk(); }
-        if (e.key.toLowerCase()==="e"){ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; }
-      }
-    });
 
-    /* ===== Command Palette (Ctrl/Cmd+K) ===== */
+    /* ===== Command Palette ===== */
     const cmdPal   = document.getElementById("cmdPal");
     const cmdInput = document.getElementById("cmdInput");
     const cmdList  = document.getElementById("cmdList");
     const actions = [
-      { id:"tools",  label:"Open Tools drawer", run: ()=> document.getElementById("toolsBtn").click() },
-      { id:"wb",     label:"Open Whiteboard",    run: ()=> wbOpenDesk() },
-      { id:"browser",label:"Open Browser (admin)", run: ()=> document.getElementById("openBrowser").click() },
-      { id:"terminal",label:"Open Terminal (admin)", run: ()=> openTerm() },
-      { id:"panic",  label:"Panic cloak",        run: ()=> triggerPanic() },
-      { id:"cloak:g",label:"Set cloak → Google", run: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); } },
-      { id:"cloak:c",label:"Set cloak → Calculator", run: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); } },
-      { id:"cloak:d",label:"Set cloak → Google Docs", run: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); } },
-      { id:"logout", label:"Lock page (logout)", run: ()=> { fetch("/.netlify/functions/logout",{credentials:"include"}).finally(()=>location.reload()); } },
+      { id:"tools",    label:"Open Tools drawer",        run: ()=> document.getElementById("toolsBtn").click() },
+      { id:"wb",       label:"Open Whiteboard",          run: ()=> wbOpenDesk() },
+      { id:"browser",  label:"Open Browser (admin)",     run: ()=> document.getElementById("openBrowser").click() },
+      { id:"terminal", label:"Open Terminal (admin)",    run: ()=> openTerm() },
+      { id:"panic",    label:"Panic cloak",              run: ()=> triggerPanic() },
+      { id:"cloak:g",  label:"Set cloak → Google",       run: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); } },
+      { id:"cloak:c",  label:"Set cloak → Calculator",   run: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); } },
+      { id:"cloak:d",  label:"Set cloak → Google Docs",  run: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); } },
+      { id:"logout",   label:"Lock page (logout)",       run: ()=> { fetch("/.netlify/functions/logout",{credentials:"include"}).finally(()=>location.reload()); } },
     ];
     function openCmd(){
       cmdPal.style.display = "block";
@@ -769,10 +744,7 @@
       renderCmd("");
       setTimeout(()=>cmdInput.focus(),0);
     }
-    function closeCmd(){
-      cmdPal.style.display = "none";
-      cmdPal.setAttribute("aria-hidden","true");
-    }
+    function closeCmd(){ cmdPal.style.display = "none"; cmdPal.setAttribute("aria-hidden","true"); }
     function renderCmd(q){
       const qq = q.trim().toLowerCase();
       const hits = actions.filter(a => a.label.toLowerCase().includes(qq) && (a.id.includes("admin") ? IS_ADMIN : true));
@@ -803,7 +775,7 @@
       }
     });
 
-    /* ===== Terminal (admin-only) + Canvas Runner ===== */
+    /* ===== Terminal (admin-only) + Canvas Runner with blob sandbox ===== */
     const termDesk  = document.getElementById("termDesk");
     const termOut   = document.getElementById("termOut");
     const termIn    = document.getElementById("termIn");
@@ -816,7 +788,9 @@
     const runKill  = document.getElementById("runKill");
 
     const CMD_PREFIX = ";sudo run canvas code generation ";
+    const CMD_OFFLINE_PREFIX = ";sudo run canvas offline ";
     const MAX_HTML_LEN = 120000; // ~120 KB safety cap
+    let currentBlobURL = null;
 
     function openTerm(){
       if (!IS_ADMIN){ alert("Admin only."); return; }
@@ -824,14 +798,9 @@
       termDesk.setAttribute("aria-hidden","false");
       termIn.value = "";
       termIn.focus();
-      if (!termOut.textContent) {
-        printLine("Terminal ready. Type ;help");
-      }
+      if (!termOut.textContent) printLine("Terminal ready. Type ;help");
     }
-    function closeTerm(){
-      termDesk.style.display = "none";
-      termDesk.setAttribute("aria-hidden","true");
-    }
+    function closeTerm(){ termDesk.style.display = "none"; termDesk.setAttribute("aria-hidden","true"); }
     openTermBtn.addEventListener("click", openTerm);
     termClose.addEventListener("click", closeTerm);
 
@@ -842,24 +811,41 @@
     }
     function clearTerm(){ termOut.textContent = ""; }
 
-    function openRunner(html){
+    function buildSandboxHTML(userHTML, offline){
+      const csp = offline
+        ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">"
+        : "";
+      return `<!doctype html><meta charset="utf-8">${csp}${userHTML}`;
+    }
+    function openRunner(userHTML, offline=false){
+      // auto-close whiteboard so overlays don't stack
+      if (typeof wbDesk !== "undefined" && wbDesk.style.display === "block") {
+        try { wbCloseDesk(); } catch {}
+      }
       runDesk.style.display = "block";
       runDesk.setAttribute("aria-hidden","false");
-      runFrame.srcdoc = html;
+
+      const html = buildSandboxHTML(userHTML, offline);
+      const blob = new Blob([html], { type: "text/html" });
+      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
+      currentBlobURL = URL.createObjectURL(blob);
+
+      runFrame.setAttribute("sandbox", "allow-scripts allow-modals"); // no same-origin
+      runFrame.referrerPolicy = "no-referrer";
+      runFrame.src = currentBlobURL;
     }
     function closeRunner(){
-      runFrame.srcdoc = "<!doctype html><title>Closed</title>";
+      try { runFrame.src = "about:blank"; } catch {}
+      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
       runDesk.style.display = "none";
       runDesk.setAttribute("aria-hidden","true");
     }
     runClose.addEventListener("click", closeRunner);
-    runKill.addEventListener("click", ()=>{ runFrame.srcdoc = "<!doctype html><title>Killed</title>"; });
+    runKill.addEventListener("click", ()=>{ try { runFrame.src = "about:blank"; } catch {} });
 
     function handleCommand(line){
       const s = line.trim();
       if (!s) return;
-
-      // echo
       printLine("> " + s);
 
       if (s === ";help"){
@@ -869,6 +855,7 @@
         printLine("  ;panic");
         printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
         printLine("  ;sudo run canvas code generation <HTML>");
+        printLine("  ;sudo run canvas offline <HTML>   (blocks all network)");
         return;
       }
       if (s === ";clear"){ clearTerm(); return; }
@@ -889,29 +876,32 @@
         return;
       }
 
+      if (s.startsWith(CMD_OFFLINE_PREFIX)){
+        const html = s.slice(CMD_OFFLINE_PREFIX.length);
+        if (!html){ printLine("No HTML provided."); return; }
+        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
+        try { openRunner(html, true); printLine("Canvas Runner opened in OFFLINE mode (no external network)."); }
+        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
+        return;
+      }
+
       if (s.startsWith(CMD_PREFIX)){
         const html = s.slice(CMD_PREFIX.length);
         if (!html){ printLine("No HTML provided."); return; }
-        if (html.length > MAX_HTML_LEN){
-          printLine("HTML too large ("+html.length+" bytes). Keep under "+MAX_HTML_LEN+" bytes.");
-          return;
-        }
-        try {
-          openRunner(html);
-          printLine("Canvas Runner opened.");
-        } catch (e){
-          printLine("Failed to run: " + (e?.message || e));
-        }
+        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
+        try { openRunner(html, false); printLine("Canvas Runner opened."); }
+        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
         return;
       }
 
       printLine("Unknown command. Try ;help");
     }
 
-    termIn.addEventListener("keydown",(e)=>{
+    const termInEl = document.getElementById("termIn");
+    termInEl.addEventListener("keydown",(e)=>{
       if (e.key === "Enter"){
-        handleCommand(termIn.value);
-        termIn.value = "";
+        handleCommand(termInEl.value);
+        termInEl.value = "";
       } else if (e.key === "Escape"){
         closeTerm();
       }
