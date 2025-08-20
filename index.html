@@ -14,19 +14,58 @@
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
-    .bar{height:var(--bar-h);display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border-bottom:1px solid #0a0f1c;background:linear-gradient(180deg,#0f172a,#0a1222)}
-    .bar .logo{display:flex;gap:.5rem;align-items:center;font-weight:700;color:#cbd5e1}
-    .bar .logo img{width:28px;height:28px;border-radius:6px}
-    .bar .spacer{flex:1}
-    .btn{padding:.35rem .6rem;background:var(--btn);border:1px solid #1f2937;border-radius:10px;color:#e5e7eb;cursor:pointer}
-    .btn:hover{background:var(--btnH)}
-    .kbd{font:inherit;background:#0b1220;border:1px solid #1f2937;border-radius:6px;padding:.1rem .35rem;color:#9ca3af}
-    .hint{color:#9ca3af;font-size:.9rem}
 
-    #app{border:0;width:100%;height:100%;background:#000}
+    /* Invisible unlock hotspot (top-left) */
+    #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
+
+    /* Down / login cover */
+    #locked-cover{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#0a49c4,#053a97); color:#dbeafe; text-align:center; z-index:1000; padding:2rem;}
+    #locked-inner{max-width:720px}
+    #locked-title{font-size:2rem; font-weight:800; margin-bottom:.5rem}
+    #locked-sub{opacity:.9}
+    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px;}
+
+    /* Top bar */
+    .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
+    .bar.unlocked{display:flex}
+    .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
+    .brand img{width:24px;height:24px;border-radius:6px}
+
+    .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:var(--text);
+         padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
+    .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
+    .btn img{width:18px;height:18px;border-radius:4px}
+    .btn.clear{color:#fca5a5;border-color:#4b1010}
+    .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
+    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
+    @media (max-width:900px){.hint{display:none}}
+
+    iframe{width:100%;height:100%;border:none;background:#000}
+
+    /* Modal (password) */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
+    .modal.show{display:flex;}
+    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+    .modal .card{position:relative; width:min(92vw,440px); background:#0f172a; border:1px solid #0b1220; border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45)}
+    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
+    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
+    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
+    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
+    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
+    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
+    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
+
+    /* Admin panel (only for admin) */
+    #adminPanel{display:none; gap:.5rem; align-items:center; margin-left:1rem}
+    #bgPick{width:120px;height:32px;padding:0;border-radius:8px;border:1px solid #1f2937;background:#0b1220}
+    #bgUpload{display:none}
+    #bgLabel{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
+    #bgClear{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
 
     /* Tools drawer */
-    #toolsDrawer{position:fixed; top:var(--bar-h); right:0; width:320px; background:#0f172a; border-left:1px solid #0a0f1c;
+    #toolsDrawer{position:fixed; top:var(--bar-h); right:0; bottom:0; width:320px; background:#0f172a; border-left:1px solid #0a0f1c;
                  transform:translateX(100%); transition:transform .18s ease; z-index:2500; overflow:auto;}
     #toolsDrawer.open{transform:translateX(0)}
     #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
@@ -35,12 +74,34 @@
     .toolCard h4{margin:.2rem 0 .6rem 0}
     .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
 
-    /* Admin panel (only for admin) */
-    #adminPanel{display:none; gap:.5rem; align-items:center; margin-left:1rem}
-    #bgPick{width:120px;height:32px;padding:0;border-radius:8px;border:1px solid #1f2937;background:#0b1220}
-    #bgUpload{display:none}
-    #bgLabel{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
-    #bgClear{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
+    /* Mini Browser “desktop” + window */
+    #browserDesk{display:none; position:fixed; inset:0; z-index:3000;
+                 background:#0b1220cc; backdrop-filter:blur(2px);
+                 background-position:center; background-repeat:no-repeat; background-size:cover;}
+    #browserWin{position:absolute; left:50%; top:50%; width:960px; height:600px; transform:translate(-50%,-50%);
+                background:#0f172a; border:1px solid #101826; border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);
+                overflow:hidden; resize:both;}
+    #browserTitle{height:42px; display:flex; align-items:center; gap:.5rem; padding:.4rem .6rem; background:linear-gradient(180deg,#131a2b,#0f1524); border-bottom:1px solid #0a0f1c; cursor:move;}
+    #browserTitle .title{font-weight:700; color:#cbd5e1}
+    .title-spacer{flex:1}
+    .win-btn{background:#111827; border:1px solid #1f2937; color:#e5e7eb; border-radius:8px; padding:.35rem .55rem; cursor:pointer}
+    .win-btn:hover{background:#1f2937}
+    #browserTabs{display:flex; gap:.35rem; padding:.35rem .6rem; background:#0b1220; border-bottom:1px solid #0a0f1c}
+    .tab{background:#0f172a;border:1px solid #1b2233;color:#cbd5e1;border-radius:10px;padding:.25rem .5rem;cursor:pointer}
+    .tab.active{background:#1a2336;border-color:#2a3a55}
+    #browserView{position:absolute; inset:90px 0 0 0;}
+    #browserFrame{width:100%;height:100%;border:none;background:#000}
+
+    /* Loader overlay inside window */
+    #loader{position:absolute; inset:90px 0 0 0; display:flex; align-items:center; justify-content:center; background:#0b1220; }
+    #loaderBox{ text-align:center; max-width:320px; }
+    #loaderLogo{ width:160px; height:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+    #prog{height:10px; border-radius:999px; background:#0f172a; border:1px solid #1b2233; overflow:hidden; margin-top:12px}
+    #prog > span{display:block; height:100%; width:0%; background:linear-gradient(90deg,#2563eb,#38bdf8); animation:loading 2.2s infinite}
+    @keyframes loading { 0%{width:0%} 50%{width:85%} 100%{width:0%} }
+
+    /* Fullscreen flag */
+    #browserWin.full { left:10px; top:10px; transform:none; width:calc(100vw - 20px); height:calc(100vh - 20px); border-radius:12px; }
 
     /* Whiteboard overlay */
     #wbDesk{display:none;position:fixed;inset:0;z-index:3500;background:#0b1220;cursor:crosshair}
@@ -67,44 +128,36 @@
     #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);
       background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
     #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-    #termOut{height:320px;overflow:auto;padding:.8rem;font:12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;background:#0c1426}
+    #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;background:#0c1426}
     #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
     #termIn{flex:1} .termHelp{color:#9ca3af;font-size:.85rem}
 
     /* Canvas Runner overlay */
     #runDesk{display:none;position:fixed;inset:0;z-index:3450;background:#0b1220}
-    #runBar{display:flex;gap:.5rem;align-items:center;padding:.5rem .7rem;background:#0f172a;border-bottom:1px solid #0a0f1c}
-    #runView{position:absolute; inset:42px 0 0 0; background:#0b1220}
-    #runFrame{width:100%;height:100%;border:none;background:#000}
-
-    /* Password modal */
-    .modal{display:none;position:fixed;inset:0;z-index:3300}
-    .modal.show{display:block}
-    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
-    .modal .card{position:relative; width:min(92vw,440px); background:#0f172a; border:1px solid #101826; border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45)}
-    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
-    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
-    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
-    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
-    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
-    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
-    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
+    #runBar{position:absolute;left:50%;transform:translateX(-50%);top:10px;display:flex;gap:.5rem;align-items:center;
+      background:#0f172a;border:1px solid #101826;border-radius:12px;padding:.4rem .6rem;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+    #runFrame{position:absolute;inset:0;border:0;background:#111}
   </style>
 </head>
 <body>
+  <!-- Invisible unlock area (top-left) -->
+  <div id="hotspot" aria-label="Open panel"></div>
+
+  <!-- Down / login screen -->
+  <div id="locked-cover">
+    <div id="locked-inner">
+      <img id="locked-icon" src="down-favicon-64.png" alt="">
+      <div id="locked-title">Math Help is down right now</div>
+      <div id="locked-sub">Please come back later.</div>
+    </div>
+  </div>
+
   <div class="wrap">
     <!-- Top bar -->
-    <div class="bar">
-      <div class="logo">
-        <img src="icon.png" alt="">
-        <span>Math Help</span>
-      </div>
+    <div class="bar" id="panel">
+      <span class="brand"><img src="icon.png" alt=""/>Math Help</span>
 
-      <div class="spacer"></div>
-
-      <!-- Tab Cloak quick picks -->
+      <!-- Cloak buttons -->
       <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt=""/>Calculator</button>
       <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt=""/>Google</button>
       <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt=""/>Docs</button>
@@ -134,7 +187,7 @@
       <!-- Admin only controls -->
       <div id="adminPanel">
         <span class="kbd">ADMIN</span>
-        <!-- Browser button removed -->
+        <button id="openBrowser" class="btn">Browser</button>
         <button id="openTerminal" class="btn">Terminal</button>
         <label style="color:#9ca3af">BG:
           <input id="bgPick" type="color" value="#0b1220">
@@ -156,41 +209,38 @@
       <button id="toolsClose" class="btn" type="button">Close</button>
     </div>
 
-    <div class="toolCard">
+    <div class="toolCard" id="noteTool">
+      <h4>Notepad</h4>
+      <textarea id="noteArea" class="input" style="height:140px; resize:vertical;" placeholder="Type notes..."></textarea>
+      <div class="toolRow" style="justify-content:flex-end;">
+        <span id="noteSaved" style="color:#9ca3af;font-size:.85rem;"></span>
+      </div>
+    </div>
+
+    <div class="toolCard" id="timerTool">
       <h4>Timer</h4>
       <div class="toolRow">
-        <label>Minutes <input id="timerMin" type="number" value="5" min="0" max="180" style="width:80px" /></label>
+        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
         <button id="timerStart" class="btn" type="button">Start</button>
-        <button id="timerStop"  class="btn" type="button">Stop</button>
+        <button id="timerStop" class="btn" type="button">Stop</button>
         <button id="timerReset" class="btn" type="button">Reset</button>
       </div>
-      <div class="toolRow"><strong id="timerOut">05:00</strong></div>
+      <div class="toolRow">
+        <div id="timerReadout" style="font-size:1.4rem;font-weight:700;">25:00</div>
+      </div>
     </div>
 
-    <div class="toolCard">
+    <div class="toolCard" id="unitTool">
       <h4>Unit Converter</h4>
       <div class="toolRow">
-        <label>cm <input id="cm" type="number" style="width:120px" /></label>
-        <label>in <input id="inch" type="number" style="width:120px" /></label>
+        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
+        <span>↔</span>
+        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
       </div>
       <div class="toolRow">
-        <label>kg <input id="kg" type="number" style="width:120px" /></label>
-        <label>lb <input id="lb" type="number" style="width:120px" /></label>
-      </div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Fullscreen Whiteboard</h4>
-      <div class="toolRow">
-        <button id="wbOpen" class="btn" type="button">Open Whiteboard</button>
-      </div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Command Palette</h4>
-      <div class="toolRow"><span class="hint">Press <span class="kbd">Ctrl/⌘ + K</span> or click below</span></div>
-      <div class="toolRow">
-        <button id="cmdOpen" class="btn" type="button">Open Command Palette</button>
+        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
+        <span>↔</span>
+        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
       </div>
     </div>
   </aside>
@@ -213,29 +263,27 @@
     </div>
   </div>
 
-  <!-- Terminal (admin) -->
-  <div id="termDesk" aria-hidden="true">
-    <div id="termBox">
-      <div id="termTop">
-        <strong>Terminal (local)</strong>
-        <button id="termClose" class="btn" type="button">Close</button>
+  <!-- ===== Mini Browser Desktop & Window ===== -->
+  <div id="browserDesk">
+    <div id="browserWin">
+      <div id="browserTitle" title="Drag • Double-click fullscreen">
+        <span class="title">Shadow Browser</span>
+        <div class="title-spacer"></div>
+        <button id="tabAdd" class="win-btn" title="New Tab (+)">＋</button>
+        <button id="fullBtn" class="win-btn" title="Fullscreen (F)">⛶</button>
+        <button id="closeBtn" class="win-btn" title="Close (Esc)">✕</button>
       </div>
-      <pre id="termOut"></pre>
-      <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder=';help — or ;sudo run canvas code generation &lt;html...&gt;' />
-        <span class="termHelp">Enter ↵</span>
+      <div id="browserTabs"></div>
+      <div id="browserView">
+        <iframe id="browserFrame" title="Shadow Browser"></iframe>
       </div>
-    </div>
-  </div>
-
-  <!-- Canvas Runner -->
-  <div id="runDesk" aria-hidden="true">
-    <div id="runBar">
-      <span>Canvas Runner (sandboxed)</span>
-      <button id="runClose" class="btn" type="button">Close</button>
-    </div>
-    <div id="runView">
-      <iframe id="runFrame" title="Sandbox"></iframe>
+      <!-- Loader -->
+      <div id="loader">
+        <div id="loaderBox">
+          <img id="loaderLogo" src="the-shadow-gamers.png" alt="">
+          <div id="prog"><span></span></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -260,14 +308,41 @@
     </div>
   </div>
 
-  <script>
-    /* ---------- constants ---------- */
-    const DEFAULT_TITLE = "Math Help";
-    const DEFAULT_ICON = "icon.png";
-    const LS_CLOAK   = "mh_cloak";
-    const LS_BG_COLOR= "mh_bg_color";
-    const LS_BG_IMAGE= "mh_bg_image";
+  <!-- Terminal (admin) -->
+  <div id="termDesk" aria-hidden="true">
+    <div id="termBox">
+      <div id="termTop">
+        <strong>Terminal (local)</strong>
+        <button id="termClose" class="btn" type="button">Close</button>
+      </div>
+      <pre id="termOut"></pre>
+      <div id="termInRow">
+        <input id="termIn" class="input" type="text" placeholder="Type ;help — or ;sudo run canvas code generation &lt;html...&gt;" />
+        <span class="termHelp">Enter ↵</span>
+      </div>
+    </div>
+  </div>
 
+  <!-- Canvas Runner -->
+  <div id="runDesk" aria-hidden="true">
+    <div id="runBar">
+      <span>Canvas Runner (sandboxed)</span>
+      <button id="runKill" class="btn" type="button" title="Stop">Kill</button>
+      <button id="runClose" class="btn" type="button">Close</button>
+    </div>
+    <iframe id="runFrame" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <script>
+    /* ---------- constants / storage keys ---------- */
+    const DEFAULT_TITLE = "Math Help";
+    const DEFAULT_ICON  = "icon.png";
+    const LS_CLOAK     = "mh_cloak";
+    const LS_BG_COLOR  = "mh_bg_color";
+    const LS_BG_IMAGE  = "mh_bg_img";
+    const LS_PANIC     = "mh_panic";
+    const LS_NOTE      = "mh_note";
+    const LS_BROWSER_POS = "mh_browser_pos";
     let IS_ADMIN = false;
 
     /* ---------- elements ---------- */
@@ -291,92 +366,119 @@
     /* modal controls */
     function openModal(){ modal.classList.add("show"); modal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
     function closeModal(){ modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); pwInput.blur(); }
-    document.getElementById("togglePw").addEventListener("click", (e)=>{ pwInput.type = pwInput.type==="password"?"text":"password"; e.target.textContent = pwInput.type==="password"?"Show":"Hide"; });
+    document.getElementById("togglePw").addEventListener("click",(e)=>{ pwInput.type = pwInput.type==="password"?"text":"password"; e.target.textContent = pwInput.type==="password"?"Show":"Hide"; });
     modal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closeModal(); });
     document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && modal.classList.contains("show")) closeModal(); });
 
     async function submitPassword(){
       const pass = pwInput.value.trim();
-      if (!pass){ pwErr.textContent="Password required."; return; }
-      pwErr.textContent="Checking…";
-      try {
-        const r = await fetch("/.netlify/functions/unlock",{ method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({password:pass}) });
-        const { ok, admin } = await r.json();
-        if (ok){
-          IS_ADMIN = !!admin;
-          adminPanel.style.display = IS_ADMIN ? "flex" : "none";
-          closeModal();
-          loadApp();
-        } else {
-          pwErr.textContent = "Invalid password.";
-        }
-      } catch (e){
-        pwErr.textContent = "Network error.";
-      }
+      if(!pass){ pwErr.textContent="Password required."; return; }
+      try{
+        const r = await fetch("/.netlify/functions/unlock", {
+          method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include",
+          body: JSON.stringify({ password: pass })
+        });
+        const j = await r.json();
+        if (j.ok){ closeModal(); reveal(j.role||"user"); }
+        else pwErr.textContent = "Incorrect password.";
+      }catch{ pwErr.textContent = "Network error. Try again."; }
     }
     document.getElementById("pwSubmit").addEventListener("click", submitPassword);
     pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
 
-    /* load app (always calculator or your app) */
-    function loadApp(){
-      const url = "https://www.desmos.com/scientific?lang=en"; // example
-      frame.src = url;
+    /* show UI after unlock */
+    function reveal(role){
+      cover.style.display="none";
+      panel.classList.add("unlocked");
+      if(!frame.src) frame.src = "/app";
+      const saved = loadCloak();
+      if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
+      IS_ADMIN = (role === "admin");
+      if (IS_ADMIN) adminPanel.style.display = "inline-flex";
     }
 
-    /* initial state */
-    setTab(DEFAULT_TITLE, DEFAULT_ICON);
-    loadApp();
-
-    /* cloak quick picks */
-    document.querySelectorAll('.bar .btn[data-title]').forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const title = btn.getAttribute("data-title");
-        const icon  = btn.getAttribute("data-favicon");
-        saveCloak(title, icon);
-        setTab(title, icon);
+    /* hotspot + cloak handlers */
+    hotspot.addEventListener("click", openModal);
+    document.querySelectorAll('.btn[data-title]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const t = btn.getAttribute('data-title');
+        const i = btn.getAttribute('data-favicon');
+        setTab(t,i); saveCloak(t,i);
       });
     });
-    document.getElementById("clearCloak").addEventListener("click", clearTab);
+    document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-    /* panic key & UI */
+    /* always start locked & set “down” favicons */
+    fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
+      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
+
+    /* ======================= PANIC (dropdown + key + button) ======================= */
     const panicSelect = document.getElementById("panicSelect");
     const panicFire   = document.getElementById("panicFire");
-    let panicChoice = JSON.parse(panicSelect.value);
-    panicSelect.addEventListener("change", ()=> panicChoice = JSON.parse(panicSelect.value));
+    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
+    (function initPanic(){
+      const saved = loadPanic();
+      if (saved) {
+        for (const opt of panicSelect.options) {
+          if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
+        }
+      } else {
+        savePanic(JSON.parse(panicSelect.value));
+      }
+    })();
+    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
     function triggerPanic(){
-      saveCloak(panicChoice.title, panicChoice.icon);
-      setTab(panicChoice.title, panicChoice.icon);
-      frame.src = "about:blank";
+      const sel = loadPanic() || JSON.parse(panicSelect.value);
+      setTab(sel.title, sel.icon);
+      saveCloak(sel.title, sel.icon);
     }
     panicFire.addEventListener("click", triggerPanic);
-    document.addEventListener("keydown",(e)=>{ if (e.key === "-"){ e.preventDefault(); triggerPanic(); } });
+    document.addEventListener("keydown", (e) => {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (typing) return;
+      if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
+    });
 
-    /* Tools Drawer */
+    /* ======================= TOOLS (Notepad, Timer, Converter) ======================= */
     const toolsBtn   = document.getElementById("toolsBtn");
     const toolsClose = document.getElementById("toolsClose");
     const toolsDrawer= document.getElementById("toolsDrawer");
-    toolsBtn.addEventListener("click", ()=> toolsDrawer.classList.add("open"));
-    toolsClose.addEventListener("click", ()=> toolsDrawer.classList.remove("open"));
+    function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
+    function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
+    toolsBtn.addEventListener("click", openTools);
+    toolsClose.addEventListener("click", closeTools);
 
-    /* Timer */
-    const timerMin   = document.getElementById("timerMin");
-    const timerOut   = document.getElementById("timerOut");
+    // Notepad (autosave)
+    const noteArea = document.getElementById("noteArea");
+    const noteSaved= document.getElementById("noteSaved");
+    noteArea.value = localStorage.getItem(LS_NOTE) || "";
+    function saveNote(){
+      try { localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent = "Saved"; setTimeout(()=>noteSaved.textContent="", 900); }
+      catch { noteSaved.textContent = "Save failed"; }
+    }
+    noteArea.addEventListener("input", () => { saveNote(); });
+
+    // Timer
+    const timerMin = document.getElementById("timerMin");
     const timerStart = document.getElementById("timerStart");
     const timerStop  = document.getElementById("timerStop");
     const timerReset = document.getElementById("timerReset");
-    let timerId = null, timerLeft = 0;
-
-    function formatTime(s){ const m = Math.floor(s/60), ss = s % 60; return `${String(m).padStart(2,"0")}:${String(ss).padStart(2,"0")}`; }
-    function renderTimer(){ timerOut.textContent = formatTime(timerLeft); }
-    function tick(){
-      if (timerLeft > 0){ timerLeft--; renderTimer(); }
-      else { clearInterval(timerId); timerId=null; new AudioContext().resume().then(()=>{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type="sine"; o.frequency.setValueAtTime(880,ctx.currentTime); o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{o.stop();ctx.close();},300);}); }
+    const timerReadout = document.getElementById("timerReadout");
+    let timerLeft = Number(timerMin.value) * 60;
+    let timerId = null;
+    function renderTimer(){
+      const m = Math.floor(timerLeft/60).toString().padStart(2,"0");
+      const s = Math.floor(timerLeft%60).toString().padStart(2,"0");
+      timerReadout.textContent = `${m}:${s}`;
     }
     function startTimer(){
       if (timerId) return;
-      timerLeft = Math.max(0, Math.min(180, Number(timerMin.value))) * 60;
-      renderTimer();
-      timerId = setInterval(tick, 1000);
+      timerId = setInterval(()=>{
+        if (timerLeft>0){ timerLeft--; renderTimer(); }
+        else { stopTimer(); alert("Time!"); }
+      }, 1000);
     }
     function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
     function resetTimer(){ stopTimer(); timerLeft = Math.max(0, Math.min(180, Number(timerMin.value))) * 60; renderTimer(); }
@@ -392,10 +494,174 @@
     const kg   = document.getElementById("kg");
     const lb   = document.getElementById("lb");
     function round(x){ return Math.round(x * 1000) / 1000; }
-    cm.addEventListener("input",  ()=> { const v = Number(cm.value||0);    inch.value = v ? round(v/2.54) : ""; });
-    inch.addEventListener("input",()=> { const v = Number(inch.value||0);  cm.value   = v ? round(v*2.54) : ""; });
-    kg.addEventListener("input",  ()=> { const v = Number(kg.value||0);    lb.value   = v ? round(v*2.2046226218) : ""; });
-    lb.addEventListener("input",  ()=> { const v = Number(lb.value||0);    kg.value   = v ? round(v/2.2046226218) : ""; });
+    cm.addEventListener("input", ()=> { const v = Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
+    inch.addEventListener("input",()=> { const v = Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
+    kg.addEventListener("input",  ()=> { const v = Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
+    lb.addEventListener("input",  ()=> { const v = Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
+
+    /* ======================= ADMIN: MINI BROWSER ======================= */
+    const browserDesk  = document.getElementById("browserDesk");
+    const browserWin   = document.getElementById("browserWin");
+    const browserTabs  = document.getElementById("browserTabs");
+    const browserFrame = document.getElementById("browserFrame");
+    const loader       = document.getElementById("loader");
+    const tabAdd       = document.getElementById("tabAdd");
+    const fullBtn      = document.getElementById("fullBtn");
+    const closeBtn     = document.getElementById("closeBtn");
+    const openBrowser  = document.getElementById("openBrowser");
+    const bgPick       = document.getElementById("bgPick");
+    const bgUpload     = document.getElementById("bgUpload");
+    const bgClear      = document.getElementById("bgClear");
+
+    const TAB_URL = "https://win11-emu-react.vercel.app/";
+    let tabs = [];   // { id, src }
+    let active = -1;
+
+    function applyBackground() {
+      const color = localStorage.getItem(LS_BG_COLOR) || "#0b1220";
+      const img   = localStorage.getItem(LS_BG_IMAGE) || null;
+      if (img) {
+        browserDesk.style.backgroundImage = `url("${img}")`;
+        browserDesk.style.backgroundColor = "";
+        browserDesk.style.backgroundSize  = "cover";
+        browserDesk.style.backgroundRepeat= "no-repeat";
+        browserDesk.style.backgroundPosition = "center";
+      } else {
+        browserDesk.style.backgroundImage = "none";
+        const col = /^#([0-9a-f]{6})$/i.test(color) ? color + "cc" : color;
+        browserDesk.style.background = col;
+      }
+      bgPick.value = color;
+    }
+    function setBgColor(c){
+      localStorage.setItem(LS_BG_COLOR, c);
+      if (!localStorage.getItem(LS_BG_IMAGE)) applyBackground();
+    }
+    bgPick.addEventListener("input", ()=> setBgColor(bgPick.value));
+    bgUpload.addEventListener("change", (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (file.size > 4 * 1024 * 1024) alert("Image is large; try a smaller one (<4MB).");
+      const reader = new FileReader();
+      reader.onload = () => {
+        try { localStorage.setItem(LS_BG_IMAGE, reader.result); applyBackground(); }
+        catch { alert("Could not save image (storage limit)."); }
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    });
+    bgClear.addEventListener("click", ()=>{ localStorage.removeItem(LS_BG_IMAGE); applyBackground(); });
+
+    function openDesk(){ applyBackground(); browserDesk.style.display="block"; restoreBrowserPos(); }
+    function closeDesk(){ browserDesk.style.display="none"; }
+
+    function selectTab(idx){
+      if (idx < 0 || idx >= tabs.length) return;
+      active = idx;
+      renderTabs();
+      const url = tabs[idx].src;
+      if (browserFrame.src !== url) {
+        showLoader(true);
+        browserFrame.src = url; // no cache-buster; browser handles caching
+      }
+    }
+
+    function renderTabs(){
+      browserTabs.innerHTML = "";
+      tabs.forEach((t, i) => {
+        const b = document.createElement("button");
+        b.className = "tab" + (i===active ? " active" : "");
+        b.textContent = "Tab " + (i+1);
+        b.onclick = () => selectTab(i);
+        const x = document.createElement("span");
+        x.textContent = " ✕";
+        x.style.marginLeft = ".35rem";
+        x.style.opacity = .8;
+        x.style.cursor = "pointer";
+        x.onclick = (ev)=>{ ev.stopPropagation(); closeTab(i); };
+        b.appendChild(x);
+        browserTabs.appendChild(b);
+      });
+    }
+    function closeTab(idx){
+      if (idx<0 || idx>=tabs.length) return;
+      tabs.splice(idx,1);
+      if (tabs.length===0){ closeDesk(); return; }
+      if (active >= tabs.length) active = tabs.length-1;
+      selectTab(active);
+    }
+    function newTab(){ tabs.push({ id: Date.now(), src: TAB_URL }); selectTab(tabs.length-1); }
+    function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
+    browserFrame.addEventListener("load", ()=> showLoader(false));
+
+    tabAdd.addEventListener("click", newTab);
+    openBrowser.addEventListener("click", ()=>{ openDesk(); if (!tabs.length) newTab(); });
+    closeBtn.addEventListener("click", closeDesk);
+    fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
+    document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
+
+    (function enableDrag(){
+      const title = document.getElementById("browserTitle");
+      const win = document.getElementById("browserWin");
+      let dragging = false, startX=0, startY=0, startL=0, startT=0;
+      function onDown(e){
+        if (win.classList.contains("full")) return;
+        dragging = true;
+        const rect = win.getBoundingClientRect();
+        startX = (e.touches? e.touches[0].clientX : e.clientX);
+        startY = (e.touches? e.touches[0].clientY : e.clientY);
+        startL = rect.left; startT = rect.top;
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+        document.addEventListener("touchmove", onMove, {passive:false});
+        document.addEventListener("touchend", onUp);
+      }
+      function onMove(e){
+        if (!dragging) return;
+        const x = (e.touches? e.touches[0].clientX : e.clientX);
+        const y = (e.touches? e.touches[0].clientY : e.clientY);
+        const dx = x - startX, dy = y - startY;
+        const nl = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, startL + dx));
+        const nt = Math.max(0, Math.min(window.innerHeight - win.offsetHeight, startT + dy));
+        win.style.left = nl + "px";
+        win.style.top  = nt + "px";
+        win.style.transform = "none";
+      }
+      function onUp(){
+        dragging = false;
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        document.removeEventListener("touchmove", onMove);
+        document.removeEventListener("touchend", onUp);
+        saveBrowserPos();
+      }
+      title.addEventListener("mousedown", onDown);
+      title.addEventListener("touchstart", onDown, {passive:true});
+      window.addEventListener("resize", saveBrowserPos);
+    })();
+
+    function saveBrowserPos(){
+      const win = document.getElementById("browserWin");
+      const rect = win.getBoundingClientRect();
+      const data = { full: win.classList.contains("full"), left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+      try { localStorage.setItem(LS_BROWSER_POS, JSON.stringify(data)); } catch {}
+    }
+    function restoreBrowserPos(){
+      const win = document.getElementById("browserWin");
+      try {
+        const d = JSON.parse(localStorage.getItem(LS_BROWSER_POS) || "null");
+        if (!d) return;
+        if (d.full) win.classList.add("full");
+        else {
+          win.classList.remove("full");
+          win.style.left = Math.max(0, Math.min(window.innerWidth - d.width, d.left)) + "px";
+          win.style.top  = Math.max(0, Math.min(window.innerHeight - d.height, d.top)) + "px";
+          win.style.width = d.width + "px";
+          win.style.height= d.height + "px";
+          win.style.transform = "none";
+        }
+      } catch {}
+    }
 
     /* ===== Whiteboard ===== */
     const wbDesk   = document.getElementById("wbDesk");
@@ -412,16 +678,13 @@
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       wbCanvas.width  = Math.floor(wbDesk.clientWidth  * dpr);
       wbCanvas.height = Math.floor(wbDesk.clientHeight * dpr);
+      wbCanvas.style.width  = wbDesk.clientWidth  + "px";
+      wbCanvas.style.height = wbDesk.clientHeight + "px";
       wbCtx = wbCanvas.getContext("2d");
       wbCtx.scale(dpr, dpr);
-      wbCtx.lineCap = "round";
-      wbCtx.lineJoin = "round";
-      wbCtx.strokeStyle = wbColor.value;
-      wbCtx.lineWidth = Number(wbSize.value);
-      wbCtx.fillStyle = "#0b1220";
-      wbCtx.fillRect(0,0,wbDesk.clientWidth,wbDesk.clientHeight);
+      wbCtx.lineCap = "round"; wbCtx.lineJoin = "round";
       const saved = localStorage.getItem("mh_whiteboard_img");
-      if (saved) { const img = new Image(); img.onload = ()=>{ wbCtx.drawImage(img,0,0,wbDesk.clientWidth,wbDesk.clientHeight); }; img.src = saved; }
+      if (saved) { const img = new Image(); img.onload = ()=> wbCtx.drawImage(img,0,0,wbDesk.clientWidth,wbDesk.clientHeight); img.src = saved; }
     }
     function wbOpenDesk(){ wbDesk.style.display = "block"; wbDesk.setAttribute("aria-hidden","false"); wbResize(); }
     function wbCloseDesk(){
@@ -435,24 +698,22 @@
       return { x: p.clientX - r.left, y: p.clientY - r.top };
     }
     function wbDrawTo(x,y){
-      wbCtx.lineWidth = erasing ? 26 : Number(wbSize.value);
-      wbCtx.strokeStyle = erasing ? "#0b1220" : wbColor.value;
-      wbCtx.beginPath();
-      wbCtx.moveTo(lastX,lastY);
-      wbCtx.lineTo(x,y);
-      wbCtx.stroke();
-      lastX=x; lastY=y;
+      wbCtx.strokeStyle = erasing ? "rgba(0,0,0,1)" : wbColor.value;
+      wbCtx.lineWidth   = Number(wbSize.value);
+      wbCtx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
+      wbCtx.beginPath(); wbCtx.moveTo(lastX,lastY); wbCtx.lineTo(x,y); wbCtx.stroke();
+      lastX = x; lastY = y;
     }
-    wbCanvas.addEventListener("mousedown",(e)=>{ drawing=true; const p=wbPos(e); lastX=p.x; lastY=p.y; });
-    wbCanvas.addEventListener("mousemove",(e)=>{ if (!drawing) return; const p=wbPos(e); wbDrawTo(p.x,p.y); });
-    wbCanvas.addEventListener("mouseup",  ()=> drawing=false);
-    wbCanvas.addEventListener("mouseleave",()=> drawing=false);
-    wbCanvas.addEventListener("touchstart",(e)=>{ drawing=true; const p=wbPos(e); lastX=p.x; lastY=p.y; e.preventDefault(); }, {passive:false});
-    wbCanvas.addEventListener("touchmove", (e)=>{ if (!drawing) return; const p=wbPos(e); wbDrawTo(p.x,p.y); e.preventDefault(); }, {passive:false});
-    wbCanvas.addEventListener("touchend",  ()=> drawing=false);
-
-    wbColor.addEventListener("change", ()=> wbCtx.strokeStyle = wbColor.value);
-    wbSize.addEventListener("change", ()=> wbCtx.lineWidth   = Number(wbSize.value));
+    function wbStart(e){ drawing = true; const p = wbPos(e); lastX=p.x; lastY=p.y; }
+    function wbMove(e){ if(!drawing) return; const p = wbPos(e); wbDrawTo(p.x,p.y); e.preventDefault(); }
+    function wbEnd(){ drawing = false; }
+    wbCanvas.addEventListener("mousedown", wbStart);
+    wbCanvas.addEventListener("mousemove", wbMove);
+    window.addEventListener("mouseup", wbEnd);
+    wbCanvas.addEventListener("touchstart", wbStart, {passive:true});
+    wbCanvas.addEventListener("touchmove",  wbMove,  {passive:false});
+    window.addEventListener("touchend", wbEnd);
+    window.addEventListener("resize", ()=>{ if (wbDesk.style.display==="block") wbResize(); });
     wbEraser.addEventListener("click", ()=>{ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; });
     wbClear.addEventListener("click", ()=>{ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); localStorage.removeItem("mh_whiteboard_img"); });
     wbSave.addEventListener("click", ()=>{
@@ -468,7 +729,9 @@
     const actions = [
       { id:"tools",    label:"Open Tools drawer",        run: ()=> document.getElementById("toolsBtn").click() },
       { id:"wb",       label:"Open Whiteboard",          run: ()=> wbOpenDesk() },
-      // Browser command removed
+      { id:"browser",  label:"Open Browser (admin)",     run: ()=> document.getElementById("openBrowser").click() },
+      { id:"terminal", label:"Open Terminal (admin)",    run: ()=> openTerm() },
+      { id:"panic",    label:"Panic cloak",              run: ()=> triggerPanic() },
       { id:"cloak:g",  label:"Set cloak → Google",       run: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); } },
       { id:"cloak:c",  label:"Set cloak → Calculator",   run: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); } },
       { id:"cloak:d",  label:"Set cloak → Google Docs",  run: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); } },
@@ -486,119 +749,156 @@
       const qq = q.trim().toLowerCase();
       const hits = actions.filter(a => a.label.toLowerCase().includes(qq) && (a.id.includes("admin") ? IS_ADMIN : true));
       cmdList.innerHTML = "";
-      hits.forEach((a, idx)=>{
+      hits.forEach((a,i)=>{
         const div = document.createElement("div");
-        div.className = "cmdItem" + (idx===0?" active":"");
-        div.tabIndex = 0;
+        div.className = "cmdItem" + (i===0 ? " active" : "");
         div.textContent = a.label;
-        div.addEventListener("click", ()=>{ a.run(); closeCmd(); });
+        div.dataset.idx = i;
+        div.onclick = ()=> { a.run(); closeCmd(); };
         cmdList.appendChild(div);
       });
     }
-    document.getElementById("cmdOpen").addEventListener("click", openCmd);
-    document.addEventListener("keydown",(e)=>{
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openCmd(); }
-      if (e.key==="Escape" && cmdPal.style.display==="block"){ e.preventDefault(); closeCmd(); }
-    });
-    cmdInput.addEventListener("input", ()=> renderCmd(cmdInput.value));
-    cmdInput.addEventListener("keydown",(e)=>{
-      const items = Array.from(cmdList.querySelectorAll(".cmdItem"));
-      let ix = items.findIndex(el=>el.classList.contains("active"));
-      if (e.key==="ArrowDown"){ ix = Math.min(items.length-1, Math.max(0, ix+1)); items.forEach(el=>el.classList.remove("active")); if (items[ix]) items[ix].classList.add("active"); e.preventDefault(); }
-      if (e.key==="ArrowUp"){ ix = Math.max(0, ix-1); items.forEach(el=>el.classList.remove("active")); if (items[ix]) items[ix].classList.add("active"); e.preventDefault(); }
-      if (e.key==="Enter"){ const el = cmdList.querySelector(".cmdItem.active"); if (el){ el.click(); } }
-    });
-
-    /* Admin Terminal */
-    const termDesk = document.getElementById("termDesk");
-    const termBox  = document.getElementById("termBox");
-    const termOut  = document.getElementById("termOut");
-    const termInEl = document.getElementById("termIn");
-    const termClose= document.getElementById("termClose");
-    document.getElementById("openTerminal").addEventListener("click", ()=>{ termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false"); termInEl.focus(); });
-    termClose.addEventListener("click", ()=>{ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); termInEl.blur(); });
-
-    const commands = {
-      help(){ println("Commands: help, clear, echo &lt;text&gt;, sudo run &lt;html&gt;"); },
-      clear(){ termOut.textContent=""; },
-      echo(...rest){ println(rest.join(" ")); },
-      "sudo run"(...rest){
-        const html = rest.join(" ");
-        if (!html){ println("Usage: ;sudo run &lt;html...&gt;"); return; }
-        openRunner(html);
+    let cmdSel = 0;
+    cmdInput.addEventListener("input", ()=>{ cmdSel = 0; renderCmd(cmdInput.value); });
+    document.addEventListener("keydown", (e)=>{
+      const mac = navigator.platform.toLowerCase().includes("mac");
+      const mod = mac ? e.metaKey : e.ctrlKey;
+      if (mod && e.key.toLowerCase()==="k"){ e.preventDefault(); openCmd(); }
+      if (cmdPal.style.display==="block"){
+        if (e.key==="Escape"){ e.preventDefault(); closeCmd(); return; }
+        const items = Array.from(cmdList.querySelectorAll(".cmdItem"));
+        if (!items.length) return;
+        if (e.key==="ArrowDown"){ e.preventDefault(); cmdSel = Math.min(items.length-1, cmdSel+1); }
+        if (e.key==="ArrowUp"){ e.preventDefault(); cmdSel = Math.max(0, cmdSel-1); }
+        items.forEach((el,i)=> el.classList.toggle("active", i===cmdSel));
+        if (e.key==="Enter"){ e.preventDefault(); items[cmdSel].click(); }
       }
-    };
-    function println(s=""){ termOut.innerHTML += s + "\\n"; termOut.scrollTop = termOut.scrollHeight; }
+    });
+
+    /* ===== Terminal (admin-only) + Canvas Runner with blob sandbox ===== */
+    const termDesk  = document.getElementById("termDesk");
+    const termOut   = document.getElementById("termOut");
+    const termIn    = document.getElementById("termIn");
+    const termClose = document.getElementById("termClose");
+    const openTermBtn = document.getElementById("openTerminal");
+
+    const runDesk  = document.getElementById("runDesk");
+    const runFrame = document.getElementById("runFrame");
+    const runClose = document.getElementById("runClose");
+    const runKill  = document.getElementById("runKill");
+
+    const CMD_PREFIX = ";sudo run canvas code generation ";
+    const CMD_OFFLINE_PREFIX = ";sudo run canvas offline ";
+    const MAX_HTML_LEN = 120000; // ~120 KB safety cap
+    let currentBlobURL = null;
+
+    function openTerm(){
+      if (!IS_ADMIN){ alert("Admin only."); return; }
+      termDesk.style.display = "block";
+      termDesk.setAttribute("aria-hidden","false");
+      termIn.value = "";
+      termIn.focus();
+      if (!termOut.textContent) printLine("Terminal ready. Type ;help");
+    }
+    function closeTerm(){ termDesk.style.display = "none"; termDesk.setAttribute("aria-hidden","true"); }
+    openTermBtn.addEventListener("click", openTerm);
+    termClose.addEventListener("click", closeTerm);
+
+    function printLine(txt=""){
+      const escaped = txt.replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      termOut.innerHTML += escaped + "\n";
+      termOut.scrollTop = termOut.scrollHeight;
+    }
+    function clearTerm(){ termOut.textContent = ""; }
+
+    function buildSandboxHTML(userHTML, offline){
+      const csp = offline
+        ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">"
+        : "";
+      return `<!doctype html><meta charset="utf-8">${csp}${userHTML}`;
+    }
+    function openRunner(userHTML, offline=false){
+      // auto-close whiteboard so overlays don't stack
+      if (typeof wbDesk !== "undefined" && wbDesk.style.display === "block") {
+        try { wbCloseDesk(); } catch {}
+      }
+      runDesk.style.display = "block";
+      runDesk.setAttribute("aria-hidden","false");
+
+      const html = buildSandboxHTML(userHTML, offline);
+      const blob = new Blob([html], { type: "text/html" });
+      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
+      currentBlobURL = URL.createObjectURL(blob);
+
+      runFrame.setAttribute("sandbox", "allow-scripts allow-modals"); // no same-origin
+      runFrame.referrerPolicy = "no-referrer";
+      runFrame.src = currentBlobURL;
+    }
+    function closeRunner(){
+      try { runFrame.src = "about:blank"; } catch {}
+      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
+      runDesk.style.display = "none";
+      runDesk.setAttribute("aria-hidden","true");
+    }
+    runClose.addEventListener("click", closeRunner);
+    runKill.addEventListener("click", ()=>{ try { runFrame.src = "about:blank"; } catch {} });
 
     function handleCommand(line){
-      const raw = line.trim();
-      if (!raw) return;
-      const parts = raw.startsWith(";") ? raw.slice(1) : raw;
-      const cmd = parts.startsWith("sudo run") ? "sudo run" : parts.split(/\s+/)[0];
-      const rest = parts.startsWith("sudo run") ? parts.slice("sudo run".length).trim().split(/\s+/) : parts.split(/\s+/).slice(1);
-      if (commands[cmd]) commands[cmd](...rest);
-      else println("Unknown command.");
+      const s = line.trim();
+      if (!s) return;
+      printLine("> " + s);
+
+      if (s === ";help"){
+        printLine("Commands:");
+        printLine("  ;help");
+        printLine("  ;clear");
+        printLine("  ;panic");
+        printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
+        printLine("  ;sudo run canvas code generation <HTML>");
+        printLine("  ;sudo run canvas offline <HTML>   (blocks all network)");
+        return;
+      }
+      if (s === ";clear"){ clearTerm(); return; }
+      if (s === ";panic"){ triggerPanic(); return; }
+
+      if (s.startsWith(";cloak ")){
+        const arg = s.slice(7).trim().toLowerCase();
+        const map = {
+          "google": ["Google","google-favicon.png"],
+          "calculator": ["Calculator","calculator-icon.png"],
+          "docs": ["Google Docs","google-docs-icon.png"],
+          "classroom": ["Google Classroom","classroom-favicon.png"],
+          "khan": ["Khan Academy","khan-favicon.png"],
+          "wikipedia": ["Wikipedia","wikipedia-favicon.png"]
+        };
+        if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
+        else printLine("Unknown cloak target.");
+        return;
+      }
+
+      if (s.startsWith(CMD_OFFLINE_PREFIX)){
+        const html = s.slice(CMD_OFFLINE_PREFIX.length);
+        if (!html){ printLine("No HTML provided."); return; }
+        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
+        try { openRunner(html, true); printLine("Canvas Runner opened in OFFLINE mode (no external network)."); }
+        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
+        return;
+      }
+
+      if (s.startsWith(CMD_PREFIX)){
+        const html = s.slice(CMD_PREFIX.length);
+        if (!html){ printLine("No HTML provided."); return; }
+        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
+        try { openRunner(html, false); printLine("Canvas Runner opened."); }
+        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
+        return;
+      }
+
+      printLine("Unknown command. Try ;help");
     }
 
-    function openRunner(html){
-      const doc = `
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Canvas</title><style>html,body{height:100%;margin:0}body{background:#111;color:#eee;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}</style></head><body>${html}</body></html>`;
-      const blob = new Blob([doc], {type:"text/html"});
-      const url = URL.createObjectURL(blob);
-      document.getElementById("runFrame").src = url;
-      document.getElementById("runDesk").style.display = "block";
-      document.getElementById("runDesk").setAttribute("aria-hidden","false");
-    }
-    document.getElementById("runClose").addEventListener("click", ()=>{
-      const f = document.getElementById("runFrame");
-      try { URL.revokeObjectURL(f.src); } catch {}
-      f.src = "about:blank";
-      document.getElementById("runDesk").style.display = "none";
-      document.getElementById("runDesk").setAttribute("aria-hidden","true");
-    });
-
-    /* Admin BG controls */
-    const bgPick   = document.getElementById("bgPick");
-    const bgUpload = document.getElementById("bgUpload");
-    const bgClear  = document.getElementById("bgClear");
-    function applyBackground(){
-      const color = localStorage.getItem(LS_BG_COLOR) || "#0b1220";
-      const img   = localStorage.getItem(LS_BG_IMAGE);
-      document.body.style.background = img ? `url(${img}) center/cover no-repeat fixed` : color;
-    }
-    bgPick.addEventListener("input", (e)=>{ localStorage.setItem(LS_BG_COLOR, e.target.value); applyBackground(); });
-    bgUpload.addEventListener("change", (e)=>{
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try { localStorage.setItem(LS_BG_IMAGE, reader.result); applyBackground(); }
-        catch { alert("Could not save image (storage limit)."); }
-      };
-      reader.readAsDataURL(file);
-      e.target.value = "";
-    });
-    bgClear.addEventListener("click", ()=>{ localStorage.removeItem(LS_BG_IMAGE); applyBackground(); });
-
-    function openModalIfNeeded(){
-      // If server requires login, show modal; otherwise show admin if cookie present
-      fetch("/.netlify/functions/unlock", {method:"POST"}).catch(()=>{}); // noop to warm
-    }
-
-    // Whiteboard button
-    document.getElementById("wbOpen").addEventListener("click", wbOpenDesk);
-
-    // Command Palette toggle
-    document.getElementById("cmdOpen").addEventListener("click", openCmd);
-
-    // Keyboard closes
-    const runDesk = document.getElementById("runDesk");
-    document.addEventListener("keydown",(e)=>{
-      if (runDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); document.getElementById("runClose").click(); }
-    });
-
-    // Terminal input
-    document.getElementById("termIn").addEventListener("keydown",(e)=>{
+    const termInEl = document.getElementById("termIn");
+    termInEl.addEventListener("keydown",(e)=>{
       if (e.key === "Enter"){
         handleCommand(termInEl.value);
         termInEl.value = "";
