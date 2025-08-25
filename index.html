@@ -1,176 +1,101 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Math Help</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Math Help</title>
+<link rel="icon" href="icon.png" type="image/png" />
+<style>
+  :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af; --btn:#111827; --btnH:#1f2937; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" href="icon.png" />
+  /* Invisible unlock hotspot */
+  #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
 
-  <style>
-    :root { --bar-h:56px; --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af;
-            --btn:#111827; --btnH:#1f2937; --accent:#2563eb; }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
+  /* Locked cover */
+  #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
+  #lockedInner{max-width:720px}
+  #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
+  #locked p{margin:0;opacity:.9}
+  #lockedIcon{width:64px;height:64px;display:block;margin:0 auto 10px;border-radius:12px}
 
-    /* Invisible unlock hotspot (top-left) */
-    #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
+  /* Top bar */
+  .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
+  .bar.unlocked{display:flex}
+  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
+  .brand img{width:22px;height:22px;border-radius:6px}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:#e5e7eb;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
+  .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
+  .btn img{width:18px;height:18px;border-radius:4px}
+  .btn.clear{color:#fca5a5;border-color:#4b1010}
+  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
+  .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
+  @media (max-width:900px){.hint{display:none}}
 
-    /* Down / login cover */
-    #locked-cover{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#0a49c4,#053a97); color:#dbeafe; text-align:center; z-index:1000; padding:2rem;}
-    #locked-inner{max-width:720px}
-    #locked-title{font-size:2rem; font-weight:800; margin-bottom:.5rem}
-    #locked-sub{opacity:.9}
-    #locked-icon{width:56px;height:56px; display:block; margin:0 auto 1rem auto; border-radius:12px;}
+  /* Tools drawer */
+  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:320px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
+  #toolsDrawer.open{transform:translateX(0)}
+  #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+  .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
+  .toolCard h4{margin:.2rem 0 .6rem}
+  .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
+  .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
 
-    /* Top bar */
-    .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
-    .bar.unlocked{display:flex}
-    .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
-    .brand img{width:24px;height:24px;border-radius:6px}
+  /* Modal (password) */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
+  .modal.show{display:flex}
+  .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+  .modal .card{position:relative;width:min(92vw,440px);background:#0f172a;border:1px solid #0b1220;border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .modal h2{margin:.4rem 0 0;font-size:1.1rem;color:#c7d2fe}
+  .modal p{margin:.25rem 0 1rem;color:#94a3b8;font-size:.95rem}
+  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
+  .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
+  .primary{background:#1f2937;border:1px solid #2b3443;color:#e5e7eb;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
+  .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
+  .err{color:#fca5a5;font-size:.9rem;min-height:1em}
 
-    .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:var(--text);
-         padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
-    .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
-    .btn img{width:18px;height:18px;border-radius:4px}
-    .btn.clear{color:#fca5a5;border-color:#4b1010}
-    .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
-    .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
-    @media (max-width:900px){.hint{display:none}}
-
-    iframe{width:100%;height:100%;border:none;background:#000}
-
-    /* Modal (password) */
-    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000;}
-    .modal.show{display:flex;}
-    .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
-    .modal .card{position:relative; width:min(92vw,440px); background:#0f172a; border:1px solid #0b1220; border-radius:16px; padding:1rem; box-shadow:0 10px 30px rgba(0,0,0,.45)}
-    .modal h2{margin:.4rem 0 0; font-size:1.1rem; color:#c7d2fe}
-    .modal p{margin:.25rem 0 1rem; color:#94a3b8; font-size:.95rem}
-    .row{display:flex; gap:.5rem; align-items:center; margin:.5rem 0}
-    .input{flex:1; background:#0b1220; border:1px solid #111827; border-radius:10px; padding:.65rem .75rem; color:#e5e7eb}
-    .toggle{cursor:pointer; padding:.5rem .65rem; background:#111827; border:1px solid #1f2937; border-radius:10px; color:#cbd5e1}
-    .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
-    .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
-    .err{color:#fca5a5; font-size:.9rem; min-height:1em}
-
-    /* Admin panel (only for admin) */
-    #adminPanel{display:none; gap:.5rem; align-items:center; margin-left:1rem}
-    #bgPick{width:120px;height:32px;padding:0;border-radius:8px;border:1px solid #1f2937;background:#0b1220}
-    #bgUpload{display:none}
-    #bgLabel{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
-    #bgClear{padding:.35rem .6rem;border:1px solid #1f2937;border-radius:10px;background:#111827;color:#e5e7eb;cursor:pointer}
-
-    /* Tools drawer */
-    #toolsDrawer{position:fixed; top:var(--bar-h); right:0; bottom:0; width:320px; background:#0f172a; border-left:1px solid #0a0f1c;
-                 transform:translateX(100%); transition:transform .18s ease; z-index:2500; overflow:auto;}
-    #toolsDrawer.open{transform:translateX(0)}
-    #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-    #toolsHdr h3{margin:0;font-size:1rem}
-    .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
-    .toolCard h4{margin:.2rem 0 .6rem 0}
-    .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
-
-    /* Mini Browser “desktop” + window */
-    #browserDesk{display:none; position:fixed; inset:0; z-index:3000;
-                 background:#0b1220cc; backdrop-filter:blur(2px);
-                 background-position:center; background-repeat:no-repeat; background-size:cover;}
-    #browserWin{position:absolute; left:50%; top:50%; width:960px; height:600px; transform:translate(-50%,-50%);
-                background:#0f172a; border:1px solid #101826; border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.55);
-                overflow:hidden; resize:both;}
-    #browserTitle{height:42px; display:flex; align-items:center; gap:.5rem; padding:.4rem .6rem; background:linear-gradient(180deg,#131a2b,#0f1524); border-bottom:1px solid #0a0f1c; cursor:move;}
-    #browserTitle .title{font-weight:700; color:#cbd5e1}
-    .title-spacer{flex:1}
-    .win-btn{background:#111827; border:1px solid #1f2937; color:#e5e7eb; border-radius:8px; padding:.35rem .55rem; cursor:pointer}
-    .win-btn:hover{background:#1f2937}
-    #browserTabs{display:flex; gap:.35rem; padding:.35rem .6rem; background:#0b1220; border-bottom:1px solid #0a0f1c}
-    .tab{background:#0f172a;border:1px solid #1b2233;color:#cbd5e1;border-radius:10px;padding:.25rem .5rem;cursor:pointer}
-    .tab.active{background:#1a2336;border-color:#2a3a55}
-    #browserView{position:absolute; inset:90px 0 0 0;}
-    #browserFrame{width:100%;height:100%;border:none;background:#000}
-
-    /* Loader overlay inside window */
-    #loader{position:absolute; inset:90px 0 0 0; display:flex; align-items:center; justify-content:center; background:#0b1220; }
-    #loaderBox{ text-align:center; max-width:320px; }
-    #loaderLogo{ width:160px; height:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
-    #prog{height:10px; border-radius:999px; background:#0f172a; border:1px solid #1b2233; overflow:hidden; margin-top:12px}
-    #prog > span{display:block; height:100%; width:0%; background:linear-gradient(90deg,#2563eb,#38bdf8); animation:loading 2.2s infinite}
-    @keyframes loading { 0%{width:0%} 50%{width:85%} 100%{width:0%} }
-
-    /* Fullscreen flag */
-    #browserWin.full { left:10px; top:10px; transform:none; width:calc(100vw - 20px); height:calc(100vh - 20px); border-radius:12px; }
-
-    /* Whiteboard overlay */
-    #wbDesk{display:none;position:fixed;inset:0;z-index:3500;background:#0b1220;cursor:crosshair}
-    #wbToolbar{
-      position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3510;
-      display:flex;gap:.5rem;align-items:center;background:#0f172a;border:1px solid #101826;
-      padding:.5rem .6rem;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5)
-    }
-    #wbToolbar .btn{padding:.35rem .6rem}
-    #wbCanvas{position:absolute;inset:0}
-
-    /* Command Palette */
-    #cmdPal{display:none;position:fixed;inset:0;z-index:3600;background:rgba(0,0,0,.45)}
-    #cmdBox{position:absolute;left:50%;top:15%;transform:translateX(-50%);width:min(800px,92vw);
-      background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55)}
-    #cmdInput{width:100%;border:0;outline:0;background:#0b1220;color:#e5e7eb;padding:14px 16px;border-radius:14px 14px 0 0}
-    #cmdList{max-height:50vh;overflow:auto}
-    .cmdItem{padding:.6rem .9rem;border-top:1px solid #0a0f1c;cursor:pointer}
-    .cmdItem:hover,.cmdItem.active{background:#131b2d}
-    .cmdHint{color:#9ca3af;font-size:.85rem;margin-left:.5rem}
-
-    /* Terminal overlay (admin only) */
-    #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.4)}
-    #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);
-      background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
-    #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-    #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;background:#0c1426}
-    #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
-    #termIn{flex:1} .termHelp{color:#9ca3af;font-size:.85rem}
-
-    /* Canvas Runner overlay */
-    #runDesk{display:none;position:fixed;inset:0;z-index:3450;background:#0b1220}
-    #runBar{position:absolute;left:50%;transform:translateX(-50%);top:10px;display:flex;gap:.5rem;align-items:center;
-      background:#0f172a;border:1px solid #101826;border-radius:12px;padding:.4rem .6rem;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-    #runFrame{position:absolute;inset:0;border:0;background:#111}
-  </style>
+  /* Terminal */
+  #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.45)}
+  #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
+  #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+  #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1426}
+  #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
+  #termIn{flex:1}
+</style>
 </head>
 <body>
-  <!-- Invisible unlock area (top-left) -->
-  <div id="hotspot" aria-label="Open panel"></div>
+  <!-- Invisible unlock area -->
+  <div id="hotspot" aria-label="Open password"></div>
 
-  <!-- Down / login screen -->
-  <div id="locked-cover">
-    <div id="locked-inner">
-      <img id="locked-icon" src="down-favicon-64.png" alt="">
-      <div id="locked-title">Math Help is down right now</div>
-      <div id="locked-sub">Please come back later.</div>
+  <!-- Locked screen -->
+  <div id="locked">
+    <div id="lockedInner">
+      <img id="lockedIcon" src="down-favicon-64.png" alt="">
+      <h1>Math Help is down right now</h1>
+      <p>Please come back later.</p>
     </div>
   </div>
 
   <div class="wrap">
     <!-- Top bar -->
     <div class="bar" id="panel">
-      <span class="brand"><img src="icon.png" alt=""/>Math Help</span>
+      <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
       <!-- Cloak buttons -->
-      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt=""/>Calculator</button>
-      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt=""/>Google</button>
-      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt=""/>Docs</button>
-      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt=""/>Classroom</button>
-      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt=""/>Khan</button>
-      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt=""/>Wikipedia</button>
-
+      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
       <button class="btn clear" id="clearCloak">Clear</button>
 
-      <!-- Panic UI -->
-      <div class="hint" id="panicUI" style="display:flex;align-items:center;gap:.5rem;margin-left:1rem;">
-        <label for="panicSelect">Panic (press <span class="kbd">-</span>):</label>
-        <select id="panicSelect" title="Choose cloak for panic key">
+      <!-- Panic -->
+      <div class="hint" style="display:flex;align-items:center;gap:.5rem;margin-left:1rem">
+        <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+        <select id="panicSelect" title="Choose panic cloak">
           <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
           <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
           <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
@@ -178,46 +103,34 @@
           <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
           <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
         </select>
-        <button id="panicFire" class="btn" type="button" title="Trigger panic now">Panic</button>
+        <button id="panicFire" class="btn" type="button">Panic</button>
       </div>
 
-      <!-- Tools (everyone) -->
+      <!-- Tools -->
       <button id="toolsBtn" class="btn">Tools</button>
-
-      <!-- Admin only controls -->
-      <div id="adminPanel">
-        <span class="kbd">ADMIN</span>
-        <button id="openBrowser" class="btn">Browser</button>
-        <button id="openTerminal" class="btn">Terminal</button>
-        <label style="color:#9ca3af">BG:
-          <input id="bgPick" type="color" value="#0b1220">
-        </label>
-        <label id="bgLabel" for="bgUpload">Upload</label>
-        <input id="bgUpload" type="file" accept="image/*">
-        <button id="bgClear" type="button">Clear BG</button>
-      </div>
+      <!-- (Admin panel removed) -->
     </div>
 
-    <!-- Main app (proxy target) -->
-    <iframe id="app" title="Math Help"></iframe>
+    <!-- Main area (empty) -->
+    <div></div>
   </div>
 
   <!-- Tools Drawer -->
   <aside id="toolsDrawer" aria-hidden="true">
     <div id="toolsHdr">
-      <h3>Tools</h3>
+      <h3 style="margin:0">Tools</h3>
       <button id="toolsClose" class="btn" type="button">Close</button>
     </div>
 
-    <div class="toolCard" id="noteTool">
+    <div class="toolCard">
       <h4>Notepad</h4>
-      <textarea id="noteArea" class="input" style="height:140px; resize:vertical;" placeholder="Type notes..."></textarea>
-      <div class="toolRow" style="justify-content:flex-end;">
-        <span id="noteSaved" style="color:#9ca3af;font-size:.85rem;"></span>
+      <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
+      <div class="toolRow" style="justify-content:flex-end">
+        <span id="noteSaved" style="color:#9ca3af;font-size:.85rem"></span>
       </div>
     </div>
 
-    <div class="toolCard" id="timerTool">
+    <div class="toolCard">
       <h4>Timer</h4>
       <div class="toolRow">
         <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
@@ -225,12 +138,10 @@
         <button id="timerStop" class="btn" type="button">Stop</button>
         <button id="timerReset" class="btn" type="button">Reset</button>
       </div>
-      <div class="toolRow">
-        <div id="timerReadout" style="font-size:1.4rem;font-weight:700;">25:00</div>
-      </div>
+      <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
     </div>
 
-    <div class="toolCard" id="unitTool">
+    <div class="toolCard">
       <h4>Unit Converter</h4>
       <div class="toolRow">
         <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
@@ -246,13 +157,13 @@
   </aside>
 
   <!-- Password Modal -->
-  <div id="pwModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div id="pwModal" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <div class="card">
       <h2>Enter password</h2>
       <p>Enter your password to unlock the page.</p>
-      <div class="row">
-        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+      <div class="toolRow">
+        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
         <button id="togglePw" class="toggle" type="button">Show</button>
       </div>
       <div id="pwErr" class="err"></div>
@@ -263,654 +174,281 @@
     </div>
   </div>
 
-  <!-- ===== Mini Browser Desktop & Window ===== -->
-  <div id="browserDesk">
-    <div id="browserWin">
-      <div id="browserTitle" title="Drag • Double-click fullscreen">
-        <span class="title">Shadow Browser</span>
-        <div class="title-spacer"></div>
-        <button id="tabAdd" class="win-btn" title="New Tab (+)">＋</button>
-        <button id="fullBtn" class="win-btn" title="Fullscreen (F)">⛶</button>
-        <button id="closeBtn" class="win-btn" title="Close (Esc)">✕</button>
-      </div>
-      <div id="browserTabs"></div>
-      <div id="browserView">
-        <iframe id="browserFrame" title="Shadow Browser"></iframe>
-      </div>
-      <!-- Loader -->
-      <div id="loader">
-        <div id="loaderBox">
-          <img id="loaderLogo" src="the-shadow-gamers.png" alt="">
-          <div id="prog"><span></span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Fullscreen Whiteboard (unchanged UI; auto-closes when runner opens) -->
-  <div id="wbDesk" aria-hidden="true">
-    <canvas id="wbCanvas"></canvas>
-    <div id="wbToolbar" role="toolbar" aria-label="Whiteboard tools">
-      <label style="color:#cbd5e1">Color <input id="wbColor" type="color" value="#ffffff" /></label>
-      <label style="color:#cbd5e1">Size <input id="wbSize" type="range" min="1" max="40" value="6" /></label>
-      <button id="wbEraser" class="btn" type="button" title="Eraser (E)">Eraser</button>
-      <button id="wbClear"  class="btn" type="button" title="Clear">Clear</button>
-      <button id="wbSave"   class="btn" type="button" title="Save PNG (Ctrl/⌘+S)">Save</button>
-      <button id="wbClose"  class="btn" type="button" title="Close (Esc)">Close</button>
-    </div>
-  </div>
-
-  <!-- Command Palette -->
-  <div id="cmdPal" aria-hidden="true">
-    <div id="cmdBox">
-      <input id="cmdInput" type="text" placeholder="Type a command… (↑/↓, Enter, Esc)" />
-      <div id="cmdList"></div>
-    </div>
-  </div>
-
-  <!-- Terminal (admin) -->
+  <!-- Terminal -->
   <div id="termDesk" aria-hidden="true">
     <div id="termBox">
       <div id="termTop">
-        <strong>Terminal (local)</strong>
+        <strong>Terminal</strong>
         <button id="termClose" class="btn" type="button">Close</button>
       </div>
       <pre id="termOut"></pre>
       <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help — or ;sudo run canvas code generation &lt;html...&gt;" />
-        <span class="termHelp">Enter ↵</span>
+        <input id="termIn" class="input" type="text" placeholder="Type ;help — try ;open tools" />
+        <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
       </div>
     </div>
   </div>
 
-  <!-- Canvas Runner -->
-  <div id="runDesk" aria-hidden="true">
-    <div id="runBar">
-      <span>Canvas Runner (sandboxed)</span>
-      <button id="runKill" class="btn" type="button" title="Stop">Kill</button>
-      <button id="runClose" class="btn" type="button">Close</button>
-    </div>
-    <iframe id="runFrame" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
-  </div>
+<script>
+/* ========= Passwords (client-side) ========= */
+const ADMIN_PASSWORD = "imadmin";
+const USER_PASSWORD  = "gamerzforever";
 
-  <script>
-    /* ---------- constants / storage keys ---------- */
-    const DEFAULT_TITLE = "Math Help";
-    const DEFAULT_ICON  = "icon.png";
-    const LS_CLOAK     = "mh_cloak";
-    const LS_BG_COLOR  = "mh_bg_color";
-    const LS_BG_IMAGE  = "mh_bg_img";
-    const LS_PANIC     = "mh_panic";
-    const LS_NOTE      = "mh_note";
-    const LS_BROWSER_POS = "mh_browser_pos";
-    let IS_ADMIN = false;
+/* ========= Storage keys ========= */
+const LS_CLOAK = "mh_cloak";
+const LS_PANIC = "mh_panic";
+const LS_NOTE  = "mh_note";
 
-    /* ---------- elements ---------- */
-    const panel = document.getElementById("panel");
-    const frame = document.getElementById("app");
-    const cover = document.getElementById("locked-cover");
-    const hotspot = document.getElementById("hotspot");
-    const modal = document.getElementById("pwModal");
-    const pwInput = document.getElementById("pwInput");
-    const pwErr = document.getElementById("pwErr");
-    const adminPanel = document.getElementById("adminPanel");
+/* ========= Elements ========= */
+const hotspot = document.getElementById("hotspot");
+const locked  = document.getElementById("locked");
+const panel   = document.getElementById("panel");
 
-    /* favicon helpers */
-    function removeFavicons(){ document.querySelectorAll('link[rel~="icon"]').forEach(el => el.remove()); }
-    function addIcon(href){ const l=document.createElement("link"); l.rel="icon"; l.type="image/png"; l.href=href; document.head.appendChild(l); }
-    function setTab(title, iconHref){ document.title = title; removeFavicons(); addIcon(iconHref); }
-    function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({title, icon})); }
-    function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); }catch{ return null; } }
-    function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab(DEFAULT_TITLE, DEFAULT_ICON); }
+/* ----- FAVICON HELPERS (single or multi-size map) ----- */
+let __iconVer = 0;
+function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
+function removeFavicons(){ document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
+function addIconWithSizes(href, sizes){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if (sizes) l.sizes=sizes; l.href=__v(href); document.head.appendChild(l); }
+function addShortcutIcon(href){ const s=document.createElement('link'); s.rel='shortcut icon'; s.href=__v(href); document.head.appendChild(s); }
+function setFaviconsMulti(icon){
+  removeFavicons();
+  if (typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); }
+  else if (icon && typeof icon==='object'){ let first=null; for (const [sizes,href] of Object.entries(icon)){ addIconWithSizes(href,sizes); if(!first) first=href; } if(first) addShortcutIcon(first); }
+}
+function setTab(title, icon){ document.title=title; setFaviconsMulti(icon); }
+function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({ title, icon })); }
+function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); } catch { return null; } }
+function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab("Math Help", "icon.png"); }
 
-    /* modal controls */
-    function openModal(){ modal.classList.add("show"); modal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
-    function closeModal(){ modal.classList.remove("show"); modal.setAttribute("aria-hidden","true"); pwInput.blur(); }
-    document.getElementById("togglePw").addEventListener("click",(e)=>{ pwInput.type = pwInput.type==="password"?"text":"password"; e.target.textContent = pwInput.type==="password"?"Show":"Hide"; });
-    modal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closeModal(); });
-    document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && modal.classList.contains("show")) closeModal(); });
+/* ======= Password Modal ======= */
+const pwModal = document.getElementById("pwModal");
+const pwInput = document.getElementById("pwInput");
+const pwErr   = document.getElementById("pwErr");
+document.getElementById("togglePw").addEventListener("click", (e)=>{
+  pwInput.type = pwInput.type === "password" ? "text" : "password";
+  e.target.textContent = pwInput.type === "password" ? "Show" : "Hide";
+});
+function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
+function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
+pwModal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closePw(); });
+document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && pwModal.classList.contains("show")) closePw(); });
+hotspot.addEventListener("click", openPw);
 
-    async function submitPassword(){
-      const pass = pwInput.value.trim();
-      if(!pass){ pwErr.textContent="Password required."; return; }
-      try{
-        const r = await fetch("/.netlify/functions/unlock", {
-          method:"POST", headers:{ "Content-Type":"application/json" }, credentials:"include",
-          body: JSON.stringify({ password: pass })
-        });
-        const j = await r.json();
-        if (j.ok){ closeModal(); reveal(j.role||"user"); }
-        else pwErr.textContent = "Incorrect password.";
-      }catch{ pwErr.textContent = "Network error. Try again."; }
+/* ======= Unlock flow ======= */
+let IS_ADMIN = false;
+function reveal(role){
+  locked.style.display = "none";
+  panel.classList.add("unlocked");
+  const saved = loadCloak();
+  if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
+  else setTab("Math Help", "icon.png");
+  IS_ADMIN = (role === "admin");
+  // (admin panel removed)
+}
+function submitPassword(){
+  const pass = pwInput.value.trim();
+  if (!pass){ pwErr.textContent = "Password required."; return; }
+  if (pass === ADMIN_PASSWORD){ closePw(); reveal("admin"); return; }
+  if (pass === USER_PASSWORD){  closePw(); reveal("user");  return; }
+  pwErr.textContent = "Incorrect password.";
+}
+document.getElementById("pwSubmit").addEventListener("click", submitPassword);
+pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
+
+/* ======= Cloak buttons + Clear ======= */
+document.querySelectorAll('.btn[data-title]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = btn.getAttribute('data-title');
+    const i = btn.getAttribute('data-favicon');
+    setTab(t,i); saveCloak(t,i);
+  });
+});
+document.getElementById('clearCloak').addEventListener('click', clearTab);
+
+/* ======= Panic selection + hotkey '-' ======= */
+const panicSelect = document.getElementById("panicSelect");
+const panicFire   = document.getElementById("panicFire");
+function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
+function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
+(function initPanic(){
+  const saved = loadPanic();
+  if (saved) {
+    for (const opt of panicSelect.options) {
+      if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
     }
-    document.getElementById("pwSubmit").addEventListener("click", submitPassword);
-    pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
+  } else {
+    savePanic(JSON.parse(panicSelect.value));
+  }
+})();
+panicSelect.addEventListener("change", ()=> savePanic(JSON.parse(panicSelect.value)));
+function triggerPanic(){
+  const sel = loadPanic() || JSON.parse(panicSelect.value);
+  setTab(sel.title, sel.icon);
+  saveCloak(sel.title, sel.icon);
+}
+panicFire.addEventListener("click", triggerPanic);
+document.addEventListener("keydown", (e)=>{
+  const el = document.activeElement;
+  const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
+  if (typing) return;
+  if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
+});
 
-    /* show UI after unlock */
-    function reveal(role){
-      cover.style.display="none";
-      panel.classList.add("unlocked");
-      if(!frame.src) frame.src = "/app";
-      const saved = loadCloak();
-      if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon); else setTab(DEFAULT_TITLE, DEFAULT_ICON);
-      IS_ADMIN = (role === "admin");
-      if (IS_ADMIN) adminPanel.style.display = "inline-flex";
-    }
+/* ======= Tools drawer ======= */
+const toolsBtn = document.getElementById("toolsBtn");
+const toolsClose = document.getElementById("toolsClose");
+const toolsDrawer= document.getElementById("toolsDrawer");
+function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
+function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
+toolsBtn.addEventListener("click", openTools);
+toolsClose.addEventListener("click", closeTools);
 
-    /* hotspot + cloak handlers */
-    hotspot.addEventListener("click", openModal);
-    document.querySelectorAll('.btn[data-title]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const t = btn.getAttribute('data-title');
-        const i = btn.getAttribute('data-favicon');
-        setTab(t,i); saveCloak(t,i);
-      });
-    });
-    document.getElementById('clearCloak').addEventListener('click', clearTab);
+/* Notepad */
+const noteArea = document.getElementById("noteArea");
+const noteSaved= document.getElementById("noteSaved");
+noteArea.value = localStorage.getItem(LS_NOTE) || "";
+function saveNote(){ try{ localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900);}catch{noteSaved.textContent="Save failed";}}
+noteArea.addEventListener("input", saveNote);
 
-    /* always start locked & set “down” favicons */
-    fetch("/.netlify/functions/logout",{credentials:"include",cache:"no-store"})
-      .finally(()=>{ document.title="Math Help - Down"; removeFavicons(); ["down-favicon-16.png","down-favicon-32.png","down-favicon-64.png"].forEach(h=>addIcon(h)); });
+/* Timer */
+const timerMin = document.getElementById("timerMin");
+const timerStart = document.getElementById("timerStart");
+const timerStop  = document.getElementById("timerStop");
+const timerReset = document.getElementById("timerReset");
+const timerReadout = document.getElementById("timerReadout");
+let timerLeft = Number(timerMin.value) * 60;
+let timerId = null;
+function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(Math.floor(timerLeft%60)).padStart(2,"0"); timerReadout.textContent = `${m}:${s}`; }
+function startTimer(){ if (timerId) return; timerId = setInterval(()=>{ if (timerLeft>0){ timerLeft--; renderTimer(); } else { stopTimer(); alert("Time!"); } },1000); }
+function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
+function resetTimer(){ stopTimer(); timerLeft = Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
+timerStart.addEventListener("click", startTimer);
+timerStop.addEventListener("click", stopTimer);
+timerReset.addEventListener("click", resetTimer);
+timerMin.addEventListener("change", resetTimer);
+renderTimer();
 
-    /* ======================= PANIC (dropdown + key + button) ======================= */
-    const panicSelect = document.getElementById("panicSelect");
-    const panicFire   = document.getElementById("panicFire");
-    function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
-    function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
-    (function initPanic(){
-      const saved = loadPanic();
-      if (saved) {
-        for (const opt of panicSelect.options) {
-          if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
-        }
-      } else {
-        savePanic(JSON.parse(panicSelect.value));
-      }
-    })();
-    panicSelect.addEventListener("change", () => { savePanic(JSON.parse(panicSelect.value)); });
-    function triggerPanic(){
-      const sel = loadPanic() || JSON.parse(panicSelect.value);
-      setTab(sel.title, sel.icon);
-      saveCloak(sel.title, sel.icon);
-    }
-    panicFire.addEventListener("click", triggerPanic);
-    document.addEventListener("keydown", (e) => {
-      const el = document.activeElement;
-      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-      if (typing) return;
-      if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
-    });
+/* Unit converter */
+const cm   = document.getElementById("cm");
+const inch = document.getElementById("inch");
+const kg   = document.getElementById("kg");
+const lb   = document.getElementById("lb");
+const round=(x)=>Math.round(x*1000)/1000;
+cm.addEventListener("input", ()=>{ const v=Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
+inch.addEventListener("input",()=>{ const v=Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
+kg.addEventListener("input",  ()=>{ const v=Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
+lb.addEventListener("input",  ()=>{ const v=Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
 
-    /* ======================= TOOLS (Notepad, Timer, Converter) ======================= */
-    const toolsBtn   = document.getElementById("toolsBtn");
-    const toolsClose = document.getElementById("toolsClose");
-    const toolsDrawer= document.getElementById("toolsDrawer");
-    function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
-    function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
-    toolsBtn.addEventListener("click", openTools);
-    toolsClose.addEventListener("click", closeTools);
+/* ======= Terminal (Admin-only; open via keyboard) ======= */
+const termDesk  = document.getElementById("termDesk");
+const termOut   = document.getElementById("termOut");
+const termIn    = document.getElementById("termIn");
+const termClose = document.getElementById("termClose");
 
-    // Notepad (autosave)
-    const noteArea = document.getElementById("noteArea");
-    const noteSaved= document.getElementById("noteSaved");
-    noteArea.value = localStorage.getItem(LS_NOTE) || "";
-    function saveNote(){
-      try { localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent = "Saved"; setTimeout(()=>noteSaved.textContent="", 900); }
-      catch { noteSaved.textContent = "Save failed"; }
-    }
-    noteArea.addEventListener("input", () => { saveNote(); });
+function openTerm(){
+  if (!IS_ADMIN){ alert("Admin only."); return; }
+  termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false");
+  termIn.value=""; termIn.focus();
+  if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n";
+}
+function closeTerm(){ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); }
+termClose.addEventListener("click", closeTerm);
+document.addEventListener("keydown",(e)=>{
+  if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
+});
 
-    // Timer
-    const timerMin = document.getElementById("timerMin");
-    const timerStart = document.getElementById("timerStart");
-    const timerStop  = document.getElementById("timerStop");
-    const timerReset = document.getElementById("timerReset");
-    const timerReadout = document.getElementById("timerReadout");
-    let timerLeft = Number(timerMin.value) * 60;
-    let timerId = null;
-    function renderTimer(){
-      const m = Math.floor(timerLeft/60).toString().padStart(2,"0");
-      const s = Math.floor(timerLeft%60).toString().padStart(2,"0");
-      timerReadout.textContent = `${m}:${s}`;
-    }
-    function startTimer(){
-      if (timerId) return;
-      timerId = setInterval(()=>{
-        if (timerLeft>0){ timerLeft--; renderTimer(); }
-        else { stopTimer(); alert("Time!"); }
-      }, 1000);
-    }
-    function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
-    function resetTimer(){ stopTimer(); timerLeft = Math.max(0, Math.min(180, Number(timerMin.value))) * 60; renderTimer(); }
-    timerStart.addEventListener("click", startTimer);
-    timerStop.addEventListener("click", stopTimer);
-    timerReset.addEventListener("click", resetTimer);
-    timerMin.addEventListener("change", resetTimer);
-    renderTimer();
+/* Keyboard shortcuts to open Terminal (since admin panel is removed) */
+document.addEventListener("keydown",(e)=>{
+  // Ctrl+`  or  Ctrl+Alt+T
+  const openByBackquote = (e.key === '`' || e.code === 'Backquote') && (e.ctrlKey || e.metaKey);
+  const openByCombo = (e.ctrlKey || e.metaKey) && e.altKey && (e.key.toLowerCase() === 't');
+  if (openByBackquote || openByCombo){ e.preventDefault(); openTerm(); }
+});
 
-    // Unit converter
-    const cm   = document.getElementById("cm");
-    const inch = document.getElementById("inch");
-    const kg   = document.getElementById("kg");
-    const lb   = document.getElementById("lb");
-    function round(x){ return Math.round(x * 1000) / 1000; }
-    cm.addEventListener("input", ()=> { const v = Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
-    inch.addEventListener("input",()=> { const v = Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
-    kg.addEventListener("input",  ()=> { const v = Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
-    lb.addEventListener("input",  ()=> { const v = Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
+function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
+function clearTerm(){ termOut.textContent = ""; }
 
-    /* ======================= ADMIN: MINI BROWSER ======================= */
-    const browserDesk  = document.getElementById("browserDesk");
-    const browserWin   = document.getElementById("browserWin");
-    const browserTabs  = document.getElementById("browserTabs");
-    const browserFrame = document.getElementById("browserFrame");
-    const loader       = document.getElementById("loader");
-    const tabAdd       = document.getElementById("tabAdd");
-    const fullBtn      = document.getElementById("fullBtn");
-    const closeBtn     = document.getElementById("closeBtn");
-    const openBrowser  = document.getElementById("openBrowser");
-    const bgPick       = document.getElementById("bgPick");
-    const bgUpload     = document.getElementById("bgUpload");
-    const bgClear      = document.getElementById("bgClear");
+/* Optional: run small HTML snippets in a new tab */
+const runFrameURL = (()=>{ let url=null; return {
+  open(html, offline=false){
+    const csp = offline ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">" : "";
+    const doc = `<!doctype html><meta charset="utf-8">${csp}${html}`;
+    const blob = new Blob([doc], {type:"text/html"});
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(blob);
+    const w = window.open("", "_blank", "noopener,noreferrer");
+    if (w) w.location = url;
+    return !!w;
+  }
+}})();
 
-    const TAB_URL = "https://win11-emu-react.vercel.app/";
-    let tabs = [];   // { id, src }
-    let active = -1;
+const MAX_HTML_LEN = 120000;
 
-    function applyBackground() {
-      const color = localStorage.getItem(LS_BG_COLOR) || "#0b1220";
-      const img   = localStorage.getItem(LS_BG_IMAGE) || null;
-      if (img) {
-        browserDesk.style.backgroundImage = `url("${img}")`;
-        browserDesk.style.backgroundColor = "";
-        browserDesk.style.backgroundSize  = "cover";
-        browserDesk.style.backgroundRepeat= "no-repeat";
-        browserDesk.style.backgroundPosition = "center";
-      } else {
-        browserDesk.style.backgroundImage = "none";
-        const col = /^#([0-9a-f]{6})$/i.test(color) ? color + "cc" : color;
-        browserDesk.style.background = col;
-      }
-      bgPick.value = color;
-    }
-    function setBgColor(c){
-      localStorage.setItem(LS_BG_COLOR, c);
-      if (!localStorage.getItem(LS_BG_IMAGE)) applyBackground();
-    }
-    bgPick.addEventListener("input", ()=> setBgColor(bgPick.value));
-    bgUpload.addEventListener("change", (e)=>{
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      if (file.size > 4 * 1024 * 1024) alert("Image is large; try a smaller one (<4MB).");
-      const reader = new FileReader();
-      reader.onload = () => {
-        try { localStorage.setItem(LS_BG_IMAGE, reader.result); applyBackground(); }
-        catch { alert("Could not save image (storage limit)."); }
-      };
-      reader.readAsDataURL(file);
-      e.target.value = "";
-    });
-    bgClear.addEventListener("click", ()=>{ localStorage.removeItem(LS_BG_IMAGE); applyBackground(); });
+function handleCommand(s){
+  const line = s.trim();
+  if (!line) return;
+  printLine("> " + line);
 
-    function openDesk(){ applyBackground(); browserDesk.style.display="block"; restoreBrowserPos(); }
-    function closeDesk(){ browserDesk.style.display="none"; }
+  if (line === ";help"){
+    printLine("Commands:");
+    printLine("  ;help / ;clear");
+    printLine("  ;panic");
+    printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
+    printLine("  ;open tools   /  ;close tools");
+    printLine("  ;run html <HTML>         (opens in new tab)");
+    printLine("  ;run html offline <HTML> (no network in that tab)");
+    return;
+  }
+  if (line === ";clear"){ clearTerm(); return; }
+  if (line === ";panic"){ triggerPanic(); return; }
 
-    function selectTab(idx){
-      if (idx < 0 || idx >= tabs.length) return;
-      active = idx;
-      renderTabs();
-      const url = tabs[idx].src;
-      if (browserFrame.src !== url) {
-        showLoader(true);
-        browserFrame.src = url; // no cache-buster; browser handles caching
-      }
-    }
+  if (line.startsWith(";cloak ")){
+    const arg = line.slice(7).trim().toLowerCase();
+    const map = {
+      google:["Google","google-favicon.png"],
+      calculator:["Calculator","calculator-icon.png"],
+      docs:["Google Docs","google-docs-icon.png"],
+      classroom:["Google Classroom","classroom-favicon.png"],
+      khan:["Khan Academy","khan-favicon.png"],
+      wikipedia:["Wikipedia","wikipedia-favicon.png"]
+    };
+    if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
+    else printLine("Unknown cloak target.");
+    return;
+  }
 
-    function renderTabs(){
-      browserTabs.innerHTML = "";
-      tabs.forEach((t, i) => {
-        const b = document.createElement("button");
-        b.className = "tab" + (i===active ? " active" : "");
-        b.textContent = "Tab " + (i+1);
-        b.onclick = () => selectTab(i);
-        const x = document.createElement("span");
-        x.textContent = " ✕";
-        x.style.marginLeft = ".35rem";
-        x.style.opacity = .8;
-        x.style.cursor = "pointer";
-        x.onclick = (ev)=>{ ev.stopPropagation(); closeTab(i); };
-        b.appendChild(x);
-        browserTabs.appendChild(b);
-      });
-    }
-    function closeTab(idx){
-      if (idx<0 || idx>=tabs.length) return;
-      tabs.splice(idx,1);
-      if (tabs.length===0){ closeDesk(); return; }
-      if (active >= tabs.length) active = tabs.length-1;
-      selectTab(active);
-    }
-    function newTab(){ tabs.push({ id: Date.now(), src: TAB_URL }); selectTab(tabs.length-1); }
-    function showLoader(v){ loader.style.display = v ? "flex" : "none"; }
-    browserFrame.addEventListener("load", ()=> showLoader(false));
+  if (line === ";open tools"){ openTools(); return; }
+  if (line === ";close tools"){ closeTools(); return; }
 
-    tabAdd.addEventListener("click", newTab);
-    openBrowser.addEventListener("click", ()=>{ openDesk(); if (!tabs.length) newTab(); });
-    closeBtn.addEventListener("click", closeDesk);
-    fullBtn.addEventListener("click", ()=> browserWin.classList.toggle("full"));
-    document.getElementById("browserTitle").addEventListener("dblclick", ()=> fullBtn.click());
+  if (line.startsWith(";run html offline ")){
+    const html = line.slice(";run html offline ".length);
+    if (!html){ printLine("No HTML provided."); return; }
+    if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
+    const ok = runFrameURL.open(html, true);
+    printLine(ok ? "Opened offline HTML in new tab." : "Popup blocked. Allow popups for this site.");
+    return;
+  }
+  if (line.startsWith(";run html ")){
+    const html = line.slice(";run html ".length);
+    if (!html){ printLine("No HTML provided."); return; }
+    if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length}). Keep under ${MAX_HTML_LEN}.`); return; }
+    const ok = runFrameURL.open(html, false);
+    printLine(ok ? "Opened HTML in new tab." : "Popup blocked. Allow popups for this site.");
+    return;
+  }
 
-    (function enableDrag(){
-      const title = document.getElementById("browserTitle");
-      const win = document.getElementById("browserWin");
-      let dragging = false, startX=0, startY=0, startL=0, startT=0;
-      function onDown(e){
-        if (win.classList.contains("full")) return;
-        dragging = true;
-        const rect = win.getBoundingClientRect();
-        startX = (e.touches? e.touches[0].clientX : e.clientX);
-        startY = (e.touches? e.touches[0].clientY : e.clientY);
-        startL = rect.left; startT = rect.top;
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-        document.addEventListener("touchmove", onMove, {passive:false});
-        document.addEventListener("touchend", onUp);
-      }
-      function onMove(e){
-        if (!dragging) return;
-        const x = (e.touches? e.touches[0].clientX : e.clientX);
-        const y = (e.touches? e.touches[0].clientY : e.clientY);
-        const dx = x - startX, dy = y - startY;
-        const nl = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, startL + dx));
-        const nt = Math.max(0, Math.min(window.innerHeight - win.offsetHeight, startT + dy));
-        win.style.left = nl + "px";
-        win.style.top  = nt + "px";
-        win.style.transform = "none";
-      }
-      function onUp(){
-        dragging = false;
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-        document.removeEventListener("touchmove", onMove);
-        document.removeEventListener("touchend", onUp);
-        saveBrowserPos();
-      }
-      title.addEventListener("mousedown", onDown);
-      title.addEventListener("touchstart", onDown, {passive:true});
-      window.addEventListener("resize", saveBrowserPos);
-    })();
+  printLine("Unknown command. Try ;help");
+}
+document.getElementById("termIn").addEventListener("keydown",(e)=>{
+  if (e.key === "Enter"){ handleCommand(e.target.value); e.target.value=""; }
+});
 
-    function saveBrowserPos(){
-      const win = document.getElementById("browserWin");
-      const rect = win.getBoundingClientRect();
-      const data = { full: win.classList.contains("full"), left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-      try { localStorage.setItem(LS_BROWSER_POS, JSON.stringify(data)); } catch {}
-    }
-    function restoreBrowserPos(){
-      const win = document.getElementById("browserWin");
-      try {
-        const d = JSON.parse(localStorage.getItem(LS_BROWSER_POS) || "null");
-        if (!d) return;
-        if (d.full) win.classList.add("full");
-        else {
-          win.classList.remove("full");
-          win.style.left = Math.max(0, Math.min(window.innerWidth - d.width, d.left)) + "px";
-          win.style.top  = Math.max(0, Math.min(window.innerHeight - d.height, d.top)) + "px";
-          win.style.width = d.width + "px";
-          win.style.height= d.height + "px";
-          win.style.transform = "none";
-        }
-      } catch {}
-    }
-
-    /* ===== Whiteboard ===== */
-    const wbDesk   = document.getElementById("wbDesk");
-    const wbCanvas = document.getElementById("wbCanvas");
-    const wbColor  = document.getElementById("wbColor");
-    const wbSize   = document.getElementById("wbSize");
-    const wbEraser = document.getElementById("wbEraser");
-    const wbClear  = document.getElementById("wbClear");
-    const wbSave   = document.getElementById("wbSave");
-    const wbClose  = document.getElementById("wbClose");
-    let wbCtx, drawing=false, lastX=0, lastY=0, erasing=false;
-
-    function wbResize(){
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      wbCanvas.width  = Math.floor(wbDesk.clientWidth  * dpr);
-      wbCanvas.height = Math.floor(wbDesk.clientHeight * dpr);
-      wbCanvas.style.width  = wbDesk.clientWidth  + "px";
-      wbCanvas.style.height = wbDesk.clientHeight + "px";
-      wbCtx = wbCanvas.getContext("2d");
-      wbCtx.scale(dpr, dpr);
-      wbCtx.lineCap = "round"; wbCtx.lineJoin = "round";
-      const saved = localStorage.getItem("mh_whiteboard_img");
-      if (saved) { const img = new Image(); img.onload = ()=> wbCtx.drawImage(img,0,0,wbDesk.clientWidth,wbDesk.clientHeight); img.src = saved; }
-    }
-    function wbOpenDesk(){ wbDesk.style.display = "block"; wbDesk.setAttribute("aria-hidden","false"); wbResize(); }
-    function wbCloseDesk(){
-      try { localStorage.setItem("mh_whiteboard_img", wbCanvas.toDataURL("image/png")); } catch {}
-      wbDesk.style.display = "none";
-      wbDesk.setAttribute("aria-hidden","true");
-    }
-    function wbPos(e){
-      const r = wbCanvas.getBoundingClientRect();
-      const p = e.touches ? e.touches[0] : e;
-      return { x: p.clientX - r.left, y: p.clientY - r.top };
-    }
-    function wbDrawTo(x,y){
-      wbCtx.strokeStyle = erasing ? "rgba(0,0,0,1)" : wbColor.value;
-      wbCtx.lineWidth   = Number(wbSize.value);
-      wbCtx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
-      wbCtx.beginPath(); wbCtx.moveTo(lastX,lastY); wbCtx.lineTo(x,y); wbCtx.stroke();
-      lastX = x; lastY = y;
-    }
-    function wbStart(e){ drawing = true; const p = wbPos(e); lastX=p.x; lastY=p.y; }
-    function wbMove(e){ if(!drawing) return; const p = wbPos(e); wbDrawTo(p.x,p.y); e.preventDefault(); }
-    function wbEnd(){ drawing = false; }
-    wbCanvas.addEventListener("mousedown", wbStart);
-    wbCanvas.addEventListener("mousemove", wbMove);
-    window.addEventListener("mouseup", wbEnd);
-    wbCanvas.addEventListener("touchstart", wbStart, {passive:true});
-    wbCanvas.addEventListener("touchmove",  wbMove,  {passive:false});
-    window.addEventListener("touchend", wbEnd);
-    window.addEventListener("resize", ()=>{ if (wbDesk.style.display==="block") wbResize(); });
-    wbEraser.addEventListener("click", ()=>{ erasing = !erasing; wbEraser.textContent = erasing ? "Eraser ✓" : "Eraser"; });
-    wbClear.addEventListener("click", ()=>{ wbCtx.clearRect(0,0,wbCanvas.width,wbCanvas.height); localStorage.removeItem("mh_whiteboard_img"); });
-    wbSave.addEventListener("click", ()=>{
-      const url = wbCanvas.toDataURL("image/png");
-      const a = document.createElement("a"); a.href = url; a.download = "whiteboard.png"; a.click();
-    });
-    wbClose.addEventListener("click", wbCloseDesk);
-
-    /* ===== Command Palette ===== */
-    const cmdPal   = document.getElementById("cmdPal");
-    const cmdInput = document.getElementById("cmdInput");
-    const cmdList  = document.getElementById("cmdList");
-    const actions = [
-      { id:"tools",    label:"Open Tools drawer",        run: ()=> document.getElementById("toolsBtn").click() },
-      { id:"wb",       label:"Open Whiteboard",          run: ()=> wbOpenDesk() },
-      { id:"browser",  label:"Open Browser (admin)",     run: ()=> document.getElementById("openBrowser").click() },
-      { id:"terminal", label:"Open Terminal (admin)",    run: ()=> openTerm() },
-      { id:"panic",    label:"Panic cloak",              run: ()=> triggerPanic() },
-      { id:"cloak:g",  label:"Set cloak → Google",       run: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); } },
-      { id:"cloak:c",  label:"Set cloak → Calculator",   run: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); } },
-      { id:"cloak:d",  label:"Set cloak → Google Docs",  run: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); } },
-      { id:"logout",   label:"Lock page (logout)",       run: ()=> { fetch("/.netlify/functions/logout",{credentials:"include"}).finally(()=>location.reload()); } },
-    ];
-    function openCmd(){
-      cmdPal.style.display = "block";
-      cmdPal.setAttribute("aria-hidden","false");
-      cmdInput.value = "";
-      renderCmd("");
-      setTimeout(()=>cmdInput.focus(),0);
-    }
-    function closeCmd(){ cmdPal.style.display = "none"; cmdPal.setAttribute("aria-hidden","true"); }
-    function renderCmd(q){
-      const qq = q.trim().toLowerCase();
-      const hits = actions.filter(a => a.label.toLowerCase().includes(qq) && (a.id.includes("admin") ? IS_ADMIN : true));
-      cmdList.innerHTML = "";
-      hits.forEach((a,i)=>{
-        const div = document.createElement("div");
-        div.className = "cmdItem" + (i===0 ? " active" : "");
-        div.textContent = a.label;
-        div.dataset.idx = i;
-        div.onclick = ()=> { a.run(); closeCmd(); };
-        cmdList.appendChild(div);
-      });
-    }
-    let cmdSel = 0;
-    cmdInput.addEventListener("input", ()=>{ cmdSel = 0; renderCmd(cmdInput.value); });
-    document.addEventListener("keydown", (e)=>{
-      const mac = navigator.platform.toLowerCase().includes("mac");
-      const mod = mac ? e.metaKey : e.ctrlKey;
-      if (mod && e.key.toLowerCase()==="k"){ e.preventDefault(); openCmd(); }
-      if (cmdPal.style.display==="block"){
-        if (e.key==="Escape"){ e.preventDefault(); closeCmd(); return; }
-        const items = Array.from(cmdList.querySelectorAll(".cmdItem"));
-        if (!items.length) return;
-        if (e.key==="ArrowDown"){ e.preventDefault(); cmdSel = Math.min(items.length-1, cmdSel+1); }
-        if (e.key==="ArrowUp"){ e.preventDefault(); cmdSel = Math.max(0, cmdSel-1); }
-        items.forEach((el,i)=> el.classList.toggle("active", i===cmdSel));
-        if (e.key==="Enter"){ e.preventDefault(); items[cmdSel].click(); }
-      }
-    });
-
-    /* ===== Terminal (admin-only) + Canvas Runner with blob sandbox ===== */
-    const termDesk  = document.getElementById("termDesk");
-    const termOut   = document.getElementById("termOut");
-    const termIn    = document.getElementById("termIn");
-    const termClose = document.getElementById("termClose");
-    const openTermBtn = document.getElementById("openTerminal");
-
-    const runDesk  = document.getElementById("runDesk");
-    const runFrame = document.getElementById("runFrame");
-    const runClose = document.getElementById("runClose");
-    const runKill  = document.getElementById("runKill");
-
-    const CMD_PREFIX = ";sudo run canvas code generation ";
-    const CMD_OFFLINE_PREFIX = ";sudo run canvas offline ";
-    const MAX_HTML_LEN = 120000; // ~120 KB safety cap
-    let currentBlobURL = null;
-
-    function openTerm(){
-      if (!IS_ADMIN){ alert("Admin only."); return; }
-      termDesk.style.display = "block";
-      termDesk.setAttribute("aria-hidden","false");
-      termIn.value = "";
-      termIn.focus();
-      if (!termOut.textContent) printLine("Terminal ready. Type ;help");
-    }
-    function closeTerm(){ termDesk.style.display = "none"; termDesk.setAttribute("aria-hidden","true"); }
-    openTermBtn.addEventListener("click", openTerm);
-    termClose.addEventListener("click", closeTerm);
-
-    function printLine(txt=""){
-      const escaped = txt.replace(/</g,"&lt;").replace(/>/g,"&gt;");
-      termOut.innerHTML += escaped + "\n";
-      termOut.scrollTop = termOut.scrollHeight;
-    }
-    function clearTerm(){ termOut.textContent = ""; }
-
-    function buildSandboxHTML(userHTML, offline){
-      const csp = offline
-        ? "<meta http-equiv='Content-Security-Policy' content=\"default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; script-src 'unsafe-inline'\">"
-        : "";
-      return `<!doctype html><meta charset="utf-8">${csp}${userHTML}`;
-    }
-    function openRunner(userHTML, offline=false){
-      // auto-close whiteboard so overlays don't stack
-      if (typeof wbDesk !== "undefined" && wbDesk.style.display === "block") {
-        try { wbCloseDesk(); } catch {}
-      }
-      runDesk.style.display = "block";
-      runDesk.setAttribute("aria-hidden","false");
-
-      const html = buildSandboxHTML(userHTML, offline);
-      const blob = new Blob([html], { type: "text/html" });
-      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
-      currentBlobURL = URL.createObjectURL(blob);
-
-      runFrame.setAttribute("sandbox", "allow-scripts allow-modals"); // no same-origin
-      runFrame.referrerPolicy = "no-referrer";
-      runFrame.src = currentBlobURL;
-    }
-    function closeRunner(){
-      try { runFrame.src = "about:blank"; } catch {}
-      if (currentBlobURL) { URL.revokeObjectURL(currentBlobURL); currentBlobURL = null; }
-      runDesk.style.display = "none";
-      runDesk.setAttribute("aria-hidden","true");
-    }
-    runClose.addEventListener("click", closeRunner);
-    runKill.addEventListener("click", ()=>{ try { runFrame.src = "about:blank"; } catch {} });
-
-    function handleCommand(line){
-      const s = line.trim();
-      if (!s) return;
-      printLine("> " + s);
-
-      if (s === ";help"){
-        printLine("Commands:");
-        printLine("  ;help");
-        printLine("  ;clear");
-        printLine("  ;panic");
-        printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
-        printLine("  ;sudo run canvas code generation <HTML>");
-        printLine("  ;sudo run canvas offline <HTML>   (blocks all network)");
-        return;
-      }
-      if (s === ";clear"){ clearTerm(); return; }
-      if (s === ";panic"){ triggerPanic(); return; }
-
-      if (s.startsWith(";cloak ")){
-        const arg = s.slice(7).trim().toLowerCase();
-        const map = {
-          "google": ["Google","google-favicon.png"],
-          "calculator": ["Calculator","calculator-icon.png"],
-          "docs": ["Google Docs","google-docs-icon.png"],
-          "classroom": ["Google Classroom","classroom-favicon.png"],
-          "khan": ["Khan Academy","khan-favicon.png"],
-          "wikipedia": ["Wikipedia","wikipedia-favicon.png"]
-        };
-        if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
-        else printLine("Unknown cloak target.");
-        return;
-      }
-
-      if (s.startsWith(CMD_OFFLINE_PREFIX)){
-        const html = s.slice(CMD_OFFLINE_PREFIX.length);
-        if (!html){ printLine("No HTML provided."); return; }
-        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
-        try { openRunner(html, true); printLine("Canvas Runner opened in OFFLINE mode (no external network)."); }
-        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
-        return;
-      }
-
-      if (s.startsWith(CMD_PREFIX)){
-        const html = s.slice(CMD_PREFIX.length);
-        if (!html){ printLine("No HTML provided."); return; }
-        if (html.length > MAX_HTML_LEN){ printLine(`HTML too large (${html.length} bytes). Keep under ${MAX_HTML_LEN}.`); return; }
-        try { openRunner(html, false); printLine("Canvas Runner opened."); }
-        catch (e){ printLine("Failed to run: " + (e?.message || e)); }
-        return;
-      }
-
-      printLine("Unknown command. Try ;help");
-    }
-
-    const termInEl = document.getElementById("termIn");
-    termInEl.addEventListener("keydown",(e)=>{
-      if (e.key === "Enter"){
-        handleCommand(termInEl.value);
-        termInEl.value = "";
-      } else if (e.key === "Escape"){
-        closeTerm();
-      }
-    });
-
-    document.addEventListener("keydown",(e)=>{
-      if (runDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeRunner(); }
-      if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
-    });
-  </script>
+/* ======= Initial state: multi-size DOWN favicon set ======= */
+setTab("Math Help - Down", {
+  "16x16": "down-favicon-16.png",
+  "32x32": "down-favicon-32.png",
+  "64x64": "down-favicon-64.png"
+});
+</script>
 </body>
 </html>
