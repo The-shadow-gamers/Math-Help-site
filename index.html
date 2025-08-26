@@ -6,28 +6,20 @@
 <title>Math Help</title>
 <link rel="icon" href="icon.png" type="image/png" />
 <style>
-  :root {
+  :root{
     --bar-h:56px;
-    --bg:#0f172a;            /* fallback bg if no theme */
+    --bg:#0f172a;
     --panel:#0b1220;
     --text:#e5e7eb;
     --muted:#9ca3af;
     --btn:#111827;
     --btnH:#1f2937;
-    --accent:#60a5fa;        /* customizable accent */
+    --accent:#60a5fa;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  body{
-    background: var(--bg) no-repeat center/cover fixed;
-  }
-  body.with-bg-img{
-    background-color: var(--bg, #0f172a);
-    background-image: var(--bg-img);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-  }
+  body{background: var(--bg) no-repeat center/cover fixed;}
+  body.with-bg-img{background-color:var(--bg,#0f172a);background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed;}
   .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
 
   /* Invisible unlock hotspot */
@@ -52,6 +44,13 @@
   .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
   .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
   @media (max-width:900px){.hint{display:none}}
+
+  /* Collapse/restore menu */
+  #collapseBtn{margin-right:.4rem}
+  #menuRestore{display:none;position:fixed;top:8px;left:8px;z-index:6000;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
+  body.bar-hidden{--bar-h:0}
+  body.bar-hidden .bar{display:none !important}
+  body.bar-hidden #menuRestore{display:block}
 
   /* Tools drawer */
   #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:340px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
@@ -84,7 +83,7 @@
   #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
   #termIn{flex:1}
 
-  /* Embedded Wix area (kept) */
+  /* Embedded Wix area */
   #embedArea{display:none;position:relative}
   #embedFrame{width:100%;height:100%;border:0;background:#000}
   #embedLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
@@ -118,11 +117,12 @@
   #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
   #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
 
-  /* Drag hint (disabled while in full/half) */
-  #browserWin.full #browserTop, #browserWin.half #browserTop{cursor:default}
 </style>
 </head>
 <body>
+  <!-- Restore menu button when collapsed -->
+  <button id="menuRestore" title="Show menu">≡</button>
+
   <!-- Invisible unlock area -->
   <div id="hotspot" aria-label="Open password"></div>
 
@@ -138,6 +138,7 @@
   <div class="wrap">
     <!-- Top bar -->
     <div class="bar" id="panel">
+      <button id="collapseBtn" class="btn" title="Hide menu">≡</button>
       <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
       <!-- Cloak buttons -->
@@ -163,9 +164,10 @@
         <button id="panicFire" class="btn" type="button">Panic</button>
       </div>
 
-      <!-- Tools & Browser -->
+      <!-- Tools, Browser, Terminal button -->
       <button id="toolsBtn" class="btn">Tools</button>
       <button id="openBrowser" class="btn">Browser</button>
+      <button id="openTermBtn" class="btn">Terminal</button>
     </div>
 
     <!-- Embedded Wix area -->
@@ -181,7 +183,7 @@
       <div id="frameError">
         <div class="msg">
           <h3>This site refused to load in an iframe.</h3>
-          <p style="opacity:.8;margin:.4rem 0 1rem">Some hosts (like Wix) block embedding. You can open it directly:</p>
+          <p style="opacity:.8;margin:.4rem 0 1rem">Some hosts block embedding. You can open it directly:</p>
           <p>
             <a id="openExternal" class="btn" target="_blank" rel="noopener noreferrer">Open in new tab</a>
             <button id="retryEmbed" class="btn" type="button" style="margin-left:.5rem">Retry</button>
@@ -250,7 +252,7 @@
         <button id="clearBgImg" class="btn" type="button">Clear image</button>
         <button id="resetTheme" class="btn" type="button">Reset</button>
       </div>
-      <p class="small">Tip: You can also theme via Terminal (type <span class="kbd">;help</span>).</p>
+      <p class="small">Tip: Inside Terminal you can also use <span class="kbd">;bind</span> and <span class="kbd">;theme</span>.</p>
     </div>
   </aside>
 
@@ -281,7 +283,7 @@
       </div>
       <pre id="termOut"></pre>
       <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help — try ;theme" />
+        <input id="termIn" class="input" type="text" placeholder="Type ;help — try ;bind help" />
         <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
       </div>
     </div>
@@ -311,9 +313,7 @@
           <div class="msg">
             <h3>This site refused to load in an iframe.</h3>
             <p style="opacity:.8;margin:.4rem 0 1rem">You can open it directly:</p>
-            <p>
-              <a id="browserOpenExternal" class="btn" target="_blank" rel="noopener noreferrer">Open in new tab</a>
-            </p>
+            <p><a id="browserOpenExternal" class="btn" target="_blank" rel="noopener noreferrer">Open in new tab</a></p>
           </div>
         </div>
       </div>
@@ -334,13 +334,17 @@ const LS_CLOAK = "mh_cloak";
 const LS_PANIC = "mh_panic";
 const LS_NOTE  = "mh_note";
 const LS_THEME = "mh_theme";
+const LS_KEYS  = "mh_keybinds";
+const LS_MENU  = "mh_menu_state";
 
 /* ========= Elements ========= */
 const hotspot = document.getElementById("hotspot");
 const locked  = document.getElementById("locked");
 const panel   = document.getElementById("panel");
+const menuRestore = document.getElementById("menuRestore");
+const collapseBtn = document.getElementById("collapseBtn");
 
-/* Wix Embed elements */
+/* Wix Embed */
 const embedArea  = document.getElementById("embedArea");
 const embedFrame = document.getElementById("embedFrame");
 const embedLoader= document.getElementById("embedLoader");
@@ -361,24 +365,23 @@ const applyThemeBtn = document.getElementById("applyTheme");
 const clearBgImgBtn = document.getElementById("clearBgImg");
 const resetThemeBtn = document.getElementById("resetTheme");
 
-/* Notepad */
+/* Notepad / Timer */
 const noteArea = document.getElementById("noteArea");
 const noteSaved= document.getElementById("noteSaved");
-
-/* Timer */
 const timerMin = document.getElementById("timerMin");
 const timerStart = document.getElementById("timerStart");
 const timerStop  = document.getElementById("timerStop");
 const timerReset = document.getElementById("timerReset");
 const timerReadout = document.getElementById("timerReadout");
 
-/* Terminal */
+/* Terminal (button open) */
 const termDesk  = document.getElementById("termDesk");
 const termOut   = document.getElementById("termOut");
 const termIn    = document.getElementById("termIn");
 const termClose = document.getElementById("termClose");
+const openTermBtn = document.getElementById("openTermBtn");
 
-/* Browser overlay */
+/* Browser */
 const openBrowserBtn = document.getElementById("openBrowser");
 const browserDesk = document.getElementById("browserDesk");
 const browserWin  = document.getElementById("browserWin");
@@ -391,17 +394,13 @@ const closeBtn = document.getElementById("closeBtn");
 const fullBtn  = document.getElementById("fullBtn");
 const halfBtn  = document.getElementById("halfBtn");
 
-/* ----- FAVICON HELPERS ----- */
+/* ----- Favicons ----- */
 let __iconVer = 0;
 function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
 function removeFavicons(){ document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
 function addIconWithSizes(href, sizes){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if (sizes) l.sizes=sizes; l.href=__v(href); document.head.appendChild(l); }
 function addShortcutIcon(href){ const s=document.createElement('link'); s.rel='shortcut icon'; s.href=__v(href); document.head.appendChild(s); }
-function setFaviconsMulti(icon){
-  removeFavicons();
-  if (typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); }
-  else if (icon && typeof icon==='object'){ let first=null; for (const [sizes,href] of Object.entries(icon)){ addIconWithSizes(href,sizes); if(!first) first=href; } if(first) addShortcutIcon(first); }
-}
+function setFaviconsMulti(icon){ removeFavicons(); if (typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else if (icon && typeof icon==='object'){ let first=null; for (const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first);} }
 function setTab(title, icon){ document.title=title; setFaviconsMulti(icon); }
 function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({ title, icon })); }
 function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); } catch { return null; } }
@@ -435,10 +434,15 @@ function reveal(role){
   if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
   else setTab("Math Help", "icon.png");
 
-  // Apply saved theme
+  // Apply saved theme & menu state
   themeLoad();
+  restoreMenu();
 
-  // show embed for user/admin
+  // Enable buttons
+  openTermBtn.disabled = false;
+  openBrowserBtn.disabled = false;
+
+  // show embed
   initEmbed();
 }
 function submitPassword(){
@@ -451,7 +455,7 @@ function submitPassword(){
 document.getElementById("pwSubmit").addEventListener("click", submitPassword);
 pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
 
-/* ======= Embed handling (with fallback if blocked) ======= */
+/* ======= Embed handling ======= */
 function initEmbed(){
   embedArea.style.display = "block";
   openExternal.href = EMBED_URL;
@@ -461,18 +465,11 @@ function tryLoadEmbed(){
   frameError.style.display = "none";
   embedLoader.style.display = "flex";
   clearTimeout(loadTimer);
-  embedFrame.removeAttribute("src"); // reset
+  embedFrame.removeAttribute("src");
   embedFrame.src = EMBED_URL;
-  loadTimer = setTimeout(()=> {
-    embedLoader.style.display = "none";
-    frameError.style.display = "flex";
-  }, 4000);
+  loadTimer = setTimeout(()=>{ embedLoader.style.display = "none"; frameError.style.display = "flex"; }, 4000);
 }
-embedFrame.addEventListener("load", ()=>{
-  clearTimeout(loadTimer);
-  embedLoader.style.display = "none";
-  frameError.style.display = "none";
-});
+embedFrame.addEventListener("load", ()=>{ clearTimeout(loadTimer); embedLoader.style.display = "none"; frameError.style.display = "none"; });
 retryEmbed.addEventListener("click", tryLoadEmbed);
 
 /* ======= Tools drawer ======= */
@@ -510,18 +507,13 @@ inch.addEventListener("input",()=>{ const v=Number(inch.value||0); cm.value   = 
 kg.addEventListener("input",  ()=>{ const v=Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
 lb.addEventListener("input",  ()=>{ const v=Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
 
-/* ======= Theme engine (UI + Terminal) ======= */
+/* ======= Theme engine ======= */
 let theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null };
 function themeApply(){
   document.documentElement.style.setProperty('--accent', theme.accent || '#60a5fa');
   document.documentElement.style.setProperty('--bg', theme.bgColor || '#0f172a');
-  if (theme.bgDataUrl){
-    document.documentElement.style.setProperty('--bg-img', `url("${theme.bgDataUrl}")`);
-    document.body.classList.add('with-bg-img');
-  } else {
-    document.documentElement.style.removeProperty('--bg-img');
-    document.body.classList.remove('with-bg-img');
-  }
+  if (theme.bgDataUrl){ document.documentElement.style.setProperty('--bg-img', `url("${theme.bgDataUrl}")`); document.body.classList.add('with-bg-img'); }
+  else { document.documentElement.style.removeProperty('--bg-img'); document.body.classList.remove('with-bg-img'); }
 }
 function themeSave(){ localStorage.setItem(LS_THEME, JSON.stringify(theme)); }
 function themeLoad(){
@@ -531,46 +523,25 @@ function themeLoad(){
   accentPick.value  = theme.accent || '#60a5fa';
   themeApply();
 }
-applyThemeBtn.addEventListener('click', ()=>{
-  theme.bgColor = bgColorPick.value || theme.bgColor;
-  theme.accent  = accentPick.value || theme.accent;
-  themeApply(); themeSave();
-});
+applyThemeBtn.addEventListener('click', ()=>{ theme.bgColor = bgColorPick.value || theme.bgColor; theme.accent = accentPick.value || theme.accent; themeApply(); themeSave(); });
 clearBgImgBtn.addEventListener('click', ()=>{ theme.bgDataUrl = null; themeApply(); themeSave(); });
-resetThemeBtn.addEventListener('click', ()=>{
-  theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null };
-  themeApply(); themeSave();
-  bgColorPick.value = theme.bgColor;
-  accentPick.value = theme.accent;
-});
-bgImageFile.addEventListener('change', (e)=>{
-  const f = e.target.files && e.target.files[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = () => { theme.bgDataUrl = reader.result; themeApply(); themeSave(); };
-  reader.readAsDataURL(f);
-});
+resetThemeBtn.addEventListener('click', ()=>{ theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null }; themeApply(); themeSave(); bgColorPick.value = theme.bgColor; accentPick.value = theme.accent; });
+bgImageFile.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { theme.bgDataUrl = reader.result; themeApply(); themeSave(); }; reader.readAsDataURL(f); });
 
-/* ======= Terminal (now allowed for user + admin) ======= */
-function openTerm(){
-  termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false");
-  termIn.value=""; termIn.focus();
-  if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n";
-}
+/* ======= Menu collapse/restore ======= */
+function hideMenu(){ document.body.classList.add('bar-hidden'); localStorage.setItem(LS_MENU, 'hidden'); }
+function showMenu(){ document.body.classList.remove('bar-hidden'); localStorage.setItem(LS_MENU, 'shown'); }
+function toggleMenu(){ if (document.body.classList.contains('bar-hidden')) showMenu(); else hideMenu(); }
+collapseBtn.addEventListener('click', hideMenu);
+menuRestore.addEventListener('click', showMenu);
+function restoreMenu(){ const st = localStorage.getItem(LS_MENU)||'shown'; if (st==='hidden') hideMenu(); else showMenu(); }
+
+/* ======= Terminal (open via button) ======= */
+function openTerm(){ termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false"); termIn.value=""; termIn.focus(); if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n"; }
 function closeTerm(){ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); }
+openTermBtn.addEventListener("click", openTerm);
 termClose.addEventListener("click", closeTerm);
-document.addEventListener("keydown",(e)=>{
-  if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
-});
-/* Shortcuts to open Terminal: Ctrl+` or Ctrl+Alt+T (after login with either password) */
-document.addEventListener("keydown",(e)=>{
-  if (!ROLE) return;
-  const combo1 = (e.key === '`' || e.code === 'Backquote') && (e.ctrlKey || e.metaKey);
-  const combo2 = (e.ctrlKey || e.metaKey) && e.altKey && (e.key.toLowerCase() === 't');
-  if (combo1 || combo2){ e.preventDefault(); openTerm(); }
-});
-function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
-function clearTerm(){ termOut.textContent = ""; }
+document.addEventListener("keydown",(e)=>{ if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
 
 /* ======= Browser (button + controls + loader + fallback) ======= */
 let browserLoadTimer = null;
@@ -583,10 +554,7 @@ function openBrowser(url = MINI_BROWSER_URL){
   browserFrame.src = url;
   browserOpenExternal.href = url;
   clearTimeout(browserLoadTimer);
-  browserLoadTimer = setTimeout(()=>{ // fallback if X-Frame-Options blocks
-    browserLoader.style.display = "none";
-    browserErr.style.display = "flex";
-  }, 5000);
+  browserLoadTimer = setTimeout(()=>{ browserLoader.style.display = "none"; browserErr.style.display = "flex"; }, 5000);
 }
 function closeBrowser(){ browserDesk.style.display = "none"; browserDesk.setAttribute("aria-hidden","true"); }
 function fullBrowser(){ browserWin.classList.add('full'); browserWin.classList.remove('half'); }
@@ -597,7 +565,7 @@ fullBtn.addEventListener('click', fullBrowser);
 halfBtn.addEventListener('click', halfBrowser);
 browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display = "none"; browserErr.style.display = "none"; });
 
-/* Drag to move (disabled in full/half) */
+/* Drag move */
 (function dragInit(){
   let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
   browserTop.addEventListener('mousedown', (e)=>{
@@ -611,42 +579,19 @@ browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); brow
     const dx=e.clientX - sx, dy=e.clientY - sy;
     browserWin.style.left = (startLeft + dx) + "px";
     browserWin.style.top  = (startTop  + dy) + "px";
-    browserWin.style.transform = "translateX(0)"; // stop centering
+    browserWin.style.transform = "translateX(0)";
   });
   window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
 })();
 
-/* ======= Cloak buttons + Clear ======= */
-document.querySelectorAll('.btn[data-title]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const t = btn.getAttribute('data-title');
-    const i = btn.getAttribute('data-favicon');
-    setTab(t,i); saveCloak(t,i);
-  });
-});
-document.getElementById('clearCloak').addEventListener('click', clearTab);
-
-/* ======= Panic selection + hotkey '-' ======= */
+/* ======= Panic & Cloak ======= */
 const panicSelect = document.getElementById("panicSelect");
 const panicFire   = document.getElementById("panicFire");
 function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
 function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
-(function initPanic(){
-  const saved = loadPanic();
-  if (saved) {
-    for (const opt of panicSelect.options) {
-      if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; }
-    }
-  } else {
-    savePanic(JSON.parse(panicSelect.value));
-  }
-})();
+(function initPanic(){ const saved = loadPanic(); if (saved){ for (const opt of panicSelect.options){ if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; } } } else { savePanic(JSON.parse(panicSelect.value)); }})();
 panicSelect.addEventListener("change", ()=> savePanic(JSON.parse(panicSelect.value)));
-function triggerPanic(){
-  const sel = loadPanic() || JSON.parse(panicSelect.value);
-  setTab(sel.title, sel.icon);
-  saveCloak(sel.title, sel.icon);
-}
+function triggerPanic(){ const sel = loadPanic() || JSON.parse(panicSelect.value); setTab(sel.title, sel.icon); saveCloak(sel.title, sel.icon); }
 panicFire.addEventListener("click", triggerPanic);
 document.addEventListener("keydown", (e)=>{
   const el = document.activeElement;
@@ -654,9 +599,77 @@ document.addEventListener("keydown", (e)=>{
   if (typing) return;
   if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
 });
+document.querySelectorAll('.btn[data-title]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const t = btn.getAttribute('data-title'); const i = btn.getAttribute('data-favicon');
+    setTab(t,i); saveCloak(t,i);
+  });
+});
+document.getElementById('clearCloak').addEventListener('click', clearTab);
+
+/* ======= Keybind system (set from Terminal) ======= */
+const ACTIONS = {
+  terminal: ()=> openTerm(),
+  tools_toggle: ()=> document.getElementById('toolsDrawer').classList.contains('open') ? closeTools() : openTools(),
+  menu_toggle: ()=> toggleMenu(),
+  panic: ()=> triggerPanic(),
+  browser_open: ()=> openBrowser(),
+  browser_close: ()=> closeBrowser(),
+  cloak_google: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); },
+  cloak_calculator: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); },
+  cloak_docs: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); },
+  cloak_classroom: ()=> { setTab("Google Classroom","classroom-favicon.png"); saveCloak("Google Classroom","classroom-favicon.png"); },
+  cloak_khan: ()=> { setTab("Khan Academy","khan-favicon.png"); saveCloak("Khan Academy","khan-favicon.png"); },
+  cloak_wikipedia: ()=> { setTab("Wikipedia","wikipedia-favicon.png"); saveCloak("Wikipedia","wikipedia-favicon.png"); },
+  cloak_clear: ()=> clearTab()
+};
+function canonCombo(s){
+  // normalize like "ctrl+alt+t"
+  const parts = s.toLowerCase().replace(/\s+/g,'').split('+').filter(Boolean);
+  const key = parts.pop(); const mods = parts.sort(); return [...mods, key].join('+');
+}
+function eventCombo(e){
+  const mods = [];
+  if (e.ctrlKey || e.metaKey) mods.push('ctrl'); // treat meta as ctrl
+  if (e.altKey) mods.push('alt');
+  if (e.shiftKey) mods.push('shift');
+  const key = e.key.length===1 ? e.key.toLowerCase() : e.key.toLowerCase(); // 'a', 'f1', etc.
+  return [...mods, key].join('+');
+}
+let keybinds = {}; // action -> combo
+let comboMap = {}; // combo -> action
+function loadKeybinds(){
+  try{ keybinds = JSON.parse(localStorage.getItem(LS_KEYS)||'{}'); }catch{ keybinds = {}; }
+  rebuildComboMap();
+}
+function saveKeybinds(){ localStorage.setItem(LS_KEYS, JSON.stringify(keybinds)); }
+function rebuildComboMap(){
+  comboMap = {};
+  for (const [action, combo] of Object.entries(keybinds)){
+    if (!ACTIONS[action] || !combo) continue;
+    comboMap[canonCombo(combo)] = action;
+  }
+}
+loadKeybinds();
+document.addEventListener('keydown', (e)=>{
+  if (!ROLE) return; // only after unlock
+  // ignore when typing in inputs/textarea (except Escape / custom desire)
+  const el = document.activeElement;
+  const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
+  if (typing) return;
+  const combo = eventCombo(e);
+  const action = comboMap[combo];
+  if (action && ACTIONS[action]){
+    e.preventDefault();
+    ACTIONS[action]();
+  }
+});
 
 /* ======= Terminal commands ======= */
 const MAX_HTML_LEN = 120000;
+function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
+function clearTerm(){ termOut.textContent = ""; }
+
 function handleCommand(s){
   const line = s.trim();
   if (!line) return;
@@ -665,12 +678,11 @@ function handleCommand(s){
   if (line === ";help"){
     printLine("Commands:");
     printLine("  ;help / ;clear / ;panic / ;open tools / ;close tools");
-    printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia>");
+    printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia|clear>");
     printLine("  ;browser open [url]   ;browser close   ;browser full   ;browser half");
-    printLine("  ;run html <HTML>      (opens HTML in a new tab)");
-    printLine("  ;theme set bg <#hex>  ;theme set accent <#hex>");
-    printLine("  ;theme set image url <URL>    ;theme clear image");
-    printLine("  ;theme save   ;theme reset");
+    printLine("  ;run html <HTML> (opens HTML in a new tab)");
+    printLine("  ;theme set bg <#hex>  ;theme set accent <#hex>  ;theme set image url <URL>  ;theme clear image  ;theme save  ;theme reset");
+    printLine("  ;bind help  — manage custom keybinds");
     return;
   }
   if (line === ";clear"){ clearTerm(); return; }
@@ -686,11 +698,12 @@ function handleCommand(s){
       docs:["Google Docs","google-docs-icon.png"],
       classroom:["Google Classroom","classroom-favicon.png"],
       khan:["Khan Academy","khan-favicon.png"],
-      wikipedia:["Wikipedia","wikipedia-favicon.png"]
+      wikipedia:["Wikipedia","wikipedia-favicon.png"],
+      clear:[null,null]
     };
-    if (map[arg]){ const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); }
-    else printLine("Unknown cloak target.");
-    return;
+    if (!map[arg]){ printLine("Unknown cloak target."); return; }
+    if (arg==="clear"){ clearTab(); return; }
+    const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); return;
   }
 
   /* Browser controls */
@@ -703,33 +716,54 @@ function handleCommand(s){
   /* Theme via terminal */
   if (line.startsWith(";theme ")){
     const parts = line.split(/\s+/);
-    if (parts[1]==="set" && parts[2]==="bg" && parts[3]){
-      theme.bgColor = parts[3]; themeApply(); printLine("BG color set.");
-      return;
-    }
-    if (parts[1]==="set" && parts[2]==="accent" && parts[3]){
-      theme.accent = parts[3]; themeApply(); printLine("Accent color set.");
-      return;
-    }
-    if (parts[1]==="set" && parts[2]==="image" && parts[3]==="url" && parts[4]){
-      theme.bgDataUrl = parts.slice(4).join(" "); themeApply(); printLine("BG image set (URL).");
-      return;
-    }
-    if (parts[1]==="clear" && parts[2]==="image"){
-      theme.bgDataUrl = null; themeApply(); printLine("BG image cleared.");
-      return;
-    }
+    if (parts[1]==="set" && parts[2]==="bg" && parts[3]){ theme.bgColor = parts[3]; themeApply(); printLine("BG color set."); return; }
+    if (parts[1]==="set" && parts[2]==="accent" && parts[3]){ theme.accent = parts[3]; themeApply(); printLine("Accent color set."); return; }
+    if (parts[1]==="set" && parts[2]==="image" && parts[3]==="url" && parts[4]){ theme.bgDataUrl = parts.slice(4).join(" "); themeApply(); printLine("BG image set (URL)."); return; }
+    if (parts[1]==="clear" && parts[2]==="image"){ theme.bgDataUrl = null; themeApply(); printLine("BG image cleared."); return; }
     if (parts[1]==="save"){ themeSave(); printLine("Theme saved."); return; }
-    if (parts[1]==="reset"){
-      theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null };
-      themeApply(); themeSave(); printLine("Theme reset.");
-      return;
-    }
+    if (parts[1]==="reset"){ theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null }; themeApply(); themeSave(); printLine("Theme reset."); return; }
     printLine("Unknown ;theme command. Try ;help");
     return;
   }
 
-  /* Run HTML snippet in a new tab */
+  /* Keybind management */
+  if (line.startsWith(";bind")){
+    const parts = line.split(/\s+/);
+    if (parts.length===1 || parts[1]==="help"){
+      printLine("Bind commands:");
+      printLine("  ;bind list");
+      printLine("  ;bind set <action> <combo>     e.g. ;bind set terminal ctrl+alt+t");
+      printLine("  ;bind clear <action|all>");
+      printLine("Actions: " + Object.keys(ACTIONS).join(", "));
+      return;
+    }
+    if (parts[1]==="list"){
+      if (!Object.keys(keybinds).length){ printLine("No keybinds set."); return; }
+      for (const [a,c] of Object.entries(keybinds)) printLine(`- ${a} → ${canonCombo(c)}`);
+      return;
+    }
+    if (parts[1]==="set" && parts[2] && parts[3]){
+      const action = parts[2];
+      const combo = parts.slice(3).join("").toLowerCase();
+      if (!ACTIONS[action]){ printLine("Unknown action."); return; }
+      keybinds[action] = combo;
+      saveKeybinds(); rebuildComboMap();
+      printLine(`Bound ${action} to ${canonCombo(combo)}.`);
+      return;
+    }
+    if (parts[1]==="clear" && parts[2]){
+      if (parts[2]==="all"){ keybinds={}; saveKeybinds(); rebuildComboMap(); printLine("Cleared all keybinds."); return; }
+      const action = parts[2];
+      delete keybinds[action];
+      saveKeybinds(); rebuildComboMap();
+      printLine(`Cleared bind for ${action}.`);
+      return;
+    }
+    printLine("Unknown ;bind command. Try ;bind help");
+    return;
+  }
+
+  /* Run HTML snippet */
   if (line.startsWith(";run html ")){
     const html = line.slice(";run html ".length);
     if (!html){ printLine("No HTML provided."); return; }
@@ -743,21 +777,12 @@ function handleCommand(s){
 }
 termIn.addEventListener("keydown",(e)=>{ if (e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
 
-/* ======= Initial state: multi-size DOWN favicon set ======= */
-setTab("Math Help - Down", {
-  "16x16": "down-favicon-16.png",
-  "32x32": "down-favicon-32.png",
-  "64x64": "down-favicon-64.png"
-});
+/* ======= Initial cloaked DOWN favicon ======= */
+setTab("Math Help - Down", { "16x16":"down-favicon-16.png", "32x32":"down-favicon-32.png", "64x64":"down-favicon-64.png" });
 
-/* ======= Browser button disabled until unlock ======= */
+/* Disable open buttons until unlock */
+openTermBtn.disabled = true;
 openBrowserBtn.disabled = true;
-
-/* Enable actions after unlock */
-(function enableAfterUnlock(){
-  const origReveal = reveal;
-  reveal = function(role){ origReveal(role); openBrowserBtn.disabled = false; };
-})();
 
 </script>
 </body>
