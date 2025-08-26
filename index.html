@@ -42,8 +42,12 @@
   .btn img{width:18px;height:18px;border-radius:4px}
   .btn.clear{color:#fca5a5;border-color:#4b1010}
   .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
-  .hint{margin-left:auto;color:#9ca3af;font-size:.9rem}
-  @media (max-width:900px){.hint{display:none}}
+  .hint{margin-left:1rem;color:#9ca3af;font-size:.9rem}
+  @media (max-width:1200px){.hint{display:none}}
+
+  /* Top bar layout groups */
+  .bar-left{display:flex;align-items:center;gap:.5rem}
+  .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
 
   /* Collapse/restore menu */
   #collapseBtn{margin-right:.4rem}
@@ -116,7 +120,6 @@
   #browserErr .msg h3{margin:.2rem 0 .6rem}
   #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
   #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
-
 </style>
 </head>
 <body>
@@ -138,36 +141,42 @@
   <div class="wrap">
     <!-- Top bar -->
     <div class="bar" id="panel">
-      <button id="collapseBtn" class="btn" title="Hide menu">≡</button>
-      <span class="brand"><img src="icon.png" alt="">Math Help</span>
+      <div class="bar-left">
+        <button id="collapseBtn" class="btn" title="Hide menu">≡</button>
+        <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
-      <!-- Cloak buttons -->
-      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
-      <button class="btn clear" id="clearCloak">Clear</button>
+        <!-- Cloak buttons -->
+        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+        <button class="btn clear" id="clearCloak">Clear</button>
 
-      <!-- Panic -->
-      <div class="hint" style="display:flex;align-items:center;gap:.5rem;margin-left:1rem">
-        <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-        <select id="panicSelect" title="Choose panic cloak">
-          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
-          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-        </select>
-        <button id="panicFire" class="btn" type="button">Panic</button>
+        <!-- Panic -->
+        <div class="hint" style="display:flex;align-items:center;gap:.5rem">
+          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+          <select id="panicSelect" title="Choose panic cloak">
+            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
+            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+          </select>
+          <button id="panicFire" class="btn" type="button">Panic</button>
+        </div>
+
+        <!-- Tools & Browser -->
+        <button id="toolsBtn" class="btn">Tools</button>
+        <button id="openBrowser" class="btn">Browser</button>
       </div>
 
-      <!-- Tools, Browser, Terminal button -->
-      <button id="toolsBtn" class="btn">Tools</button>
-      <button id="openBrowser" class="btn">Browser</button>
-      <button id="openTermBtn" class="btn">Terminal</button>
+      <!-- Terminal pinned to top-right -->
+      <div class="bar-right">
+        <button id="openTermBtn" class="btn">Terminal</button>
+      </div>
     </div>
 
     <!-- Embedded Wix area -->
@@ -624,7 +633,6 @@ const ACTIONS = {
   cloak_clear: ()=> clearTab()
 };
 function canonCombo(s){
-  // normalize like "ctrl+alt+t"
   const parts = s.toLowerCase().replace(/\s+/g,'').split('+').filter(Boolean);
   const key = parts.pop(); const mods = parts.sort(); return [...mods, key].join('+');
 }
@@ -633,7 +641,7 @@ function eventCombo(e){
   if (e.ctrlKey || e.metaKey) mods.push('ctrl'); // treat meta as ctrl
   if (e.altKey) mods.push('alt');
   if (e.shiftKey) mods.push('shift');
-  const key = e.key.length===1 ? e.key.toLowerCase() : e.key.toLowerCase(); // 'a', 'f1', etc.
+  const key = e.key.length===1 ? e.key.toLowerCase() : e.key.toLowerCase();
   return [...mods, key].join('+');
 }
 let keybinds = {}; // action -> combo
@@ -653,7 +661,6 @@ function rebuildComboMap(){
 loadKeybinds();
 document.addEventListener('keydown', (e)=>{
   if (!ROLE) return; // only after unlock
-  // ignore when typing in inputs/textarea (except Escape / custom desire)
   const el = document.activeElement;
   const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
   if (typing) return;
@@ -783,7 +790,6 @@ setTab("Math Help - Down", { "16x16":"down-favicon-16.png", "32x32":"down-favico
 /* Disable open buttons until unlock */
 openTermBtn.disabled = true;
 openBrowserBtn.disabled = true;
-
 </script>
 </body>
 </html>
