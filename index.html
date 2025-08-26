@@ -50,14 +50,13 @@
   .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
 
   /* Collapse/restore menu */
-  #collapseBtn{margin-right:.4rem}
   #menuRestore{display:none;position:fixed;top:8px;left:8px;z-index:6000;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
   body.bar-hidden{--bar-h:0}
   body.bar-hidden .bar{display:none !important}
   body.bar-hidden #menuRestore{display:block}
 
   /* Tools drawer */
-  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:340px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
+  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
   #toolsDrawer.open{transform:translateX(0)}
   #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
   .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
@@ -65,6 +64,8 @@
   .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
   .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
   .small{font-size:.85rem;color:#9ca3af}
+  .muted{color:#9ca3af}
+  .pill{font-size:.75rem;padding:.15rem .45rem;border:1px solid #263046;border-radius:999px;background:#0e1526;color:#cbd5e1}
 
   /* Modal (password) */
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
@@ -142,7 +143,6 @@
     <!-- Top bar -->
     <div class="bar" id="panel">
       <div class="bar-left">
-        <button id="collapseBtn" class="btn" title="Hide menu">≡</button>
         <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
         <!-- Cloak buttons -->
@@ -168,14 +168,16 @@
           <button id="panicFire" class="btn" type="button">Panic</button>
         </div>
 
-        <!-- Tools & Browser -->
+        <!-- Tools, Browser, Terminal (left side) -->
         <button id="toolsBtn" class="btn">Tools</button>
         <button id="openBrowser" class="btn">Browser</button>
+        <button id="openTermBtn" class="btn">Terminal</button>
       </div>
 
-      <!-- Terminal pinned to top-right -->
+      <!-- Right side: Keybinds + Close Menu -->
       <div class="bar-right">
-        <button id="openTermBtn" class="btn">Terminal</button>
+        <button id="openKeybindsBtn" class="btn" title="Open Keybinds">Keybinds</button>
+        <button id="collapseBtn" class="btn" title="Hide menu">Close Menu</button>
       </div>
     </div>
 
@@ -262,6 +264,16 @@
         <button id="resetTheme" class="btn" type="button">Reset</button>
       </div>
       <p class="small">Tip: Inside Terminal you can also use <span class="kbd">;bind</span> and <span class="kbd">;theme</span>.</p>
+    </div>
+
+    <!-- Keybinds GUI -->
+    <div class="toolCard" id="kbSection">
+      <h4 style="display:flex;align-items:center;gap:.5rem">Keybinds <span class="pill">New</span></h4>
+      <p class="small" style="margin:.2rem 0 .6rem">Click <strong>Record</strong>, press your combo (e.g. <span class="kbd">Ctrl</span>+<span class="kbd">Alt</span>+<span class="kbd">T</span>), then <strong>Set</strong>. Use Clear to remove a binding.</p>
+      <div id="kbList" style="display:flex;flex-direction:column;gap:.4rem"></div>
+      <div class="toolRow" style="justify-content:flex-end;margin-top:.6rem">
+        <button id="kbClearAll" class="btn" type="button">Clear All</button>
+      </div>
     </div>
   </aside>
 
@@ -352,6 +364,7 @@ const locked  = document.getElementById("locked");
 const panel   = document.getElementById("panel");
 const menuRestore = document.getElementById("menuRestore");
 const collapseBtn = document.getElementById("collapseBtn");
+const openKeybindsBtn = document.getElementById("openKeybindsBtn");
 
 /* Wix Embed */
 const embedArea  = document.getElementById("embedArea");
@@ -403,6 +416,11 @@ const closeBtn = document.getElementById("closeBtn");
 const fullBtn  = document.getElementById("fullBtn");
 const halfBtn  = document.getElementById("halfBtn");
 
+/* Keybinds UI */
+const kbSection = document.getElementById("kbSection");
+const kbList = document.getElementById("kbList");
+const kbClearAll = document.getElementById("kbClearAll");
+
 /* ----- Favicons ----- */
 let __iconVer = 0;
 function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
@@ -438,20 +456,16 @@ function reveal(role){
   locked.style.display = "none";
   panel.classList.add("unlocked");
 
-  // restore saved cloak or default
   const saved = loadCloak();
   if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
   else setTab("Math Help", "icon.png");
 
-  // Apply saved theme & menu state
   themeLoad();
   restoreMenu();
 
-  // Enable buttons
   openTermBtn.disabled = false;
   openBrowserBtn.disabled = false;
 
-  // show embed
   initEmbed();
 }
 function submitPassword(){
@@ -537,7 +551,7 @@ clearBgImgBtn.addEventListener('click', ()=>{ theme.bgDataUrl = null; themeApply
 resetThemeBtn.addEventListener('click', ()=>{ theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null }; themeApply(); themeSave(); bgColorPick.value = theme.bgColor; accentPick.value = theme.accent; });
 bgImageFile.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { theme.bgDataUrl = reader.result; themeApply(); themeSave(); }; reader.readAsDataURL(f); });
 
-/* ======= Menu collapse/restore ======= */
+/* ======= Menu collapse/restore (top-right close) ======= */
 function hideMenu(){ document.body.classList.add('bar-hidden'); localStorage.setItem(LS_MENU, 'hidden'); }
 function showMenu(){ document.body.classList.remove('bar-hidden'); localStorage.setItem(LS_MENU, 'shown'); }
 function toggleMenu(){ if (document.body.classList.contains('bar-hidden')) showMenu(); else hideMenu(); }
@@ -616,7 +630,7 @@ document.querySelectorAll('.btn[data-title]').forEach(btn=>{
 });
 document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-/* ======= Keybind system (set from Terminal) ======= */
+/* ======= Keybind system (logic) ======= */
 const ACTIONS = {
   terminal: ()=> openTerm(),
   tools_toggle: ()=> document.getElementById('toolsDrawer').classList.contains('open') ? closeTools() : openTools(),
@@ -632,6 +646,21 @@ const ACTIONS = {
   cloak_wikipedia: ()=> { setTab("Wikipedia","wikipedia-favicon.png"); saveCloak("Wikipedia","wikipedia-favicon.png"); },
   cloak_clear: ()=> clearTab()
 };
+const ACTION_LABELS = {
+  terminal:"Open Terminal",
+  tools_toggle:"Toggle Tools",
+  menu_toggle:"Toggle Menu (fullscreen embed)",
+  panic:"Panic Cloak",
+  browser_open:"Open Browser",
+  browser_close:"Close Browser",
+  cloak_google:"Cloak → Google",
+  cloak_calculator:"Cloak → Calculator",
+  cloak_docs:"Cloak → Google Docs",
+  cloak_classroom:"Cloak → Classroom",
+  cloak_khan:"Cloak → Khan Academy",
+  cloak_wikipedia:"Cloak → Wikipedia",
+  cloak_clear:"Cloak → Clear"
+};
 function canonCombo(s){
   const parts = s.toLowerCase().replace(/\s+/g,'').split('+').filter(Boolean);
   const key = parts.pop(); const mods = parts.sort(); return [...mods, key].join('+');
@@ -641,15 +670,12 @@ function eventCombo(e){
   if (e.ctrlKey || e.metaKey) mods.push('ctrl'); // treat meta as ctrl
   if (e.altKey) mods.push('alt');
   if (e.shiftKey) mods.push('shift');
-  const key = e.key.length===1 ? e.key.toLowerCase() : e.key.toLowerCase();
+  let key = e.key.toLowerCase();
   return [...mods, key].join('+');
 }
-let keybinds = {}; // action -> combo
-let comboMap = {}; // combo -> action
-function loadKeybinds(){
-  try{ keybinds = JSON.parse(localStorage.getItem(LS_KEYS)||'{}'); }catch{ keybinds = {}; }
-  rebuildComboMap();
-}
+let keybinds = {};
+let comboMap = {};
+function loadKeybinds(){ try{ keybinds = JSON.parse(localStorage.getItem(LS_KEYS)||'{}'); }catch{ keybinds = {}; } rebuildComboMap(); }
 function saveKeybinds(){ localStorage.setItem(LS_KEYS, JSON.stringify(keybinds)); }
 function rebuildComboMap(){
   comboMap = {};
@@ -660,7 +686,7 @@ function rebuildComboMap(){
 }
 loadKeybinds();
 document.addEventListener('keydown', (e)=>{
-  if (!ROLE) return; // only after unlock
+  if (!ROLE) return;
   const el = document.activeElement;
   const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
   if (typing) return;
@@ -672,7 +698,82 @@ document.addEventListener('keydown', (e)=>{
   }
 });
 
-/* ======= Terminal commands ======= */
+/* ======= Keybinds GUI in Tools ======= */
+let recordingFor = null;
+function renderKeybindsUI(){
+  kbList.innerHTML = "";
+  for (const [action,label] of Object.entries(ACTION_LABELS)){
+    const row = document.createElement("div");
+    row.className = "toolRow";
+    row.innerHTML = `
+      <label class="small" style="width:155px">${label}</label>
+      <input class="input kb-input" data-action="${action}" placeholder="e.g. ctrl+alt+t" value="${keybinds[action] ? canonCombo(keybinds[action]) : ""}" style="flex:1" />
+      <button class="btn kb-record" data-action="${action}" type="button">Record</button>
+      <button class="btn kb-set" data-action="${action}" type="button">Set</button>
+      <button class="btn kb-clear" data-action="${action}" type="button" title="Clear">✕</button>
+    `;
+    kbList.appendChild(row);
+  }
+  wireKeybindsUI();
+}
+function wireKeybindsUI(){
+  kbList.querySelectorAll(".kb-record").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      recordingFor = btn.getAttribute("data-action");
+      kbList.querySelectorAll(".kb-record").forEach(b=>b.textContent="Record");
+      btn.textContent = "Press keys…";
+      const input = kbList.querySelector(`.kb-input[data-action="${recordingFor}"]`);
+      input.focus();
+    });
+  });
+  kbList.querySelectorAll(".kb-set").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const action = btn.getAttribute("data-action");
+      const input = kbList.querySelector(`.kb-input[data-action="${action}"]`);
+      const val = input.value.trim().toLowerCase();
+      if (!ACTIONS[action]) return alert("Unknown action");
+      if (!val) return alert("Enter a combo like ctrl+alt+t");
+      keybinds[action] = val;
+      saveKeybinds(); rebuildComboMap();
+      input.value = canonCombo(val);
+    });
+  });
+  kbList.querySelectorAll(".kb-clear").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const action = btn.getAttribute("data-action");
+      delete keybinds[action];
+      saveKeybinds(); rebuildComboMap();
+      const input = kbList.querySelector(`.kb-input[data-action="${action}"]`);
+      if (input) input.value = "";
+    });
+  });
+}
+document.addEventListener("keydown",(e)=>{
+  if (!recordingFor) return;
+  e.preventDefault();
+  const combo = eventCombo(e);
+  const input = kbList.querySelector(`.kb-input[data-action="${recordingFor}"]`);
+  if (input) input.value = combo;
+  kbList.querySelectorAll(".kb-record").forEach(b=>b.textContent="Record");
+  recordingFor = null;
+});
+kbClearAll.addEventListener("click", ()=>{
+  if (!confirm("Clear all keybinds?")) return;
+  keybinds = {};
+  saveKeybinds(); rebuildComboMap();
+  renderKeybindsUI();
+});
+function openKeybinds(){
+  openTools();
+  // ensure UI is rendered before scroll
+  setTimeout(()=>{
+    document.getElementById("kbSection").scrollIntoView({behavior:"smooth", block:"start"});
+  }, 50);
+}
+openKeybindsBtn.addEventListener("click", openKeybinds);
+renderKeybindsUI();
+
+/* ======= Terminal commands (kept) ======= */
 const MAX_HTML_LEN = 120000;
 function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
 function clearTerm(){ termOut.textContent = ""; }
@@ -733,7 +834,7 @@ function handleCommand(s){
     return;
   }
 
-  /* Keybind management */
+  /* Terminal keybind management (still supported) */
   if (line.startsWith(";bind")){
     const parts = line.split(/\s+/);
     if (parts.length===1 || parts[1]==="help"){
@@ -756,14 +857,16 @@ function handleCommand(s){
       keybinds[action] = combo;
       saveKeybinds(); rebuildComboMap();
       printLine(`Bound ${action} to ${canonCombo(combo)}.`);
+      renderKeybindsUI();
       return;
     }
     if (parts[1]==="clear" && parts[2]){
-      if (parts[2]==="all"){ keybinds={}; saveKeybinds(); rebuildComboMap(); printLine("Cleared all keybinds."); return; }
+      if (parts[2]==="all"){ keybinds={}; saveKeybinds(); rebuildComboMap(); printLine("Cleared all keybinds."); renderKeybindsUI(); return; }
       const action = parts[2];
       delete keybinds[action];
       saveKeybinds(); rebuildComboMap();
       printLine(`Cleared bind for ${action}.`);
+      renderKeybindsUI();
       return;
     }
     printLine("Unknown ;bind command. Try ;bind help");
