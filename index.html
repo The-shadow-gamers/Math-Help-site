@@ -20,7 +20,7 @@
   html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   body{background: var(--bg) no-repeat center/cover fixed;}
   body.with-bg-img{background-color:var(--bg,#0f172a);background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed;}
-  .wrap{height:100%;display:grid;grid-template-rows:var(--bar-h) 1fr}
+  .wrap{height:100%;display:grid;grid-template-rows:auto 1fr} /* auto bar height for multi-row */
 
   /* Invisible unlock hotspot */
   #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
@@ -33,8 +33,9 @@
   #lockedIcon{width:64px;height:64px;display:block;margin:0 auto 10px;border-radius:12px}
 
   /* Top bar */
-  .bar{display:none;align-items:center;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
+  .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
   .bar.unlocked{display:flex}
+  .bar-row{width:100%;display:flex;align-items:center;gap:.5rem}
   .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
   .brand img{width:22px;height:22px;border-radius:6px}
   .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:#e5e7eb;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
@@ -45,7 +46,6 @@
   .hint{margin-left:1rem;color:#9ca3af;font-size:.9rem}
   @media (max-width:1200px){.hint{display:none}}
 
-  /* Top bar layout groups */
   .bar-left{display:flex;align-items:center;gap:.5rem}
   .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
 
@@ -64,7 +64,6 @@
   .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
   .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
   .small{font-size:.85rem;color:#9ca3af}
-  .muted{color:#9ca3af}
   .pill{font-size:.75rem;padding:.15rem .45rem;border:1px solid #263046;border-radius:999px;background:#0e1526;color:#cbd5e1}
 
   /* Modal (password) */
@@ -121,6 +120,25 @@
   #browserErr .msg h3{margin:.2rem 0 .6rem}
   #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
   #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
+
+  /* Game window (Burrito Bison) */
+  #gameDesk{display:none;position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:3350;pointer-events:none}
+  #gameWin{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(1100px,96vw);height:min(80vh,calc(100vh - var(--bar-h) - 36px));background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;pointer-events:auto}
+  #gameTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c;cursor:move}
+  #gameTitle{font-weight:600}
+  #gameCtrls{display:flex;gap:.4rem}
+  #gameBody{position:absolute;inset:44px 0 0 0}
+  #gameFrame{position:absolute;inset:0;border:0;width:100%;height:100%;background:#000}
+  #gameLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
+  #gameLoaderInner{text-align:center;max-width:360px}
+  #gameLogo{width:90px;height:90px;border-radius:14px;display:block;margin:0 auto 12px}
+  #gameProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
+  #gameProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#a3e635);animation:loading 2.2s infinite}
+  #gameErr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
+  #gameErr .msg{max-width:520px}
+  #gameErr .msg h3{margin:.2rem 0 .6rem}
+  #gameWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
+  #gameWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
 </style>
 </head>
 <body>
@@ -140,44 +158,54 @@
   </div>
 
   <div class="wrap">
-    <!-- Top bar -->
+    <!-- Top bar (two rows) -->
     <div class="bar" id="panel">
-      <div class="bar-left">
-        <span class="brand"><img src="icon.png" alt="">Math Help</span>
+      <!-- Row 1 -->
+      <div class="bar-row">
+        <div class="bar-left">
+          <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
-        <!-- Cloak buttons -->
-        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
-        <button class="btn clear" id="clearCloak">Clear</button>
+          <!-- Cloak buttons -->
+          <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+          <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+          <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+          <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+          <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+          <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+          <button class="btn clear" id="clearCloak">Clear</button>
 
-        <!-- Panic -->
-        <div class="hint" style="display:flex;align-items:center;gap:.5rem">
-          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-          <select id="panicSelect" title="Choose panic cloak">
-            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
-            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-          </select>
-          <button id="panicFire" class="btn" type="button">Panic</button>
+          <!-- Panic -->
+          <div class="hint" style="display:flex;align-items:center;gap:.5rem">
+            <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+            <select id="panicSelect" title="Choose panic cloak">
+              <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+              <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+              <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+              <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
+              <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+              <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+            </select>
+            <button id="panicFire" class="btn" type="button">Panic</button>
+          </div>
+
+          <!-- Tools, Browser, Terminal -->
+          <button id="toolsBtn" class="btn">Tools</button>
+          <button id="openBrowser" class="btn">Browser</button>
+          <button id="openTermBtn" class="btn">Terminal</button>
         </div>
 
-        <!-- Tools, Browser, Terminal (left side) -->
-        <button id="toolsBtn" class="btn">Tools</button>
-        <button id="openBrowser" class="btn">Browser</button>
-        <button id="openTermBtn" class="btn">Terminal</button>
+        <!-- Right side -->
+        <div class="bar-right">
+          <button id="openKeybindsBtn" class="btn" title="Open Keybinds">Keybinds</button>
+          <button id="collapseBtn" class="btn" title="Hide menu">Close Menu</button>
+        </div>
       </div>
 
-      <!-- Right side: Keybinds + Close Menu -->
-      <div class="bar-right">
-        <button id="openKeybindsBtn" class="btn" title="Open Keybinds">Keybinds</button>
-        <button id="collapseBtn" class="btn" title="Hide menu"> </button>
+      <!-- Row 2 (Games) -->
+      <div class="bar-row" id="gamesRow" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
+        <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
+        <button id="openBurrito" class="btn">Burrito Bison (Embed)</button>
+        <a id="openBurritoTab" class="btn" href="https://stately-arithmetic-c0991f.netlify.app/" target="_blank" rel="noopener noreferrer">Open in New Tab</a>
       </div>
     </div>
 
@@ -333,8 +361,39 @@
         <div id="browserErr">
           <div class="msg">
             <h3>This site refused to load in an iframe.</h3>
-            <p style="opacity:.8;margin:.4rem 0 1rem">You can open it directly like a gooood boyyy:</p>
+            <p style="opacity:.8;margin:.4rem 0 1rem">You can open it directly:</p>
             <p><a id="browserOpenExternal" class="btn" target="_blank" rel="noopener noreferrer">Open in new tab</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game overlay -->
+  <div id="gameDesk" aria-hidden="true">
+    <div id="gameWin" role="dialog" aria-label="Game window">
+      <div id="gameTop">
+        <div id="gameTitle">Burrito Bison</div>
+        <div id="gameCtrls">
+          <button id="gHalfBtn" class="ctrl" title="Half screen">▭▭</button>
+          <button id="gFullBtn" class="ctrl" title="Full screen">▢</button>
+          <button id="gCloseBtn" class="ctrl" title="Close">✕</button>
+        </div>
+      </div>
+      <div id="gameBody">
+        <iframe id="gameFrame" title="Game Frame"></iframe>
+        <div id="gameLoader">
+          <div id="gameLoaderInner">
+            <img id="gameLogo" src="icon.png" alt="Loading">
+            <div id="gameProg"><span></span></div>
+            <p class="small" style="text-align:center;margin-top:.6rem">Launching game…</p>
+          </div>
+        </div>
+        <div id="gameErr">
+          <div class="msg">
+            <h3>Couldn’t load the game here.</h3>
+            <p style="opacity:.8;margin:.4rem 0 1rem">The site may block embedding. You can open it directly:</p>
+            <p><a id="gameOpenExternal" class="btn" target="_blank" rel="noopener noreferrer">Open in new tab</a></p>
           </div>
         </div>
       </div>
@@ -344,7 +403,8 @@
 <script>
 /* ========= Config ========= */
 const EMBED_URL = "https://videogamenerds.wixstudio.com/math-help/";
-const MINI_BROWSER_URL = "https://nabeelshar.github.io/Windows-11/";
+const MINI_BROWSER_URL = "https://win11-emu-react.vercel.app/";
+const BURRITO_URL = "https://stately-arithmetic-c0991f.netlify.app/"; // external game site
 
 /* ========= Passwords ========= */
 const ADMIN_PASSWORD = "imadmin";
@@ -396,7 +456,7 @@ const timerStop  = document.getElementById("timerStop");
 const timerReset = document.getElementById("timerReset");
 const timerReadout = document.getElementById("timerReadout");
 
-/* Terminal (button open) */
+/* Terminal */
 const termDesk  = document.getElementById("termDesk");
 const termOut   = document.getElementById("termOut");
 const termIn    = document.getElementById("termIn");
@@ -415,6 +475,19 @@ const browserOpenExternal = document.getElementById("browserOpenExternal");
 const closeBtn = document.getElementById("closeBtn");
 const fullBtn  = document.getElementById("fullBtn");
 const halfBtn  = document.getElementById("halfBtn");
+
+/* Game */
+const openBurritoBtn = document.getElementById("openBurrito");
+const gameDesk = document.getElementById("gameDesk");
+const gameWin  = document.getElementById("gameWin");
+const gameTop  = document.getElementById("gameTop");
+const gameFrame= document.getElementById("gameFrame");
+const gameLoader = document.getElementById("gameLoader");
+const gameErr = document.getElementById("gameErr");
+const gameOpenExternal = document.getElementById("gameOpenExternal");
+const gCloseBtn = document.getElementById("gCloseBtn");
+const gFullBtn  = document.getElementById("gFullBtn");
+const gHalfBtn  = document.getElementById("gHalfBtn");
 
 /* Keybinds UI */
 const kbSection = document.getElementById("kbSection");
@@ -451,6 +524,13 @@ hotspot.addEventListener("click", openPw);
 let ROLE = null;
 let loadTimer = null;
 
+function updateBarHeight(){
+  if (document.body.classList.contains('bar-hidden')) return;
+  const h = panel.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--bar-h', h + 'px');
+}
+window.addEventListener('resize', updateBarHeight);
+
 function reveal(role){
   ROLE = role;
   locked.style.display = "none";
@@ -467,6 +547,7 @@ function reveal(role){
   openBrowserBtn.disabled = false;
 
   initEmbed();
+  updateBarHeight();
 }
 function submitPassword(){
   const pass = pwInput.value.trim();
@@ -551,22 +632,21 @@ clearBgImgBtn.addEventListener('click', ()=>{ theme.bgDataUrl = null; themeApply
 resetThemeBtn.addEventListener('click', ()=>{ theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null }; themeApply(); themeSave(); bgColorPick.value = theme.bgColor; accentPick.value = theme.accent; });
 bgImageFile.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { theme.bgDataUrl = reader.result; themeApply(); themeSave(); }; reader.readAsDataURL(f); });
 
-/* ======= Menu collapse/restore (top-right close) ======= */
-function hideMenu(){ document.body.classList.add('bar-hidden'); localStorage.setItem(LS_MENU, 'hidden'); }
-function showMenu(){ document.body.classList.remove('bar-hidden'); localStorage.setItem(LS_MENU, 'shown'); }
-function toggleMenu(){ if (document.body.classList.contains('bar-hidden')) showMenu(); else hideMenu(); }
+/* ======= Menu collapse/restore ======= */
+function hideMenu(){ document.body.classList.add('bar-hidden'); localStorage.setItem(LS_MENU, 'hidden'); document.documentElement.style.setProperty('--bar-h','0px'); }
+function showMenu(){ document.body.classList.remove('bar-hidden'); localStorage.setItem(LS_MENU, 'shown'); updateBarHeight(); }
 collapseBtn.addEventListener('click', hideMenu);
 menuRestore.addEventListener('click', showMenu);
 function restoreMenu(){ const st = localStorage.getItem(LS_MENU)||'shown'; if (st==='hidden') hideMenu(); else showMenu(); }
 
-/* ======= Terminal (open via button) ======= */
+/* ======= Terminal ======= */
 function openTerm(){ termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false"); termIn.value=""; termIn.focus(); if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n"; }
 function closeTerm(){ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); }
 openTermBtn.addEventListener("click", openTerm);
 termClose.addEventListener("click", closeTerm);
 document.addEventListener("keydown",(e)=>{ if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
 
-/* ======= Browser (button + controls + loader + fallback) ======= */
+/* ======= Browser ======= */
 let browserLoadTimer = null;
 function openBrowser(url = MINI_BROWSER_URL){
   browserDesk.style.display = "block"; browserDesk.setAttribute("aria-hidden","false");
@@ -588,8 +668,8 @@ fullBtn.addEventListener('click', fullBrowser);
 halfBtn.addEventListener('click', halfBrowser);
 browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display = "none"; browserErr.style.display = "none"; });
 
-/* Drag move */
-(function dragInit(){
+/* Drag move (Browser) */
+(function dragBrowser(){
   let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
   browserTop.addEventListener('mousedown', (e)=>{
     if (browserWin.classList.contains('full') || browserWin.classList.contains('half')) return;
@@ -603,6 +683,48 @@ browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); brow
     browserWin.style.left = (startLeft + dx) + "px";
     browserWin.style.top  = (startTop  + dy) + "px";
     browserWin.style.transform = "translateX(0)";
+  });
+  window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
+})();
+
+/* ======= Game (Burrito Bison) ======= */
+let gameLoadTimer = null;
+function openGame(url = BURRITO_URL){
+  gameDesk.style.display = "block"; gameDesk.setAttribute("aria-hidden","false");
+  gameWin.classList.remove('full','half');
+  gameLoader.style.display = "flex";
+  gameErr.style.display = "none";
+  gameFrame.removeAttribute('src');
+  gameFrame.src = url;
+  gameOpenExternal.href = url;
+  clearTimeout(gameLoadTimer);
+  gameLoadTimer = setTimeout(()=>{ gameLoader.style.display = "none"; gameErr.style.display = "flex"; }, 7000);
+}
+function closeGame(){ gameDesk.style.display = "none"; gameDesk.setAttribute("aria-hidden","true"); }
+function fullGame(){ gameWin.classList.add('full'); gameWin.classList.remove('half'); }
+function halfGame(){ gameWin.classList.add('half'); gameWin.classList.remove('full'); }
+openBurritoBtn.addEventListener('click', ()=> openGame());
+gCloseBtn.addEventListener('click', closeGame);
+gFullBtn.addEventListener('click', fullGame);
+gHalfBtn.addEventListener('click', halfGame);
+gameFrame.addEventListener('load', ()=>{ clearTimeout(gameLoadTimer); gameLoader.style.display = "none"; gameErr.style.display = "none"; });
+
+/* Drag move (Game) */
+(function dragGame(){
+  let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
+  const gameTop = document.getElementById('gameTop');
+  gameTop.addEventListener('mousedown', (e)=>{
+    if (gameWin.classList.contains('full') || gameWin.classList.contains('half')) return;
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    const r = gameWin.getBoundingClientRect(); startLeft=r.left; startTop=r.top;
+    document.body.style.userSelect="none";
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if (!dragging) return;
+    const dx=e.clientX - sx, dy=e.clientY - sy;
+    gameWin.style.left = (startLeft + dx) + "px";
+    gameWin.style.top  = (startTop  + dy) + "px";
+    gameWin.style.transform = "translateX(0)";
   });
   window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
 })();
@@ -630,11 +752,11 @@ document.querySelectorAll('.btn[data-title]').forEach(btn=>{
 });
 document.getElementById('clearCloak').addEventListener('click', clearTab);
 
-/* ======= Keybind system (logic) ======= */
+/* ======= Keybind system ======= */
 const ACTIONS = {
   terminal: ()=> openTerm(),
   tools_toggle: ()=> document.getElementById('toolsDrawer').classList.contains('open') ? closeTools() : openTools(),
-  menu_toggle: ()=> toggleMenu(),
+  menu_toggle: ()=> { const hidden=document.body.classList.contains('bar-hidden'); hidden?showMenu():hideMenu(); },
   panic: ()=> triggerPanic(),
   browser_open: ()=> openBrowser(),
   browser_close: ()=> closeBrowser(),
@@ -644,7 +766,12 @@ const ACTIONS = {
   cloak_classroom: ()=> { setTab("Google Classroom","classroom-favicon.png"); saveCloak("Google Classroom","classroom-favicon.png"); },
   cloak_khan: ()=> { setTab("Khan Academy","khan-favicon.png"); saveCloak("Khan Academy","khan-favicon.png"); },
   cloak_wikipedia: ()=> { setTab("Wikipedia","wikipedia-favicon.png"); saveCloak("Wikipedia","wikipedia-favicon.png"); },
-  cloak_clear: ()=> clearTab()
+  cloak_clear: ()=> clearTab(),
+  /* Game */
+  game_open: ()=> openGame(),
+  game_close: ()=> closeGame(),
+  game_full: ()=> fullGame(),
+  game_half: ()=> halfGame()
 };
 const ACTION_LABELS = {
   terminal:"Open Terminal",
@@ -659,7 +786,11 @@ const ACTION_LABELS = {
   cloak_classroom:"Cloak → Classroom",
   cloak_khan:"Cloak → Khan Academy",
   cloak_wikipedia:"Cloak → Wikipedia",
-  cloak_clear:"Cloak → Clear"
+  cloak_clear:"Cloak → Clear",
+  game_open:"Open Game (Burrito Bison)",
+  game_close:"Close Game",
+  game_full:"Game Full Screen",
+  game_half:"Game Half Screen"
 };
 function canonCombo(s){
   const parts = s.toLowerCase().replace(/\s+/g,'').split('+').filter(Boolean);
@@ -667,23 +798,16 @@ function canonCombo(s){
 }
 function eventCombo(e){
   const mods = [];
-  if (e.ctrlKey || e.metaKey) mods.push('ctrl'); // treat meta as ctrl
+  if (e.ctrlKey || e.metaKey) mods.push('ctrl');
   if (e.altKey) mods.push('alt');
   if (e.shiftKey) mods.push('shift');
-  let key = e.key.toLowerCase();
-  return [...mods, key].join('+');
+  return [...mods, e.key.toLowerCase()].join('+');
 }
 let keybinds = {};
 let comboMap = {};
 function loadKeybinds(){ try{ keybinds = JSON.parse(localStorage.getItem(LS_KEYS)||'{}'); }catch{ keybinds = {}; } rebuildComboMap(); }
 function saveKeybinds(){ localStorage.setItem(LS_KEYS, JSON.stringify(keybinds)); }
-function rebuildComboMap(){
-  comboMap = {};
-  for (const [action, combo] of Object.entries(keybinds)){
-    if (!ACTIONS[action] || !combo) continue;
-    comboMap[canonCombo(combo)] = action;
-  }
-}
+function rebuildComboMap(){ comboMap = {}; for (const [a,c] of Object.entries(keybinds)){ if (!ACTIONS[a] || !c) continue; comboMap[canonCombo(c)] = a; } }
 loadKeybinds();
 document.addEventListener('keydown', (e)=>{
   if (!ROLE) return;
@@ -692,13 +816,13 @@ document.addEventListener('keydown', (e)=>{
   if (typing) return;
   const combo = eventCombo(e);
   const action = comboMap[combo];
-  if (action && ACTIONS[action]){
-    e.preventDefault();
-    ACTIONS[action]();
-  }
+  if (action && ACTIONS[action]){ e.preventDefault(); ACTIONS[action](); }
 });
 
-/* ======= Keybinds GUI in Tools ======= */
+/* ======= Keybinds GUI ======= */
+const kbSection = document.getElementById("kbSection");
+const kbList = document.getElementById("kbList");
+const kbClearAll = document.getElementById("kbClearAll");
 let recordingFor = null;
 function renderKeybindsUI(){
   kbList.innerHTML = "";
@@ -706,7 +830,7 @@ function renderKeybindsUI(){
     const row = document.createElement("div");
     row.className = "toolRow";
     row.innerHTML = `
-      <label class="small" style="width:155px">${label}</label>
+      <label class="small" style="width:170px">${label}</label>
       <input class="input kb-input" data-action="${action}" placeholder="e.g. ctrl+alt+t" value="${keybinds[action] ? canonCombo(keybinds[action]) : ""}" style="flex:1" />
       <button class="btn kb-record" data-action="${action}" type="button">Record</button>
       <button class="btn kb-set" data-action="${action}" type="button">Set</button>
@@ -765,15 +889,12 @@ kbClearAll.addEventListener("click", ()=>{
 });
 function openKeybinds(){
   openTools();
-  // ensure UI is rendered before scroll
-  setTimeout(()=>{
-    document.getElementById("kbSection").scrollIntoView({behavior:"smooth", block:"start"});
-  }, 50);
+  setTimeout(()=>{ document.getElementById("kbSection").scrollIntoView({behavior:"smooth", block:"start"}); }, 50);
 }
 openKeybindsBtn.addEventListener("click", openKeybinds);
 renderKeybindsUI();
 
-/* ======= Terminal commands (kept) ======= */
+/* ======= Terminal commands ======= */
 const MAX_HTML_LEN = 120000;
 function printLine(x=""){ const esc = x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
 function clearTerm(){ termOut.textContent = ""; }
@@ -788,6 +909,7 @@ function handleCommand(s){
     printLine("  ;help / ;clear / ;panic / ;open tools / ;close tools");
     printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia|clear>");
     printLine("  ;browser open [url]   ;browser close   ;browser full   ;browser half");
+    printLine("  ;game open [url]      ;game close     ;game full      ;game half");
     printLine("  ;run html <HTML> (opens HTML in a new tab)");
     printLine("  ;theme set bg <#hex>  ;theme set accent <#hex>  ;theme set image url <URL>  ;theme clear image  ;theme save  ;theme reset");
     printLine("  ;bind help  — manage custom keybinds");
@@ -798,6 +920,7 @@ function handleCommand(s){
   if (line === ";open tools"){ openTools(); return; }
   if (line === ";close tools"){ closeTools(); return; }
 
+  /* Cloak */
   if (line.startsWith(";cloak ")){
     const arg = line.slice(7).trim().toLowerCase();
     const map = {
@@ -814,14 +937,21 @@ function handleCommand(s){
     const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); return;
   }
 
-  /* Browser controls */
+  /* Browser */
   if (line === ";browser open"){ openBrowser(); return; }
   if (line.startsWith(";browser open ")){ const url=line.slice(";browser open ".length).trim(); openBrowser(url || MINI_BROWSER_URL); return; }
   if (line === ";browser close"){ closeBrowser(); return; }
   if (line === ";browser full"){ fullBrowser(); return; }
   if (line === ";browser half"){ halfBrowser(); return; }
 
-  /* Theme via terminal */
+  /* Game */
+  if (line === ";game open"){ openGame(); return; }
+  if (line.startsWith(";game open ")){ const url=line.slice(";game open ".length).trim(); openGame(url || BURRITO_URL); return; }
+  if (line === ";game close"){ closeGame(); return; }
+  if (line === ";game full"){ fullGame(); return; }
+  if (line === ";game half"){ halfGame(); return; }
+
+  /* Theme */
   if (line.startsWith(";theme ")){
     const parts = line.split(/\s+/);
     if (parts[1]==="set" && parts[2]==="bg" && parts[3]){ theme.bgColor = parts[3]; themeApply(); printLine("BG color set."); return; }
@@ -834,13 +964,13 @@ function handleCommand(s){
     return;
   }
 
-  /* Terminal keybind management (still supported) */
+  /* Keybinds */
   if (line.startsWith(";bind")){
     const parts = line.split(/\s+/);
     if (parts.length===1 || parts[1]==="help"){
       printLine("Bind commands:");
       printLine("  ;bind list");
-      printLine("  ;bind set <action> <combo>     e.g. ;bind set terminal ctrl+alt+t");
+      printLine("  ;bind set <action> <combo>  e.g. ;bind set terminal ctrl+alt+t");
       printLine("  ;bind clear <action|all>");
       printLine("Actions: " + Object.keys(ACTIONS).join(", "));
       return;
@@ -854,8 +984,7 @@ function handleCommand(s){
       const action = parts[2];
       const combo = parts.slice(3).join("").toLowerCase();
       if (!ACTIONS[action]){ printLine("Unknown action."); return; }
-      keybinds[action] = combo;
-      saveKeybinds(); rebuildComboMap();
+      keybinds[action] = combo; saveKeybinds(); rebuildComboMap();
       printLine(`Bound ${action} to ${canonCombo(combo)}.`);
       renderKeybindsUI();
       return;
@@ -863,10 +992,8 @@ function handleCommand(s){
     if (parts[1]==="clear" && parts[2]){
       if (parts[2]==="all"){ keybinds={}; saveKeybinds(); rebuildComboMap(); printLine("Cleared all keybinds."); renderKeybindsUI(); return; }
       const action = parts[2];
-      delete keybinds[action];
-      saveKeybinds(); rebuildComboMap();
-      printLine(`Cleared bind for ${action}.`);
-      renderKeybindsUI();
+      delete keybinds[action]; saveKeybinds(); rebuildComboMap();
+      printLine(`Cleared bind for ${action}.`); renderKeybindsUI();
       return;
     }
     printLine("Unknown ;bind command. Try ;bind help");
