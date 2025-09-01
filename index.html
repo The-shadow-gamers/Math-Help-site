@@ -66,7 +66,7 @@
   .small{font-size:.85rem;color:#9ca3af}
   .pill{font-size:.75rem;padding:.15rem .45rem;border:1px solid #263046;border-radius:999px;background:#0e1526;color:#cbd5e1}
 
-  /* Modal (password) */
+  /* Modal (password & chooser) */
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
   .modal.show{display:flex}
   .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
@@ -114,6 +114,9 @@
   #browserErr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
   #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
   #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
+
+  /* Games row label tweak */
+  #gamesRow .brand{border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af}
 </style>
 </head>
 <body>
@@ -178,7 +181,7 @@
 
       <!-- Row 2 (Games) -->
       <div class="bar-row" id="gamesRow" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
-        <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
+        <span class="brand">Games</span>
         <button id="openBurrito" class="btn">Burrito Bison</button>
       </div>
     </div>
@@ -297,6 +300,21 @@
     </div>
   </div>
 
+  <!-- Browser Chooser Modal -->
+  <div id="browserChooser" class="modal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <div class="card">
+      <h2>Open Browser</h2>
+      <p>Choose which environment to open.</p>
+      <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
+        <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
+        <button id="chooseWin11" class="primary" type="button">Windows 11</button>
+        <button class="secondary" data-close type="button">Cancel</button>
+      </div>
+      <p class="small" style="margin-top:.6rem;opacity:.8">Tip: your last choice is remembered.</p>
+    </div>
+  </div>
+
   <!-- Terminal -->
   <div id="termDesk" aria-hidden="true" style="display:none">
     <div id="termBox">
@@ -329,23 +347,25 @@
           <div id="browserLoaderInner">
             <img id="browserLogo" src="icon.png" alt="Loading">
             <div id="browserProg"><span></span></div>
-            <p class="small" style="text-align:center;margin-top:.6rem">Launching Windows 11…</p>
+            <p class="small" style="text-align:center;margin-top:.6rem">Launching…</p>
           </div>
         </div>
-        <div id="browserErr" style="display:none;text-align:center;padding:1rem">Couldn’t load.</div>
+        <div id="browserErr" style="display:none;text-align:center;padding:1rem">
+          Couldn’t load. The site may block iframes.
+        </div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
 /* ========= Config ========= */
 const EMBED_URL = "https://videogamenerds.wixstudio.com/math-help/";
 const MINI_BROWSER_URL = "https://win11-emu-react.vercel.app/";
+const BEAN_URL = "https://mbxp.vercel.app/";
 
-/* Use your working Burrito Bison URL (new tab is safest for Unity) */
-const BURRITO_URL = "/burrito/";
-// If you prefer a local path with Netlify proxy, set instead:
-// const BURRITO_URL = "/burrito/";
+/* Game (open safely in new tab) */
+const BURRITO_URL = "https://nintendoboi222.github.io/games/Burrito-Bison/";
 
 /* ========= Passwords ========= */
 const ADMIN_PASSWORD = "imadmin";
@@ -358,6 +378,7 @@ const LS_NOTE  = "mh_note";
 const LS_THEME = "mh_theme";
 const LS_KEYS  = "mh_keybinds";
 const LS_MENU  = "mh_menu_state";
+const LS_BROWSER_CHOICE = "mh_browser_choice"; // "bean" | "win11"
 
 /* ========= Elements ========= */
 const hotspot = document.getElementById("hotspot");
@@ -404,8 +425,12 @@ const termIn    = document.getElementById("termIn");
 const termClose = document.getElementById("termClose");
 const openTermBtn = document.getElementById("openTermBtn");
 
-/* Browser */
+/* Browser + chooser */
 const openBrowserBtn = document.getElementById("openBrowser");
+const browserChooser = document.getElementById("browserChooser");
+const chooseBean = document.getElementById("chooseBean");
+const chooseWin11 = document.getElementById("chooseWin11");
+
 const browserDesk = document.getElementById("browserDesk");
 const browserWin  = document.getElementById("browserWin");
 const browserTop  = document.getElementById("browserTop");
@@ -445,7 +470,7 @@ function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hid
 function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
 pwModal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closePw(); });
 document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && pwModal.classList.contains("show")) closePw(); });
-document.getElementById("hotspot").addEventListener("click", openPw);
+hotspot.addEventListener("click", openPw);
 
 /* ======= Unlock flow ======= */
 let ROLE = null;
@@ -470,7 +495,7 @@ function reveal(role){
   themeLoad();
   restoreMenu();
   openTermBtn.disabled = false;
-  openBrowserBtn.disabled = false;
+
   initEmbed();
   updateBarHeight();
 }
@@ -499,7 +524,7 @@ function tryLoadEmbed(){
   loadTimer = setTimeout(()=>{ embedLoader.style.display = "none"; frameError.style.display = "flex"; }, 4000);
 }
 embedFrame.addEventListener("load", ()=>{ clearTimeout(loadTimer); embedLoader.style.display = "none"; frameError.style.display = "none"; });
-document.getElementById("retryEmbed").addEventListener("click", tryLoadEmbed);
+retryEmbed.addEventListener("click", tryLoadEmbed);
 
 /* ======= Tools drawer ======= */
 function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
@@ -560,7 +585,6 @@ bgImageFile.addEventListener('change', (e)=>{ const f = e.target.files && e.targ
 /* ======= Menu collapse/restore ======= */
 function hideMenu(){ document.body.classList.add('bar-hidden'); localStorage.setItem(LS_MENU, 'hidden'); document.documentElement.style.setProperty('--bar-h','0px'); }
 function showMenu(){ document.body.classList.remove('bar-hidden'); localStorage.setItem(LS_MENU, 'shown'); updateBarHeight(); }
-function toggleMenu(){ if (document.body.classList.contains('bar-hidden')) showMenu(); else hideMenu(); }
 collapseBtn.addEventListener('click', hideMenu);
 menuRestore.addEventListener('click', showMenu);
 function restoreMenu(){ const st = localStorage.getItem(LS_MENU)||'shown'; if (st==='hidden') hideMenu(); else showMenu(); }
@@ -572,9 +596,9 @@ openTermBtn.addEventListener("click", openTerm);
 termClose.addEventListener("click", closeTerm);
 document.addEventListener("keydown",(e)=>{ if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
 
-/* ======= Mini Browser ======= */
+/* ======= Browser ======= */
 let browserLoadTimer = null;
-function openBrowser(url = MINI_BROWSER_URL){
+function openBrowser(url){
   browserDesk.style.display = "block"; browserDesk.setAttribute("aria-hidden","false");
   browserWin.classList.remove('full','half');
   browserLoader.style.display = "flex";
@@ -587,7 +611,6 @@ function openBrowser(url = MINI_BROWSER_URL){
 function closeBrowser(){ browserDesk.style.display = "none"; browserDesk.setAttribute("aria-hidden","true"); }
 function fullBrowser(){ browserWin.classList.add('full'); browserWin.classList.remove('half'); }
 function halfBrowser(){ browserWin.classList.add('half'); browserWin.classList.remove('full'); }
-openBrowserBtn.addEventListener('click', ()=> openBrowser());
 closeBtn.addEventListener('click', closeBrowser);
 fullBtn.addEventListener('click', fullBrowser);
 halfBtn.addEventListener('click', halfBrowser);
@@ -595,20 +618,19 @@ browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); brow
 
 /* Drag move (Browser) */
 (function dragBrowser(){
-  const bar=browserTop, win=browserWin;
   let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
-  bar.addEventListener('mousedown', (e)=>{
-    if (win.classList.contains('full') || win.classList.contains('half')) return;
+  browserTop.addEventListener('mousedown', (e)=>{
+    if (browserWin.classList.contains('full') || browserWin.classList.contains('half')) return;
     dragging=true; sx=e.clientX; sy=e.clientY;
-    const r=win.getBoundingClientRect(); startLeft=r.left; startTop=r.top;
+    const r=browserWin.getBoundingClientRect(); startLeft=r.left; startTop=r.top;
     document.body.style.userSelect="none";
   });
   window.addEventListener('mousemove', (e)=>{
     if (!dragging) return;
     const dx=e.clientX-sx, dy=e.clientY-sy;
-    win.style.left=(startLeft+dx)+"px";
-    win.style.top=(startTop+dy)+"px";
-    win.style.transform="translateX(0)";
+    browserWin.style.left=(startLeft+dx)+"px";
+    browserWin.style.top=(startTop+dy)+"px";
+    browserWin.style.transform="translateX(0)";
   });
   window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
 })();
@@ -642,7 +664,13 @@ const ACTIONS = {
   tools_toggle: ()=> document.getElementById('toolsDrawer').classList.contains('open') ? closeTools() : openTools(),
   menu_toggle: ()=> (document.body.classList.contains('bar-hidden')? showMenu():hideMenu()),
   panic: ()=> triggerPanic(),
-  browser_open: ()=> openBrowser(),
+  browser_open: ()=> {
+    // Respect last choice; if none, show chooser.
+    const last = localStorage.getItem(LS_BROWSER_CHOICE);
+    if (last === "bean") { openBrowser(BEAN_URL); return; }
+    if (last === "win11") { openBrowser(MINI_BROWSER_URL); return; }
+    showBrowserChooser();
+  },
   browser_close: ()=> closeBrowser(),
   cloak_google: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); },
   cloak_calculator: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); },
@@ -659,7 +687,7 @@ const ACTION_LABELS = {
   tools_toggle:"Toggle Tools",
   menu_toggle:"Toggle Menu (fullscreen embed)",
   panic:"Panic Cloak",
-  browser_open:"Open Browser",
+  browser_open:"Open Browser (chooser)",
   browser_close:"Close Browser",
   cloak_google:"Cloak → Google",
   cloak_calculator:"Cloak → Calculator",
@@ -788,13 +816,18 @@ function handleCommand(s){
     const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); return;
   }
 
-  if (line === ";browser open"){ openBrowser(); return; }
+  if (line === ";browser open"){ 
+    const last = localStorage.getItem(LS_BROWSER_CHOICE);
+    if (last === "bean") { openBrowser(BEAN_URL); return; }
+    if (last === "win11") { openBrowser(MINI_BROWSER_URL); return; }
+    showBrowserChooser();
+    return;
+  }
   if (line.startsWith(";browser open ")){ const url=line.slice(";browser open ".length).trim(); openBrowser(url || MINI_BROWSER_URL); return; }
   if (line === ";browser close"){ closeBrowser(); return; }
   if (line === ";browser full"){ fullBrowser(); return; }
   if (line === ";browser half"){ halfBrowser(); return; }
 
-  /* Game: open safely in new tab */
   if (line === ";game open"){ window.open(BURRITO_URL, "_blank", "noopener"); return; }
 
   if (line.startsWith(";theme ")){
@@ -839,15 +872,49 @@ termIn.addEventListener("keydown",(e)=>{ if (e.key==="Enter"){ handleCommand(e.t
 /* ======= Initial favicon (Down screen) ======= */
 setTab("Math Help - Down", { "16x16":"down-favicon-16.png", "32x32":"down-favicon-32.png", "64x64":"down-favicon-64.png" });
 
-/* Disable open buttons until unlock */
+/* Disable terminal until unlock */
 openTermBtn.disabled = true;
-openBrowserBtn.disabled = true;
+
+/* ======= Browser chooser wiring ======= */
+function showBrowserChooser(){
+  browserChooser.classList.add("show");
+  browserChooser.setAttribute("aria-hidden","false");
+}
+function hideBrowserChooser(){
+  browserChooser.classList.remove("show");
+  browserChooser.setAttribute("aria-hidden","true");
+}
+browserChooser.addEventListener("click",(e)=>{
+  if (e.target.dataset.close !== undefined) hideBrowserChooser();
+});
+document.addEventListener("keydown",(e)=>{
+  if (e.key==="Escape" && browserChooser.classList.contains("show")) hideBrowserChooser();
+});
+chooseBean.addEventListener("click", ()=>{
+  localStorage.setItem(LS_BROWSER_CHOICE, "bean");
+  hideBrowserChooser();
+  openBrowser(BEAN_URL);
+});
+chooseWin11.addEventListener("click", ()=>{
+  localStorage.setItem(LS_BROWSER_CHOICE, "win11");
+  hideBrowserChooser();
+  openBrowser(MINI_BROWSER_URL);
+});
+
+/* Replace Browser button click — show chooser or open last */
+openBrowserBtn.addEventListener('click', ()=>{
+  const last = localStorage.getItem(LS_BROWSER_CHOICE);
+  if (last === "bean") { openBrowser(BEAN_URL); return; }
+  if (last === "win11") { openBrowser(MINI_BROWSER_URL); return; }
+  showBrowserChooser();
+});
 
 /* ======= After unlock actions ======= */
-function openBurritoNewTab(){ window.open(BURRITO_URL, "_blank", "noopener"); }
-document.getElementById("openBurrito").addEventListener("click", openBurritoNewTab);
+document.getElementById("openBurrito").addEventListener("click", ()=> {
+  window.open(BURRITO_URL, "_blank", "noopener");
+});
 
-/* Unlock trigger is the invisible hotspot */
+/* Unlock via hotspot */
 </script>
 </body>
 </html>
