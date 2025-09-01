@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Math Help</title>
 <link rel="icon" href="icon.png" type="image/png" />
+
 <style>
   :root{
-    --bar-h:56px;
+    --bar-h:56px;              /* updated in JS */
     --bg:#0f172a;
     --panel:#0b1220;
     --text:#e5e7eb;
@@ -18,22 +19,21 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  body{background: var(--bg) no-repeat center/cover fixed;}
-  body.with-bg-img{background-color:var(--bg,#0f172a);background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed;}
-  .wrap{height:100%;display:grid;grid-template-rows:auto 1fr}
+  body{background:var(--bg)}
+  body.with-bg-img{background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed}
 
-  /* Invisible unlock hotspot */
+  /* Invisible unlock hotspot (top-left) */
   #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
 
-  /* Locked cover */
+  /* Down/locked screen */
   #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
   #lockedInner{max-width:720px}
+  #lockedIcon{width:64px;height:64px;border-radius:12px;display:block;margin:0 auto 12px}
   #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
   #locked p{margin:0;opacity:.9}
-  #lockedIcon{width:64px;height:64px;display:block;margin:0 auto 10px;border-radius:12px}
 
-  /* Top bar */
-  .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c}
+  /* Top bar (fixed) */
+  .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c;position:fixed;top:0;left:0;right:0;z-index:1200}
   .bar.unlocked{display:flex}
   .bar-row{width:100%;display:flex;align-items:center;gap:.5rem}
   .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
@@ -42,45 +42,34 @@
   .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
   .btn img{width:18px;height:18px;border-radius:4px}
   .btn.clear{color:#fca5a5;border-color:#4b1010}
-  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
-  .hint{margin-left:1rem;color:#9ca3af;font-size:.9rem}
-  @media (max-width:1200px){.hint{display:none}}
-
   .bar-left{display:flex;align-items:center;gap:.5rem}
   .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
+  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
 
-  /* Collapse/restore menu */
-  #menuRestore{
-    display:none;position:fixed;top:8px;right:8px; /* moved to top-right */
-    z-index:6000;background:#111827;border:1px solid #1f2937;
-    color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer
-  }
-  body.bar-hidden{--bar-h:0}
-  body.bar-hidden .bar{display:none !important}
+  /* Menu restore button (when bar hidden) */
+  #menuRestore{display:none;position:fixed;top:8px;right:8px;z-index:1300;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
   body.bar-hidden #menuRestore{display:block}
+  body.bar-hidden .bar{display:none !important}
 
   /* Tools drawer */
-  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:2500;overflow:auto}
+  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:1250;overflow:auto}
   #toolsDrawer.open{transform:translateX(0)}
   #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
   .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
-  .toolCard h4{margin:.2rem 0 .6rem}
   .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
   .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
   .small{font-size:.85rem;color:#9ca3af}
-  .pill{font-size:.75rem;padding:.15rem .45rem;border:1px solid #263046;border-radius:999px;background:#0e1526;color:#cbd5e1}
 
-  /* Modal (password & chooser) */
+  /* Modals */
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
   .modal.show{display:flex}
   .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
   .modal .card{position:relative;width:min(92vw,440px);background:#0f172a;border:1px solid #0b1220;border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-  .modal h2{margin:.4rem 0 0;font-size:1.1rem;color:#c7d2fe}
-  .modal p{margin:.25rem 0 1rem;color:#94a3b8;font-size:.95rem}
-  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
+  .modal h2{margin:.3rem 0;color:#c7d2fe}
   .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
   .primary{background:#1f2937;border:1px solid #2b3443;color:#e5e7eb;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
   .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
+  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
   .err{color:#fca5a5;font-size:.9rem;min-height:1em}
 
   /* Terminal */
@@ -91,20 +80,17 @@
   #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
   #termIn{flex:1}
 
-  /* Embedded Wix area */
-  #embedArea{display:none;position:relative}
+  /* ---- FIX: Embed area always fills below menu ---- */
+  #embedArea{position:fixed;top:var(--bar-h);left:0;right:0;bottom:0;z-index:100}
   #embedFrame{width:100%;height:100%;border:0;background:#000}
   #embedLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
   #embedLoaderInner{text-align:center;max-width:320px}
   #embedLogo{width:100px;height:100px;border-radius:14px;display:block;margin:0 auto 12px}
   #embedProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
   #embedProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#38bdf8);animation:loading 2.2s infinite}
-  @keyframes loading {0%{width:0%}50%{width:85%}100%{width:0%}}
-  #frameError{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
-  #frameError .msg{max-width:520px}
-  #frameError .msg h3{margin:.2rem 0 .6rem}
+  @keyframes loading{0%{width:0%}50%{width:85%}100%{width:0%}}
 
-  /* Mini Browser overlay */
+  /* Browser overlay */
   #browserDesk{display:none;position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:3300;pointer-events:none}
   #browserWin{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(1100px,96vw);height:min(80vh,calc(100vh - var(--bar-h) - 36px));background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;pointer-events:auto}
   #browserTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c;cursor:move}
@@ -118,19 +104,16 @@
   #browserErr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
   #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
   #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
-
-  /* Games row label */
-  #gamesRow .brand{border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af}
 </style>
 </head>
 <body>
-  <!-- Show menu (when hidden) -->
+  <!-- Restore button when menu is hidden -->
   <button id="menuRestore" title="Show menu">≡ Menu</button>
 
-  <!-- Invisible unlock area -->
+  <!-- Invisible password hotspot -->
   <div id="hotspot" aria-label="Open password"></div>
 
-  <!-- Locked screen -->
+  <!-- Down screen -->
   <div id="locked">
     <div id="lockedInner">
       <img id="lockedIcon" src="down-favicon-64.png" alt="">
@@ -139,76 +122,53 @@
     </div>
   </div>
 
-  <div class="wrap">
-    <!-- Top bar -->
-    <div class="bar" id="panel">
-      <!-- Row 1 -->
-      <div class="bar-row">
-        <div class="bar-left">
-          <span class="brand"><img src="icon.png" alt="">Math Help</span>
+  <!-- Top menu -->
+  <div class="bar" id="panel">
+    <div class="bar-row">
+      <div class="bar-left">
+        <span class="brand"><img src="icon.png" alt="">Math Help</span>
 
-          <!-- Cloak -->
-          <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-          <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-          <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-          <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-          <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-          <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
-          <button class="btn clear" id="clearCloak">Clear</button>
+        <!-- Tab cloak buttons -->
+        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+        <button class="btn clear" id="clearCloak">Clear</button>
 
-          <!-- Panic -->
-          <div class="hint" style="display:flex;align-items:center;gap:.5rem">
-            <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-            <select id="panicSelect" title="Choose panic cloak">
-              <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-              <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-              <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-              <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Google Classroom</option>
-              <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-              <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-            </select>
-            <button id="panicFire" class="btn" type="button">Panic</button>
-          </div>
-
-          <!-- Tools / Browser / Terminal -->
-          <button id="toolsBtn" class="btn">Tools</button>
-          <button id="openBrowser" class="btn">Browser</button>
-          <button id="openTermBtn" class="btn">Terminal</button>
+        <!-- Panic -->
+        <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
+          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+          <select id="panicSelect">
+            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
+            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+          </select>
+          <button id="panicFire" class="btn">Panic</button>
         </div>
 
-        <!-- Right side -->
-        <div class="bar-right">
-          <button id="openKeybindsBtn" class="btn" title="Open Keybinds">Keybinds</button>
-          <button id="collapseBtn" class="btn" title="Hide menu">Close Menu</button>
-        </div>
+        <!-- Tools / Browser / Terminal -->
+        <button id="toolsBtn" class="btn">Tools</button>
+        <button id="openBrowser" class="btn">Browser</button>
+        <button id="openTermBtn" class="btn">Terminal</button>
       </div>
 
-      <!-- Row 2 (Games) -->
-      <div class="bar-row" id="gamesRow" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
-        <span class="brand">Games</span>
-        <button id="openBurrito" class="btn">Burrito Bison</button>
+      <div class="bar-right">
+        <button id="collapseBtn" class="btn">Close Menu</button>
       </div>
     </div>
 
-    <!-- Embedded Wix area -->
-    <div id="embedArea">
-      <iframe id="embedFrame" title="Embedded Site"></iframe>
-      <div id="embedLoader">
-        <div id="embedLoaderInner">
-          <img id="embedLogo" src="icon.png" alt="Loading">
-          <div id="embedProg"><span></span></div>
-          <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
-        </div>
-      </div>
-      <div id="frameError">
-        <div class="msg">
-          <h3>This site refused to load in an iframe.</h3>
-        </div>
-      </div>
+    <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
+      <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
+      <button id="openBurrito" class="btn">Burrito Bison</button>
     </div>
   </div>
 
-  <!-- Tools Drawer -->
+  <!-- Tools drawer -->
   <aside id="toolsDrawer" aria-hidden="true">
     <div id="toolsHdr">
       <h3 style="margin:0">Tools</h3>
@@ -218,9 +178,7 @@
     <div class="toolCard">
       <h4>Notepad</h4>
       <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
-      <div class="toolRow" style="justify-content:flex-end">
-        <span id="noteSaved" class="small"></span>
-      </div>
+      <div class="toolRow" style="justify-content:flex-end"><span id="noteSaved" class="small"></span></div>
     </div>
 
     <div class="toolCard">
@@ -247,37 +205,6 @@
         <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
       </div>
     </div>
-
-    <div class="toolCard">
-      <h4>Theme</h4>
-      <div class="toolRow">
-        <label class="small" for="bgColorPick" style="width:90px">BG Color</label>
-        <input id="bgColorPick" class="input" type="color" value="#0f172a" style="width:120px;padding:.2rem">
-      </div>
-      <div class="toolRow">
-        <label class="small" for="accentPick" style="width:90px">Accent</label>
-        <input id="accentPick" class="input" type="color" value="#60a5fa" style="width:120px;padding:.2rem">
-      </div>
-      <div class="toolRow">
-        <label class="small" for="bgImageFile" style="width:90px">BG Image</label>
-        <input id="bgImageFile" class="input" type="file" accept="image/*" />
-      </div>
-      <div class="toolRow" style="justify-content:flex-end">
-        <button id="applyTheme" class="btn" type="button">Apply</button>
-        <button id="clearBgImg" class="btn" type="button">Clear image</button>
-        <button id="resetTheme" class="btn" type="button">Reset</button>
-      </div>
-    </div>
-
-    <!-- Keybinds -->
-    <div class="toolCard" id="kbSection">
-      <h4 style="display:flex;align-items:center;gap:.5rem">Keybinds <span class="pill">New</span></h4>
-      <p class="small" style="margin:.2rem 0 .6rem">Click <strong>Record</strong>, press your combo, then <strong>Set</strong>.</p>
-      <div id="kbList" style="display:flex;flex-direction:column;gap:.4rem"></div>
-      <div class="toolRow" style="justify-content:flex-end;margin-top:.6rem">
-        <button id="kbClearAll" class="btn" type="button">Clear All</button>
-      </div>
-    </div>
   </aside>
 
   <!-- Password Modal -->
@@ -285,7 +212,6 @@
     <div class="backdrop" data-close></div>
     <div class="card">
       <h2>Enter password</h2>
-      <p>Enter your password to unlock the page.</p>
       <div class="toolRow">
         <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
         <button id="togglePw" class="toggle" type="button">Show</button>
@@ -298,12 +224,11 @@
     </div>
   </div>
 
-  <!-- Browser Chooser Modal (always prompts; no saving) -->
+  <!-- Browser chooser -->
   <div id="browserChooser" class="modal" aria-hidden="true">
     <div class="backdrop" data-close></div>
     <div class="card">
       <h2>Open Browser</h2>
-      <p>Choose which environment to open.</p>
       <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
         <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
         <button id="chooseWin11" class="primary" type="button">Windows 11</button>
@@ -321,13 +246,13 @@
       </div>
       <pre id="termOut"></pre>
       <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help — try ;bind help" />
+        <input id="termIn" class="input" type="text" placeholder="Type ;help" />
         <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
       </div>
     </div>
   </div>
 
-  <!-- Mini Browser overlay -->
+  <!-- Mini Browser -->
   <div id="browserDesk" aria-hidden="true">
     <div id="browserWin" role="dialog" aria-label="Browser window">
       <div id="browserTop" title="Drag • Double-click to toggle full/window">
@@ -354,535 +279,262 @@
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Embed Area (fixed so it never crops) -->
+  <div id="embedArea">
+    <iframe id="embedFrame" title="Embedded Site"></iframe>
+    <div id="embedLoader">
+      <div id="embedLoaderInner">
+        <img id="embedLogo" src="icon.png" alt="Loading">
+        <div id="embedProg"><span></span></div>
+        <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
+      </div>
+    </div>
+  </div>
 
 <script>
-/* ========= Config ========= */
-const EMBED_URL = "https://videogamenerds.wixstudio.com/math-help/";
-const MINI_BROWSER_URL = "https://win11-emu-react.vercel.app/";
-const BEAN_URL = "https://mbxp.vercel.app/";
-const BURRITO_URL = "https://nintendoboi222.github.io/games/Burrito-Bison/";
+/* ===== Config ===== */
+const EMBED_URL="https://videogamenerds.wixstudio.com/math-help/";
+const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
+const BEAN_URL="https://mbxp.vercel.app/";
+const BURRITO_URL="https://nintendoboi222.github.io/games/Burrito-Bison/";
 
-/* ========= Passwords ========= */
-const ADMIN_PASSWORD = "imadmin";
-const USER_PASSWORD  = "gamerzforever";
+const ADMIN_PASSWORD="imadmin";
+const USER_PASSWORD="gamerzforever";
 
-/* ========= Storage keys ========= */
-const LS_CLOAK = "mh_cloak";
-const LS_PANIC = "mh_panic";
-const LS_NOTE  = "mh_note";
-const LS_THEME = "mh_theme";
-const LS_KEYS  = "mh_keybinds";
-const LS_MENU  = "mh_menu_state";
+/* Elements */
+const hotspot=document.getElementById("hotspot");
+const locked=document.getElementById("locked");
+const panel=document.getElementById("panel");
+const menuRestore=document.getElementById("menuRestore");
+const collapseBtn=document.getElementById("collapseBtn");
 
-/* ========= Elements ========= */
-const hotspot = document.getElementById("hotspot");
-const locked  = document.getElementById("locked");
-const panel   = document.getElementById("panel");
-const menuRestore = document.getElementById("menuRestore");
-const collapseBtn = document.getElementById("collapseBtn");
-const openKeybindsBtn = document.getElementById("openKeybindsBtn");
+const embedFrame=document.getElementById("embedFrame");
+const embedLoader=document.getElementById("embedLoader");
 
-/* Wix Embed */
-const embedArea  = document.getElementById("embedArea");
-const embedFrame = document.getElementById("embedFrame");
-const embedLoader= document.getElementById("embedLoader");
+const toolsDrawer=document.getElementById("toolsDrawer");
+const toolsBtn=document.getElementById("toolsBtn");
+const toolsClose=document.getElementById("toolsClose");
 
-/* Tools */
-const toolsBtn = document.getElementById("toolsBtn");
-const toolsClose = document.getElementById("toolsClose");
-const toolsDrawer= document.getElementById("toolsDrawer");
+const noteArea=document.getElementById("noteArea");
+const noteSaved=document.getElementById("noteSaved");
 
-/* Theme controls */
-const bgColorPick = document.getElementById("bgColorPick");
-const accentPick  = document.getElementById("accentPick");
-const bgImageFile = document.getElementById("bgImageFile");
-const applyThemeBtn = document.getElementById("applyTheme");
-const clearBgImgBtn = document.getElementById("clearBgImg");
-const resetThemeBtn = document.getElementById("resetTheme");
+const timerMin=document.getElementById("timerMin");
+const timerStart=document.getElementById("timerStart");
+const timerStop=document.getElementById("timerStop");
+const timerReset=document.getElementById("timerReset");
+const timerReadout=document.getElementById("timerReadout");
 
-/* Notepad / Timer */
-const noteArea = document.getElementById("noteArea");
-const noteSaved= document.getElementById("noteSaved");
-const timerMin = document.getElementById("timerMin");
-const timerStart = document.getElementById("timerStart");
-const timerStop  = document.getElementById("timerStop");
-const timerReset = document.getElementById("timerReset");
-const timerReadout = document.getElementById("timerReadout");
+const termDesk=document.getElementById("termDesk");
+const termOut=document.getElementById("termOut");
+const termIn=document.getElementById("termIn");
+const termClose=document.getElementById("termClose");
+const openTermBtn=document.getElementById("openTermBtn");
 
-/* Terminal */
-const termDesk  = document.getElementById("termDesk");
-const termOut   = document.getElementById("termOut");
-const termIn    = document.getElementById("termIn");
-const termClose = document.getElementById("termClose");
-const openTermBtn = document.getElementById("openTermBtn");
+const openBrowserBtn=document.getElementById("openBrowser");
+const browserChooser=document.getElementById("browserChooser");
+const chooseBean=document.getElementById("chooseBean");
+const chooseWin11=document.getElementById("chooseWin11");
 
-/* Browser + chooser */
-const openBrowserBtn = document.getElementById("openBrowser");
-const browserChooser = document.getElementById("browserChooser");
-const chooseBean = document.getElementById("chooseBean");
-const chooseWin11 = document.getElementById("chooseWin11");
+const browserDesk=document.getElementById("browserDesk");
+const browserWin=document.getElementById("browserWin");
+const browserTop=document.getElementById("browserTop");
+const browserFrame=document.getElementById("browserFrame");
+const browserLoader=document.getElementById("browserLoader");
+const browserErr=document.getElementById("browserErr");
+const closeBtn=document.getElementById("closeBtn");
+const fullBtn=document.getElementById("fullBtn");
+const halfBtn=document.getElementById("halfBtn");
+const winBtn=document.getElementById("winBtn");
 
-const browserDesk = document.getElementById("browserDesk");
-const browserWin  = document.getElementById("browserWin");
-const browserTop  = document.getElementById("browserTop");
-const browserFrame= document.getElementById("browserFrame");
-const browserLoader = document.getElementById("browserLoader");
-const browserErr = document.getElementById("browserErr");
-const closeBtn = document.getElementById("closeBtn");
-const fullBtn  = document.getElementById("fullBtn");
-const halfBtn  = document.getElementById("halfBtn");
-const winBtn   = document.getElementById("winBtn");
+/* Tab cloak helpers (with multi-size icons) */
+let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
+function removeFavicons(){ document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
+function addIconWithSizes(href,s){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if(s) l.sizes=s; l.href=__v(href); document.head.appendChild(l); }
+function addShortcutIcon(href){ const l=document.createElement('link'); l.rel='shortcut icon'; l.href=__v(href); document.head.appendChild(l); }
+function setFavicons(icon){ removeFavicons(); if(typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else { let first=null; for(const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first); } }
+function setTab(title,icon){ document.title=title; setFavicons(icon); }
+function saveCloak(title,icon){ localStorage.setItem("mh_cloak",JSON.stringify({title,icon})); }
+function loadCloak(){ try{return JSON.parse(localStorage.getItem("mh_cloak")||"null");}catch{return null;} }
+function clearTab(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); }
 
-/* Keybinds UI */
-const kbSection = document.getElementById("kbSection");
-const kbList = document.getElementById("kbList");
-const kbClearAll = document.getElementById("kbClearAll");
+/* Panic */
+const panicSelect=document.getElementById("panicSelect");
+const panicFire=document.getElementById("panicFire");
+function savePanic(obj){ localStorage.setItem("mh_panic",JSON.stringify(obj)); }
+function loadPanic(){ try{return JSON.parse(localStorage.getItem("mh_panic")||"null");}catch{return null;} }
+(function(){ const saved=loadPanic(); if(saved){ for(const o of panicSelect.options){ if(o.value===JSON.stringify(saved)){ panicSelect.value=o.value; break; } } } else savePanic(JSON.parse(panicSelect.value)); })();
+panicSelect.addEventListener("change",()=>savePanic(JSON.parse(panicSelect.value)));
+function triggerPanic(){ const sel=loadPanic()||JSON.parse(panicSelect.value); setTab(sel.title,sel.icon); saveCloak(sel.title,sel.icon); }
+panicFire.addEventListener("click",triggerPanic);
+document.addEventListener("keydown",e=>{
+  const el=document.activeElement, typing=el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
+  if(!typing && (e.key==="-"||e.key==="_"||e.code==="Minus")) triggerPanic();
+});
+document.querySelectorAll('.btn[data-title]').forEach(b=>b.addEventListener('click',()=>{
+  const t=b.getAttribute('data-title'), i=b.getAttribute('data-favicon'); setTab(t,i); saveCloak(t,i);
+}));
+document.getElementById('clearCloak').addEventListener('click',clearTab);
 
-/* ----- Favicons / Cloak ----- */
-let __iconVer = 0;
-function __v(href){ return href + (href.includes('?') ? '&' : '?') + 'v=' + (++__iconVer); }
-function removeFavicons(){ document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
-function addIconWithSizes(href, sizes){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if (sizes) l.sizes=sizes; l.href=__v(href); document.head.appendChild(l); }
-function addShortcutIcon(href){ const s=document.createElement('link'); s.rel='shortcut icon'; s.href=__v(href); document.head.appendChild(s); }
-function setFaviconsMulti(icon){ removeFavicons(); if (typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else if (icon && typeof icon==='object'){ let first=null; for (const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first);} }
-function setTab(title, icon){ document.title=title; setFaviconsMulti(icon); }
-function saveCloak(title, icon){ localStorage.setItem(LS_CLOAK, JSON.stringify({ title, icon })); }
-function loadCloak(){ try{ return JSON.parse(localStorage.getItem(LS_CLOAK)||"null"); } catch { return null; } }
-function clearTab(){ localStorage.removeItem(LS_CLOAK); setTab("Math Help", "icon.png"); }
-
-/* ======= Password Modal ======= */
-const pwModal = document.getElementById("pwModal");
-const pwInput = document.getElementById("pwInput");
-const pwErr   = document.getElementById("pwErr");
-document.getElementById("togglePw").addEventListener("click", (e)=>{
-  pwInput.type = pwInput.type === "password" ? "text" : "password";
-  e.target.textContent = pwInput.type === "password" ? "Show" : "Hide";
+/* Password modal */
+const pwModal=document.getElementById("pwModal");
+const pwInput=document.getElementById("pwInput");
+const pwErr=document.getElementById("pwErr");
+document.getElementById("togglePw").addEventListener("click",e=>{
+  pwInput.type=pwInput.type==="password"?"text":"password"; e.target.textContent=pwInput.type==="password"?"Show":"Hide";
 });
 function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
 function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
-pwModal.addEventListener("click",(e)=>{ if (e.target.dataset.close !== undefined) closePw(); });
-document.addEventListener("keydown",(e)=>{ if (e.key==="Escape" && pwModal.classList.contains("show")) closePw(); });
-hotspot.addEventListener("click", openPw);
+pwModal.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closePw(); });
+document.getElementById("pwSubmit").addEventListener("click",submitPassword);
+pwInput.addEventListener("keydown",e=>{ if(e.key==="Enter") submitPassword(); });
+hotspot.addEventListener("click",openPw);
 
-/* ======= Unlock flow ======= */
-let ROLE = null;
-let loadTimer = null;
-
-function updateBarHeight(){
-  const targetH = document.body.classList.contains('bar-hidden') ? 0 : panel.getBoundingClientRect().height;
-  document.documentElement.style.setProperty('--bar-h', targetH + 'px');
-}
-window.addEventListener('resize', updateBarHeight);
-
-function reveal(role){
-  ROLE = role;
-  locked.style.display = "none";
-  panel.classList.add("unlocked");
-
-  const saved = loadCloak();
-  if (saved && saved.title && saved.icon) setTab(saved.title, saved.icon);
-  else setTab("Math Help", "icon.png");
-
-  themeLoad();
-  restoreMenu();
-  openTermBtn.disabled = false;
-
-  initEmbed();
-  updateBarHeight();
-}
-function submitPassword(){
-  const pass = pwInput.value.trim();
-  if (!pass){ pwErr.textContent = "Password required."; return; }
-  if (pass === ADMIN_PASSWORD){ closePw(); reveal("admin"); return; }
-  if (pass === USER_PASSWORD){  closePw(); reveal("user");  return; }
-  pwErr.textContent = "Incorrect password.";
-}
-document.getElementById("pwSubmit").addEventListener("click", submitPassword);
-pwInput.addEventListener("keydown",(e)=>{ if (e.key==="Enter") submitPassword(); });
-
-/* ======= Embed handling ======= */
-function initEmbed(){
-  embedArea.style.display = "block";
-  embedFrame.src = EMBED_URL;
-  embedLoader.style.display = "flex";
-  clearTimeout(loadTimer);
-  loadTimer = setTimeout(()=>{ embedLoader.style.display = "none"; }, 4000);
-}
-embedFrame.addEventListener("load", ()=>{ clearTimeout(loadTimer); embedLoader.style.display = "none"; });
-
-/* ======= Tools drawer ======= */
-function openTools(){ toolsDrawer.classList.add("open"); toolsDrawer.setAttribute("aria-hidden","false"); }
-function closeTools(){ toolsDrawer.classList.remove("open"); toolsDrawer.setAttribute("aria-hidden","true"); }
-toolsBtn.addEventListener("click", openTools);
-toolsClose.addEventListener("click", closeTools);
-
-/* Notepad */
-noteArea.value = localStorage.getItem(LS_NOTE) || "";
-function saveNote(){ try{ localStorage.setItem(LS_NOTE, noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900);}catch{noteSaved.textContent="Save failed";}}
-noteArea.addEventListener("input", saveNote);
-
-/* Timer */
-let timerLeft = Number(timerMin.value) * 60;
-let timerId = null;
-function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(Math.floor(timerLeft%60)).padStart(2,"0"); timerReadout.textContent = `${m}:${s}`; }
-function startTimer(){ if (timerId) return; timerId = setInterval(()=>{ if (timerLeft>0){ timerLeft--; renderTimer(); } else { stopTimer(); alert("Time!"); } },1000); }
-function stopTimer(){ if (timerId){ clearInterval(timerId); timerId=null; } }
-function resetTimer(){ stopTimer(); timerLeft = Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
-timerStart.addEventListener("click", startTimer);
-timerStop.addEventListener("click", stopTimer);
-timerReset.addEventListener("click", resetTimer);
-timerMin.addEventListener("change", resetTimer);
-renderTimer();
-
-/* Unit converter */
-const cm   = document.getElementById("cm");
-const inch = document.getElementById("inch");
-const kg   = document.getElementById("kg");
-const lb   = document.getElementById("lb");
-const round=(x)=>Math.round(x*1000)/1000;
-cm.addEventListener("input", ()=>{ const v=Number(cm.value||0); inch.value = v ? round(v/2.54) : ""; });
-inch.addEventListener("input",()=>{ const v=Number(inch.value||0); cm.value   = v ? round(v*2.54) : ""; });
-kg.addEventListener("input",  ()=>{ const v=Number(kg.value||0);   lb.value   = v ? round(v*2.2046226218) : ""; });
-lb.addEventListener("input",  ()=>{ const v=Number(lb.value||0);   kg.value   = v ? round(v/2.2046226218) : ""; });
-
-/* ======= Theme engine ======= */
-let theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null };
-function themeApply(){
-  document.documentElement.style.setProperty('--accent', theme.accent || '#60a5fa');
-  document.documentElement.style.setProperty('--bg', theme.bgColor || '#0f172a');
-  if (theme.bgDataUrl){ document.documentElement.style.setProperty('--bg-img', `url("${theme.bgDataUrl}")`); document.body.classList.add('with-bg-img'); }
-  else { document.documentElement.style.removeProperty('--bg-img'); document.body.classList.remove('with-bg-img'); }
-}
-function themeSave(){ localStorage.setItem(LS_THEME, JSON.stringify(theme)); }
-function themeLoad(){
-  const raw = localStorage.getItem(LS_THEME);
-  if (raw){ try{ theme = {...theme, ...JSON.parse(raw)}; } catch{} }
-  bgColorPick.value = theme.bgColor || '#0f172a';
-  accentPick.value  = theme.accent || '#60a5fa';
-  themeApply();
-}
-applyThemeBtn.addEventListener('click', ()=>{ theme.bgColor = bgColorPick.value || theme.bgColor; theme.accent = accentPick.value || theme.accent; themeApply(); themeSave(); });
-clearBgImgBtn.addEventListener('click', ()=>{ theme.bgDataUrl = null; themeApply(); themeSave(); });
-resetThemeBtn.addEventListener('click', ()=>{ theme = { bgColor:"#0f172a", accent:"#60a5fa", bgDataUrl:null }; themeApply(); themeSave(); bgColorPick.value = theme.bgColor; accentPick.value = theme.accent; });
-bgImageFile.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if (!f) return; const reader = new FileReader(); reader.onload = () => { theme.bgDataUrl = reader.result; themeApply(); themeSave(); }; reader.readAsDataURL(f); });
-
-/* ======= Menu collapse/restore (fixed) ======= */
-function hideMenu(){
-  document.body.classList.add('bar-hidden');
-  localStorage.setItem(LS_MENU, 'hidden');
-  updateBarHeight();
-}
+/* ---- FIX DRIVER: set --bar-h precisely ---- */
+function setBarHeight(px){ document.documentElement.style.setProperty('--bar-h', px + 'px'); }
 function showMenu(){
   document.body.classList.remove('bar-hidden');
-  localStorage.setItem(LS_MENU, 'shown');
-  updateBarHeight();
+  panel.classList.add("unlocked");
+  requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0));
 }
-function restoreMenu(){
-  const st = localStorage.getItem(LS_MENU)||'shown';
-  if (st==='hidden') hideMenu(); else showMenu();
+function hideMenu(){ document.body.classList.add('bar-hidden'); setBarHeight(0); }
+collapseBtn.addEventListener('click',hideMenu);
+menuRestore.addEventListener('click',showMenu);
+window.addEventListener('resize',()=>{ if(!document.body.classList.contains('bar-hidden')) setBarHeight(panel.getBoundingClientRect().height || 0); });
+
+/* Unlock flow */
+let ROLE=null, loadTimer=null;
+function reveal(role){
+  ROLE=role;
+  locked.style.display="none";
+  panel.classList.add("unlocked");
+  showMenu();                       // start open
+
+  const saved=loadCloak();
+  if(saved&&saved.title&&saved.icon) setTab(saved.title,saved.icon); else setTab("Math Help","icon.png");
+
+  // Load embedded site
+  embedFrame.src=EMBED_URL;
+  embedLoader.style.display="flex";
+  clearTimeout(loadTimer);
+  loadTimer=setTimeout(()=>{ embedLoader.style.display="none"; },4000);
 }
-collapseBtn.addEventListener('click', hideMenu);
-menuRestore.addEventListener('click', showMenu);
-
-/* ======= Terminal ======= */
-function openTerm(){ termDesk.style.display="block"; termDesk.setAttribute("aria-hidden","false"); termIn.value=""; termIn.focus(); if (!termOut.textContent) termOut.textContent = "Terminal ready. Type ;help\n"; }
-function closeTerm(){ termDesk.style.display="none"; termDesk.setAttribute("aria-hidden","true"); }
-openTermBtn.addEventListener("click", openTerm);
-termClose.addEventListener("click", closeTerm);
-document.addEventListener("keydown",(e)=>{ 
-  if (termDesk.style.display==="block" && e.key==="Escape"){ e.preventDefault(); closeTerm(); }
-});
-
-/* ======= Browser (overlay window) ======= */
-let browserLoadTimer = null;
-function stateWindowed(){ browserWin.classList.remove('full','half'); browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)'; }
-function stateFull(){ browserWin.classList.add('full'); browserWin.classList.remove('half'); browserWin.style.transform=''; }
-function stateHalf(){ browserWin.classList.add('half'); browserWin.classList.remove('full'); browserWin.style.transform=''; }
-
-function openBrowser(url){
-  browserDesk.style.display = "block"; browserDesk.setAttribute("aria-hidden","false");
-  stateWindowed();
-  browserLoader.style.display = "flex";
-  browserErr.style.display = "none";
-  browserFrame.removeAttribute('src');
-  browserFrame.src = url;
-  clearTimeout(browserLoadTimer);
-  browserLoadTimer = setTimeout(()=>{ browserLoader.style.display = "none"; browserErr.style.display = "block"; }, 6000);
+function submitPassword(){
+  const pass=pwInput.value.trim();
+  if(!pass){ pwErr.textContent="Password required."; return; }
+  if(pass===ADMIN_PASSWORD || pass===USER_PASSWORD){ closePw(); reveal(pass===ADMIN_PASSWORD?"admin":"user"); return; }
+  pwErr.textContent="Incorrect password.";
 }
-function closeBrowser(){ browserDesk.style.display = "none"; browserDesk.setAttribute("aria-hidden","true"); }
-function fullBrowser(){ stateFull(); }
-function halfBrowser(){ stateHalf(); }
-function winBrowser(){ stateWindowed(); }
-closeBtn.addEventListener('click', closeBrowser);
-fullBtn.addEventListener('click', fullBrowser);
-halfBtn.addEventListener('click', halfBrowser);
-winBtn.addEventListener('click', winBrowser);
-browserFrame.addEventListener('load', ()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display = "none"; });
-document.addEventListener('keydown',(e)=>{ if (browserDesk.style.display!=="none" && e.key==="Escape"){ e.preventDefault(); closeBrowser(); }});
 
-/* Drag move (disabled in full/half) + dblclick toggle full/window */
-(function dragBrowser(){
-  let dragging=false, sx=0, sy=0, startLeft=0, startTop=0;
-  browserTop.addEventListener('mousedown', (e)=>{
-    if (browserWin.classList.contains('full') || browserWin.classList.contains('half')) return;
-    dragging=true; sx=e.clientX; sy=e.clientY;
-    const r=browserWin.getBoundingClientRect(); startLeft=r.left; startTop=r.top;
-    document.body.style.userSelect="none";
-  });
-  window.addEventListener('mousemove', (e)=>{
-    if (!dragging) return;
-    const dx=e.clientX-sx, dy=e.clientY-sy;
-    browserWin.style.left=(startLeft+dx)+"px";
-    browserWin.style.top=(startTop+dy)+"px";
-    browserWin.style.transform="translateX(0)";
-  });
-  window.addEventListener('mouseup', ()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
-  browserTop.addEventListener('dblclick', ()=>{
-    if (browserWin.classList.contains('full')) { winBrowser(); }
-    else { fullBrowser(); }
-  });
-})();
+/* Tools */
+function openTools(){ toolsDrawer.classList.add("open"); }
+function closeTools(){ toolsDrawer.classList.remove("open"); }
+toolsBtn.addEventListener("click",openTools);
+toolsClose.addEventListener("click",closeTools);
 
-/* ======= Panic & Cloak ======= */
-const panicSelect = document.getElementById("panicSelect");
-const panicFire   = document.getElementById("panicFire");
-function savePanic(obj){ localStorage.setItem(LS_PANIC, JSON.stringify(obj)); }
-function loadPanic(){ try{ return JSON.parse(localStorage.getItem(LS_PANIC) || "null"); } catch { return null; } }
-(function initPanic(){ const saved = loadPanic(); if (saved){ for (const opt of panicSelect.options){ if (opt.value === JSON.stringify(saved)) { panicSelect.value = opt.value; break; } } } else { savePanic(JSON.parse(panicSelect.value)); }})();
-panicSelect.addEventListener("change", ()=> savePanic(JSON.parse(panicSelect.value)));
-function triggerPanic(){ const sel = loadPanic() || JSON.parse(panicSelect.value); setTab(sel.title, sel.icon); saveCloak(sel.title, sel.icon); }
-panicFire.addEventListener("click", triggerPanic);
-document.addEventListener("keydown", (e)=>{
-  const el = document.activeElement;
-  const typing = el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
-  if (typing) return;
-  if (e.key === "-" || e.key === "_" || e.code === "Minus") triggerPanic();
-});
-document.querySelectorAll('.btn[data-title]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const t = btn.getAttribute('data-title'); const i = btn.getAttribute('data-favicon');
-    setTab(t,i); saveCloak(t,i);
-  });
-});
-document.getElementById('clearCloak').addEventListener('click', clearTab);
+/* Notepad */
+noteArea.value=localStorage.getItem("mh_note")||"";
+noteArea.addEventListener("input",()=>{ localStorage.setItem("mh_note",noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900); });
 
-/* ======= Keybind system ======= */
-const ACTIONS = {
-  terminal: ()=> openTerm(),
-  tools_toggle: ()=> document.getElementById('toolsDrawer').classList.contains('open') ? closeTools() : openTools(),
-  menu_toggle: ()=> (document.body.classList.contains('bar-hidden')? showMenu():hideMenu()),
-  panic: ()=> triggerPanic(),
-  browser_open: ()=> { showBrowserChooser(); },
-  browser_close: ()=> closeBrowser(),
-  cloak_google: ()=> { setTab("Google","google-favicon.png"); saveCloak("Google","google-favicon.png"); },
-  cloak_calculator: ()=> { setTab("Calculator","calculator-icon.png"); saveCloak("Calculator","calculator-icon.png"); },
-  cloak_docs: ()=> { setTab("Google Docs","google-docs-icon.png"); saveCloak("Google Docs","google-docs-icon.png"); },
-  cloak_classroom: ()=> { setTab("Google Classroom","classroom-favicon.png"); saveCloak("Google Classroom","classroom-favicon.png"); },
-  cloak_khan: ()=> { setTab("Khan Academy","khan-favicon.png"); saveCloak("Khan Academy","khan-favicon.png"); },
-  cloak_wikipedia: ()=> { setTab("Wikipedia","wikipedia-favicon.png"); saveCloak("Wikipedia","wikipedia-favicon.png"); },
-  cloak_clear: ()=> clearTab(),
-  game_open: ()=> window.open(BURRITO_URL, "_blank", "noopener")
-};
-const ACTION_LABELS = {
-  terminal:"Open Terminal",
-  tools_toggle:"Toggle Tools",
-  menu_toggle:"Toggle Menu (fullscreen embed)",
-  panic:"Panic Cloak",
-  browser_open:"Open Browser (chooser)",
-  browser_close:"Close Browser",
-  cloak_google:"Cloak → Google",
-  cloak_calculator:"Cloak → Calculator",
-  cloak_docs:"Cloak → Google Docs",
-  cloak_classroom:"Cloak → Classroom",
-  cloak_khan:"Cloak → Khan Academy",
-  cloak_wikipedia:"Cloak → Wikipedia",
-  cloak_clear:"Cloak → Clear",
-  game_open:"Open Game (Burrito Bison)"
-};
-function canonCombo(s){ const parts=s.toLowerCase().replace(/\s+/g,'').split('+').filter(Boolean); const key=parts.pop(); const mods=parts.sort(); return [...mods,key].join('+'); }
-function eventCombo(e){ const mods=[]; if(e.ctrlKey||e.metaKey)mods.push('ctrl'); if(e.altKey)mods.push('alt'); if(e.shiftKey)mods.push('shift'); return [...mods,e.key.toLowerCase()].join('+'); }
-let keybinds={}, comboMap={};
-function loadKeybinds(){ try{ keybinds=JSON.parse(localStorage.getItem(LS_KEYS)||'{}'); }catch{ keybinds={}; } rebuildComboMap(); }
-function saveKeybinds(){ localStorage.setItem(LS_KEYS, JSON.stringify(keybinds)); }
-function rebuildComboMap(){ comboMap={}; for(const [a,c] of Object.entries(keybinds)){ if(!ACTIONS[a]||!c) continue; comboMap[canonCombo(c)] = a; } }
-loadKeybinds();
-document.addEventListener('keydown',(e)=>{
-  if (!ROLE) return;
-  const el=document.activeElement;
-  const typing=el && (el.tagName==="INPUT" || el.tagName==="TEXTAREA" || el.isContentEditable);
-  if (typing) return;
-  const combo=eventCombo(e);
-  const action=comboMap[combo];
-  if (action && ACTIONS[action]){ e.preventDefault(); ACTIONS[action](); }
-});
+/* Timer */
+let timerLeft=Number(timerMin.value)*60, timerId=null;
+function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(timerLeft%60).padStart(2,"0"); timerReadout.textContent=`${m}:${s}`; }
+function startTimer(){ if(timerId) return; timerId=setInterval(()=>{ if(timerLeft>0){ timerLeft--; renderTimer(); } else { clearInterval(timerId); timerId=null; alert("Time!"); }},1000); }
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function resetTimer(){ stopTimer(); timerLeft=Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
+timerStart.addEventListener("click",startTimer);
+timerStop.addEventListener("click",stopTimer);
+timerReset.addEventListener("click",resetTimer);
+timerMin.addEventListener("change",resetTimer);
+renderTimer();
 
-/* Keybinds UI */
-function renderKeybindsUI(){
-  kbList.innerHTML="";
-  for (const [action,label] of Object.entries(ACTION_LABELS)){
-    const row=document.createElement("div");
-    row.className="toolRow";
-    row.innerHTML=`
-      <label class="small" style="width:170px">${label}</label>
-      <input class="input kb-input" data-action="${action}" placeholder="e.g. ctrl+alt+t" value="${keybinds[action]?canonCombo(keybinds[action]):""}" style="flex:1" />
-      <button class="btn kb-record" data-action="${action}" type="button">Record</button>
-      <button class="btn kb-set" data-action="${action}" type="button">Set</button>
-      <button class="btn kb-clear" data-action="${action}" type="button" title="Clear">✕</button>
-    `;
-    kbList.appendChild(row);
-  }
-  wireKeybindsUI();
-}
-let recordingFor=null;
-function wireKeybindsUI(){
-  kbList.querySelectorAll(".kb-record").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      recordingFor=btn.getAttribute("data-action");
-      kbList.querySelectorAll(".kb-record").forEach(b=>b.textContent="Record");
-      btn.textContent="Press keys…";
-      const input=kbList.querySelector(`.kb-input[data-action="${recordingFor}"]`); input.focus();
-    });
-  });
-  kbList.querySelectorAll(".kb-set").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const action=btn.getAttribute("data-action");
-      const input=kbList.querySelector(`.kb-input[data-action="${action}"]`);
-      const val=input.value.trim().toLowerCase();
-      if(!ACTIONS[action]) return alert("Unknown action");
-      if(!val) return alert("Enter a combo like ctrl+alt+t");
-      keybinds[action]=val; saveKeybinds(); rebuildComboMap();
-      input.value=canonCombo(val);
-    });
-  });
-  kbList.querySelectorAll(".kb-clear").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const action=btn.getAttribute("data-action");
-      delete keybinds[action]; saveKeybinds(); rebuildComboMap();
-      const input=kbList.querySelector(`.kb-input[data-action="${action}"]`); if(input) input.value="";
-    });
-  });
-}
-document.addEventListener("keydown",(e)=>{
-  if(!recordingFor) return;
-  e.preventDefault();
-  const combo=eventCombo(e);
-  const input=kbList.querySelector(`.kb-input[data-action="${recordingFor}"]`);
-  if(input) input.value=combo;
-  kbList.querySelectorAll(".kb-record").forEach(b=>b.textContent="Record");
-  recordingFor=null;
-});
-kbClearAll.addEventListener("click", ()=>{
-  if(!confirm("Clear all keybinds?")) return;
-  keybinds={}; saveKeybinds(); rebuildComboMap(); renderKeybindsUI();
-});
-function openKeybinds(){ openTools(); setTimeout(()=>{ document.getElementById("kbSection").scrollIntoView({behavior:"smooth",block:"start"}); },50); }
-openKeybindsBtn.addEventListener("click", openKeybinds);
-renderKeybindsUI();
-
-/* ======= Terminal commands ======= */
-const MAX_HTML_LEN = 120000;
-function printLine(x=""){ const esc=x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML += esc + "\n"; termOut.scrollTop = termOut.scrollHeight; }
+/* Terminal */
+function openTerm(){ termDesk.style.display="block"; termIn.value=""; termIn.focus(); if(!termOut.textContent) termOut.textContent="Terminal ready. Type ;help\n"; }
+function closeTerm(){ termDesk.style.display="none"; }
+openTermBtn.addEventListener("click",openTerm);
+termClose.addEventListener("click",closeTerm);
+document.addEventListener("keydown",e=>{ if(termDesk.style.display==="block"&&e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
+function printLine(x=""){ const esc=x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML+=esc+"\n"; termOut.scrollTop=termOut.scrollHeight; }
 function clearTerm(){ termOut.textContent=""; }
 function handleCommand(s){
   const line=s.trim(); if(!line) return; printLine("> "+line);
-
-  if (line === ";help"){
-    printLine("Commands:");
-    printLine("  ;help / ;clear / ;panic / ;open tools / ;close tools");
-    printLine("  ;cloak <google|calculator|docs|classroom|khan|wikipedia|clear>");
-    printLine("  ;browser open [url]   ;browser close   ;browser full   ;browser half   ;browser window");
-    printLine("  ;game open (opens Burrito Bison in a new tab)");
-    printLine("  ;bind help, ;theme ...");
-    return;
-  }
-  if (line === ";clear"){ clearTerm(); return; }
-  if (line === ";panic"){ triggerPanic(); return; }
-  if (line === ";open tools"){ openTools(); return; }
-  if (line === ";close tools"){ closeTools(); return; }
-
-  if (line.startsWith(";cloak ")){
-    const arg=line.slice(7).trim().toLowerCase();
-    const map={
-      google:["Google","google-favicon.png"],
-      calculator:["Calculator","calculator-icon.png"],
-      docs:["Google Docs","google-docs-icon.png"],
-      classroom:["Google Classroom","classroom-favicon.png"],
-      khan:["Khan Academy","khan-favicon.png"],
-      wikipedia:["Wikipedia","wikipedia-favicon.png"],
-      clear:[null,null]
-    };
-    if(!map[arg]){ printLine("Unknown cloak target."); return; }
-    if(arg==="clear"){ clearTab(); return; }
-    const [t,i]=map[arg]; setTab(t,i); saveCloak(t,i); return;
-  }
-
-  if (line === ";browser open"){ showBrowserChooser(); return; }
-  if (line.startsWith(";browser open ")){ const url=line.slice(";browser open ".length).trim(); openBrowser(url || MINI_BROWSER_URL); return; }
-  if (line === ";browser close"){ closeBrowser(); return; }
-  if (line === ";browser full"){ fullBrowser(); return; }
-  if (line === ";browser half"){ halfBrowser(); return; }
-  if (line === ";browser window"){ winBrowser(); return; }
-
-  if (line === ";game open"){ window.open(BURRITO_URL, "_blank", "noopener"); return; }
-
-  if (line.startsWith(";theme ")){
-    const p=line.split(/\s+/);
-    if(p[1]==="set"&&p[2]==="bg"&&p[3]){ theme.bgColor=p[3]; themeApply(); printLine("BG color set."); return; }
-    if(p[1]==="set"&&p[2]==="accent"&&p[3]){ theme.accent=p[3]; themeApply(); printLine("Accent color set."); return; }
-    if(p[1]==="set"&&p[2]==="image"&&p[3]==="url"&&p[4]){ theme.bgDataUrl=p.slice(4).join(" "); themeApply(); printLine("BG image set (URL)."); return; }
-    if(p[1]==="clear"&&p[2]==="image"){ theme.bgDataUrl=null; themeApply(); printLine("BG image cleared."); return; }
-    if(p[1]==="save"){ themeSave(); printLine("Theme saved."); return; }
-    if(p[1]==="reset"){ theme={bgColor:"#0f172a",accent:"#60a5fa",bgDataUrl:null}; themeApply(); themeSave(); printLine("Theme reset."); return; }
-    printLine("Unknown ;theme command. Try ;help"); return;
-  }
-
-  if (line.startsWith(";bind")){
-    const p=line.split(/\s+/);
-    if(p.length===1||p[1]==="help"){
-      printLine("Bind commands: list / set <action> <combo> / clear <action|all>");
-      printLine("Actions: "+Object.keys(ACTIONS).join(", "));
-      return;
-    }
-    if(p[1]==="list"){ if(!Object.keys(keybinds).length){ printLine("No keybinds set."); return; } for(const [a,c] of Object.entries(keybinds)) printLine(`- ${a} → ${canonCombo(c)}`); return; }
-    if(p[1]==="set"&&p[2]&&p[3]){ const action=p[2], combo=p.slice(3).join("").toLowerCase(); if(!ACTIONS[action]){ printLine("Unknown action."); return; } keybinds[action]=combo; saveKeybinds(); rebuildComboMap(); printLine(`Bound ${action} to ${canonCombo(combo)}.`); renderKeybindsUI(); return; }
-    if(p[1]==="clear"&&p[2]){ if(p[2]==="all"){ keybinds={}; saveKeybinds(); rebuildComboMap(); printLine("Cleared all keybinds."); renderKeybindsUI(); return; } delete keybinds[p[2]]; saveKeybinds(); rebuildComboMap(); printLine(`Cleared bind for ${p[2]}.`); renderKeybindsUI(); return; }
-    printLine("Unknown ;bind command. Try ;bind help"); return;
-  }
-
+  if(line===";help"){ printLine("Commands: ;help ;clear ;panic ;open tools ;close tools"); printLine(";browser open [url] ;browser close ;browser full ;browser half ;browser window"); return; }
+  if(line===";clear"){ clearTerm(); return; }
+  if(line===";panic"){ triggerPanic(); return; }
+  if(line===";open tools"){ openTools(); return; }
+  if(line===";close tools"){ closeTools(); return; }
+  if(line===";browser open"){ showBrowserChooser(); return; }
+  if(line.startsWith(";browser open ")){ openBrowser(line.slice(14).trim()||MINI_BROWSER_URL); return; }
+  if(line===";browser close"){ closeBrowser(); return; }
+  if(line===";browser full"){ makeFull(); return; }
+  if(line===";browser half"){ makeHalf(); return; }
+  if(line===";browser window"){ makeWindow(); return; }
   printLine("Unknown command. Try ;help");
 }
-termIn.addEventListener("keydown",(e)=>{ if (e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
+termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
 
-/* ======= Initial favicon (Down screen) ======= */
-setTab("Math Help - Down", { "16x16":"down-favicon-16.png", "32x32":"down-favicon-32.png", "64x64":"down-favicon-64.png" });
+/* Browser chooser */
+function showBrowserChooser(){ browserChooser.classList.add("show"); browserChooser.setAttribute("aria-hidden","false"); }
+function hideBrowserChooser(){ browserChooser.classList.remove("show"); browserChooser.setAttribute("aria-hidden","true"); }
+browserChooser.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) hideBrowserChooser(); });
+chooseBean.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(BEAN_URL); });
+chooseWin11.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
+openBrowserBtn.addEventListener('click',showBrowserChooser);
 
-/* Disable terminal until unlock */
-openTermBtn.disabled = true;
-
-/* ======= Browser chooser (always prompts, no saving) ======= */
-function showBrowserChooser(){
-  browserChooser.classList.add("show");
-  browserChooser.setAttribute("aria-hidden","false");
+/* Mini browser */
+let browserLoadTimer=null;
+function resetBrowserInline(){
+  browserWin.style.left=''; browserWin.style.top=''; browserWin.style.right=''; browserWin.style.transform='';
 }
-function hideBrowserChooser(){
-  browserChooser.classList.remove("show");
-  browserChooser.setAttribute("aria-hidden","true");
+function makeWindow(){
+  browserWin.classList.remove('full','half');
+  resetBrowserInline();
+  browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)';
 }
-browserChooser.addEventListener("click",(e)=>{
-  if (e.target.dataset.close !== undefined) hideBrowserChooser();
-});
-document.addEventListener("keydown",(e)=>{
-  if (e.key==="Escape" && browserChooser.classList.contains("show")) hideBrowserChooser();
-});
-chooseBean.addEventListener("click", ()=>{ hideBrowserChooser(); openBrowser(BEAN_URL); });
-chooseWin11.addEventListener("click", ()=>{ hideBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
-openBrowserBtn.addEventListener('click', showBrowserChooser);
+function makeFull(){
+  browserWin.classList.remove('half');
+  browserWin.classList.add('full');
+  resetBrowserInline();
+}
+function makeHalf(){
+  browserWin.classList.remove('full');
+  browserWin.classList.add('half');
+  resetBrowserInline();
+}
+function openBrowser(url){
+  browserDesk.style.display="block"; browserDesk.setAttribute("aria-hidden","false");
+  makeWindow(); browserErr.style.display="none"; browserLoader.style.display="flex";
+  browserFrame.removeAttribute('src'); browserFrame.src=url;
+  clearTimeout(browserLoadTimer); browserLoadTimer=setTimeout(()=>{ browserLoader.style.display="none"; browserErr.style.display="block"; },6000);
+}
+function closeBrowser(){ browserDesk.style.display="none"; browserDesk.setAttribute("aria-hidden","true"); }
+closeBtn.addEventListener('click',closeBrowser);
+fullBtn.addEventListener('click',makeFull);
+halfBtn.addEventListener('click',makeHalf);
+winBtn .addEventListener('click',makeWindow);
+browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display="none"; });
 
-/* ======= After unlock actions ======= */
-document.getElementById("openBurrito").addEventListener("click", ()=> {
-  window.open(BURRITO_URL, "_blank", "noopener");
-});
+/* Drag (disabled in full/half) */
+(function(){ let dragging=false,sx=0,sy=0,left=0,top=0;
+  browserTop.addEventListener('mousedown',e=>{
+    if(browserWin.classList.contains('full')||browserWin.classList.contains('half'))return;
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    const r=browserWin.getBoundingClientRect(); left=r.left; top=r.top; document.body.style.userSelect="none";
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    browserWin.style.left=(left+dx)+"px"; browserWin.style.top=(top+dy)+"px"; browserWin.style.transform="translateX(0)";
+  });
+  window.addEventListener('mouseup',()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
+  browserTop.addEventListener('dblclick',()=>{ browserWin.classList.contains('full')?makeWindow():makeFull(); });
+})();
+
+/* Game */
+document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
+
+/* Initial "down" favicon set (multi-size) */
+setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
 </script>
 </body>
 </html>
