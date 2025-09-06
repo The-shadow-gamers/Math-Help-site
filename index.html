@@ -5,38 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Math Help</title>
 <link rel="icon" href="icon.png" type="image/png" />
-
+<!-- Netlify Identity (email verification + login) -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
   :root{
-    --bar-h:56px;              /* updated in JS */
-    --bg:#0f172a;
-    --panel:#0b1220;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --btn:#111827;
-    --btnH:#1f2937;
-    --accent:#60a5fa;
+    --bar-h:56px;
+    --bg:#0f172a; --panel:#0b1220; --text:#e5e7eb; --muted:#9ca3af;
+    --btn:#111827; --btnH:#1f2937; --accent:#60a5fa;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   body{background:var(--bg)}
   body.with-bg-img{background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed}
-
-  /* Invisible unlock hotspot (top-left) */
   #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
-
-  /* Down/locked screen */
   #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
   #lockedInner{max-width:720px}
   #lockedIcon{width:64px;height:64px;border-radius:12px;display:block;margin:0 auto 12px}
-  #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
-  #locked p{margin:0;opacity:.9}
-
-  /* Top bar (fixed) */
   .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c;position:fixed;top:0;left:0;right:0;z-index:1200}
   .bar.unlocked{display:flex}
   .bar-row{width:100%;display:flex;align-items:center;gap:.5rem}
-  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
+  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700}
   .brand img{width:22px;height:22px;border-radius:6px}
   .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:#e5e7eb;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
   .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
@@ -45,13 +33,9 @@
   .bar-left{display:flex;align-items:center;gap:.5rem}
   .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
   .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
-
-  /* Menu restore button (when bar hidden) */
   #menuRestore{display:none;position:fixed;top:8px;right:8px;z-index:1300;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
   body.bar-hidden #menuRestore{display:block}
   body.bar-hidden .bar{display:none !important}
-
-  /* Tools drawer */
   #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:1250;overflow:auto}
   #toolsDrawer.open{transform:translateX(0)}
   #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
@@ -59,8 +43,6 @@
   .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
   .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
   .small{font-size:.85rem;color:#9ca3af}
-
-  /* Modals */
   .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
   .modal.show{display:flex}
   .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
@@ -71,16 +53,13 @@
   .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
   .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
   .err{color:#fca5a5;font-size:.9rem;min-height:1em}
-
-  /* Terminal */
   #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.45)}
   #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
   #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
   #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1426}
   #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
   #termIn{flex:1}
-
-  /* ---- FIX: Embed area always fills below menu ---- */
+  /* FIX: embed always fills under menu */
   #embedArea{position:fixed;top:var(--bar-h);left:0;right:0;bottom:0;z-index:100}
   #embedFrame{width:100%;height:100%;border:0;background:#000}
   #embedLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
@@ -89,8 +68,6 @@
   #embedProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
   #embedProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#38bdf8);animation:loading 2.2s infinite}
   @keyframes loading{0%{width:0%}50%{width:85%}100%{width:0%}}
-
-  /* Browser overlay */
   #browserDesk{display:none;position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:3300;pointer-events:none}
   #browserWin{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(1100px,96vw);height:min(80vh,calc(100vh - var(--bar-h) - 36px));background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;pointer-events:auto}
   #browserTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c;cursor:move}
@@ -107,235 +84,218 @@
 </style>
 </head>
 <body>
-  <!-- Restore button when menu is hidden -->
-  <button id="menuRestore" title="Show menu">≡ Menu</button>
+<button id="menuRestore" title="Show menu">≡ Menu</button>
+<div id="hotspot" aria-label="Open password"></div>
 
-  <!-- Invisible password hotspot -->
-  <div id="hotspot" aria-label="Open password"></div>
+<div id="locked">
+  <div id="lockedInner">
+    <img id="lockedIcon" src="down-favicon-64.png" alt="">
+    <h1>Math Help is down right now</h1>
+    <p>Please come back later.</p>
+  </div>
+</div>
 
-  <!-- Down screen -->
-  <div id="locked">
-    <div id="lockedInner">
-      <img id="lockedIcon" src="down-favicon-64.png" alt="">
-      <h1>Math Help is down right now</h1>
-      <p>Please come back later.</p>
+<div class="bar" id="panel">
+  <div class="bar-row">
+    <div class="bar-left">
+      <span class="brand"><img src="icon.png" alt="">Math Help</span>
+
+      <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+      <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+      <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+      <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+      <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+      <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+      <button class="btn clear" id="clearCloak">Clear</button>
+
+      <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
+        <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+        <select id="panicSelect">
+          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
+          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+        </select>
+        <button id="panicFire" class="btn">Panic</button>
+      </div>
+
+      <button id="toolsBtn" class="btn">Tools</button>
+      <button id="openBrowser" class="btn">Browser</button>
+      <button id="openTermBtn" class="btn">Terminal</button>
+    </div>
+
+    <div class="bar-right">
+      <button id="collapseBtn" class="btn">Close Menu</button>
     </div>
   </div>
 
-  <!-- Top menu -->
-  <div class="bar" id="panel">
-    <div class="bar-row">
-      <div class="bar-left">
-        <span class="brand"><img src="icon.png" alt="">Math Help</span>
+  <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
+    <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
+    <button id="openBurrito" class="btn">Burrito Bison</button>
+  </div>
+</div>
 
-        <!-- Tab cloak buttons -->
-        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
-        <button class="btn clear" id="clearCloak">Clear</button>
-
-        <!-- Panic -->
-        <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
-          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-          <select id="panicSelect">
-            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
-            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-          </select>
-          <button id="panicFire" class="btn">Panic</button>
-        </div>
-
-        <!-- Tools / Browser / Terminal -->
-        <button id="toolsBtn" class="btn">Tools</button>
-        <button id="openBrowser" class="btn">Browser</button>
-        <button id="openTermBtn" class="btn">Terminal</button>
-      </div>
-
-      <div class="bar-right">
-        <button id="collapseBtn" class="btn">Close Menu</button>
-      </div>
-    </div>
-
-    <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
-      <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
-      <button id="openBurrito" class="btn">Burrito Bison</button>
-    </div>
+<aside id="toolsDrawer" aria-hidden="true">
+  <div id="toolsHdr">
+    <h3 style="margin:0">Tools</h3>
+    <button id="toolsClose" class="btn" type="button">Close</button>
   </div>
 
-  <!-- Tools drawer -->
-  <aside id="toolsDrawer" aria-hidden="true">
-    <div id="toolsHdr">
-      <h3 style="margin:0">Tools</h3>
-      <button id="toolsClose" class="btn" type="button">Close</button>
-    </div>
-
-    <div class="toolCard">
-      <h4>Notepad</h4>
-      <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
-      <div class="toolRow" style="justify-content:flex-end"><span id="noteSaved" class="small"></span></div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Timer</h4>
-      <div class="toolRow">
-        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
-        <button id="timerStart" class="btn" type="button">Start</button>
-        <button id="timerStop" class="btn" type="button">Stop</button>
-        <button id="timerReset" class="btn" type="button">Reset</button>
-      </div>
-      <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Unit Converter</h4>
-      <div class="toolRow">
-        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
-        <span>↔</span>
-        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
-      </div>
-      <div class="toolRow">
-        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
-        <span>↔</span>
-        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
-      </div>
-    </div>
-  </aside>
-
-  <!-- Password Modal -->
-  <div id="pwModal" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="card">
-      <h2>Enter password</h2>
-      <div class="toolRow">
-        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
-        <button id="togglePw" class="toggle" type="button">Show</button>
-      </div>
-      <div id="pwErr" class="err"></div>
-      <div class="actions">
-        <button class="secondary" data-close type="button">Cancel</button>
-        <button id="pwSubmit" class="primary" type="button">Unlock</button>
-      </div>
-    </div>
+  <div class="toolCard">
+    <h4>Notepad</h4>
+    <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
+    <div class="toolRow" style="justify-content:flex-end"><span id="noteSaved" class="small"></span></div>
   </div>
 
-  <!-- Browser chooser -->
-  <div id="browserChooser" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="card">
-      <h2>Open Browser</h2>
-      <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
-        <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
-        <button id="chooseWin11" class="primary" type="button">Windows 11</button>
-        <button class="secondary" data-close type="button">Cancel</button>
-      </div>
+  <div class="toolCard">
+    <h4>Timer</h4>
+    <div class="toolRow">
+      <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
+      <button id="timerStart" class="btn" type="button">Start</button>
+      <button id="timerStop" class="btn" type="button">Stop</button>
+      <button id="timerReset" class="btn" type="button">Reset</button>
     </div>
+    <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
   </div>
 
-  <!-- Terminal -->
-  <div id="termDesk" aria-hidden="true" style="display:none">
-    <div id="termBox">
-      <div id="termTop">
-        <strong>Terminal</strong>
-        <button id="termClose" class="btn" type="button">Close</button>
-      </div>
-      <pre id="termOut"></pre>
-      <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help" />
-        <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
-      </div>
+  <div class="toolCard">
+    <h4>Unit Converter</h4>
+    <div class="toolRow">
+      <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
+      <span>↔</span>
+      <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
+    </div>
+    <div class="toolRow">
+      <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
+      <span>↔</span>
+      <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
     </div>
   </div>
+</aside>
 
-  <!-- Mini Browser -->
-  <div id="browserDesk" aria-hidden="true">
-    <div id="browserWin" role="dialog" aria-label="Browser window">
-      <div id="browserTop" title="Drag • Double-click to toggle full/window">
-        <div id="browserTitle">Browser</div>
-        <div id="browserCtrls">
-          <button id="halfBtn" class="btn" title="Half screen">▭▭</button>
-          <button id="fullBtn" class="btn" title="Full screen">▢</button>
-          <button id="winBtn"  class="btn" title="Windowed">▣</button>
-          <button id="closeBtn" class="btn" title="Close">✕</button>
-        </div>
+<!-- Password Modal (your original gate) -->
+<div id="pwModal" class="modal" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="card">
+    <h2>Enter password</h2>
+    <div class="toolRow">
+      <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
+      <button id="togglePw" class="toggle" type="button">Show</button>
+    </div>
+    <div id="pwErr" class="err"></div>
+    <div class="actions">
+      <button class="secondary" data-close type="button">Cancel</button>
+      <button id="pwSubmit" class="primary" type="button">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Browser chooser -->
+<div id="browserChooser" class="modal" aria-hidden="true">
+  <div class="backdrop" data-close></div>
+  <div class="card">
+    <h2>Open Browser</h2>
+    <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
+      <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
+      <button id="chooseWin11" class="primary" type="button">Windows 11</button>
+      <button class="secondary" data-close type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Terminal -->
+<div id="termDesk" aria-hidden="true" style="display:none">
+  <div id="termBox">
+    <div id="termTop">
+      <strong>Terminal</strong>
+      <button id="termClose" class="btn" type="button">Close</button>
+    </div>
+    <pre id="termOut"></pre>
+    <div id="termInRow">
+      <input id="termIn" class="input" type="text" placeholder="Type ;help" />
+      <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
+    </div>
+  </div>
+</div>
+
+<!-- Mini Browser -->
+<div id="browserDesk" aria-hidden="true">
+  <div id="browserWin" role="dialog" aria-label="Browser window">
+    <div id="browserTop" title="Drag • Double-click to toggle full/window">
+      <div id="browserTitle">Browser</div>
+      <div id="browserCtrls">
+        <button id="halfBtn" class="btn" title="Half screen">▭▭</button>
+        <button id="fullBtn" class="btn" title="Full screen">▢</button>
+        <button id="winBtn"  class="btn" title="Windowed">▣</button>
+        <button id="closeBtn" class="btn" title="Close">✕</button>
       </div>
-      <div id="browserBody">
-        <iframe id="browserFrame" title="Mini Browser"></iframe>
-        <div id="browserLoader">
-          <div id="browserLoaderInner">
-            <img id="browserLogo" src="icon.png" alt="Loading">
-            <div id="browserProg"><span></span></div>
-            <p class="small" style="text-align:center;margin-top:.6rem">Launching…</p>
-          </div>
-        </div>
-        <div id="browserErr" style="display:none;text-align:center;padding:1rem">
-          Couldn’t load. The site may block iframes.
+    </div>
+    <div id="browserBody">
+      <iframe id="browserFrame" title="Mini Browser"></iframe>
+      <div id="browserLoader">
+        <div id="browserLoaderInner">
+          <img id="browserLogo" src="icon.png" alt="Loading">
+          <div id="browserProg"><span></span></div>
+          <p class="small" style="text-align:center;margin-top:.6rem">Launching…</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Embed Area (fixed so it never crops) -->
-  <div id="embedArea">
-    <iframe id="embedFrame" title="Embedded Site"></iframe>
-    <div id="embedLoader">
-      <div id="embedLoaderInner">
-        <img id="embedLogo" src="icon.png" alt="Loading">
-        <div id="embedProg"><span></span></div>
-        <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
+      <div id="browserErr" style="display:none;text-align:center;padding:1rem">
+        Couldn’t load. The site may block iframes.
       </div>
     </div>
   </div>
+</div>
+
+<!-- Embed Area (fixed so it never crops) -->
+<div id="embedArea">
+  <iframe id="embedFrame" title="Embedded Site"></iframe>
+  <div id="embedLoader">
+    <div id="embedLoaderInner">
+      <img id="embedLogo" src="icon.png" alt="Loading">
+      <div id="embedProg"><span></span></div>
+      <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ===== Config ===== */
 const EMBED_URL="https://videogamenerds.wixstudio.com/math-help/";
 const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
 const BEAN_URL="https://mbxp.vercel.app/";
-const BURRITO_URL="/burrito/";
-
+const BURRITO_URL="https://nintendoboi222.github.io/games/Burrito-Bison/";
 const ADMIN_PASSWORD="imadmin";
 const USER_PASSWORD="gamerzforever";
 
-/* Elements */
+/* Shortcuts to elements (kept from your build) */
 const hotspot=document.getElementById("hotspot");
 const locked=document.getElementById("locked");
 const panel=document.getElementById("panel");
 const menuRestore=document.getElementById("menuRestore");
 const collapseBtn=document.getElementById("collapseBtn");
-
 const embedFrame=document.getElementById("embedFrame");
 const embedLoader=document.getElementById("embedLoader");
-
 const toolsDrawer=document.getElementById("toolsDrawer");
 const toolsBtn=document.getElementById("toolsBtn");
 const toolsClose=document.getElementById("toolsClose");
-
 const noteArea=document.getElementById("noteArea");
 const noteSaved=document.getElementById("noteSaved");
-
 const timerMin=document.getElementById("timerMin");
 const timerStart=document.getElementById("timerStart");
 const timerStop=document.getElementById("timerStop");
 const timerReset=document.getElementById("timerReset");
 const timerReadout=document.getElementById("timerReadout");
-
 const termDesk=document.getElementById("termDesk");
 const termOut=document.getElementById("termOut");
 const termIn=document.getElementById("termIn");
 const termClose=document.getElementById("termClose");
 const openTermBtn=document.getElementById("openTermBtn");
-
 const openBrowserBtn=document.getElementById("openBrowser");
 const browserChooser=document.getElementById("browserChooser");
 const chooseBean=document.getElementById("chooseBean");
 const chooseWin11=document.getElementById("chooseWin11");
-
 const browserDesk=document.getElementById("browserDesk");
 const browserWin=document.getElementById("browserWin");
 const browserTop=document.getElementById("browserTop");
@@ -347,7 +307,7 @@ const fullBtn=document.getElementById("fullBtn");
 const halfBtn=document.getElementById("halfBtn");
 const winBtn=document.getElementById("winBtn");
 
-/* Tab cloak helpers (with multi-size icons) */
+/* Favicon & cloak (unchanged) */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
 function removeFavicons(){ document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
 function addIconWithSizes(href,s){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if(s) l.sizes=s; l.href=__v(href); document.head.appendChild(l); }
@@ -358,7 +318,7 @@ function saveCloak(title,icon){ localStorage.setItem("mh_cloak",JSON.stringify({
 function loadCloak(){ try{return JSON.parse(localStorage.getItem("mh_cloak")||"null");}catch{return null;} }
 function clearTab(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); }
 
-/* Panic */
+/* Panic (unchanged) */
 const panicSelect=document.getElementById("panicSelect");
 const panicFire=document.getElementById("panicFire");
 function savePanic(obj){ localStorage.setItem("mh_panic",JSON.stringify(obj)); }
@@ -376,7 +336,7 @@ document.querySelectorAll('.btn[data-title]').forEach(b=>b.addEventListener('cli
 }));
 document.getElementById('clearCloak').addEventListener('click',clearTab);
 
-/* Password modal */
+/* Password modal (kept) */
 const pwModal=document.getElementById("pwModal");
 const pwInput=document.getElementById("pwInput");
 const pwErr=document.getElementById("pwErr");
@@ -390,7 +350,7 @@ document.getElementById("pwSubmit").addEventListener("click",submitPassword);
 pwInput.addEventListener("keydown",e=>{ if(e.key==="Enter") submitPassword(); });
 hotspot.addEventListener("click",openPw);
 
-/* ---- FIX DRIVER: set --bar-h precisely ---- */
+/* Bar height driver (so embed never crops) */
 function setBarHeight(px){ document.documentElement.style.setProperty('--bar-h', px + 'px'); }
 function showMenu(){
   document.body.classList.remove('bar-hidden');
@@ -402,53 +362,85 @@ collapseBtn.addEventListener('click',hideMenu);
 menuRestore.addEventListener('click',showMenu);
 window.addEventListener('resize',()=>{ if(!document.body.classList.contains('bar-hidden')) setBarHeight(panel.getBoundingClientRect().height || 0); });
 
-/* Unlock flow */
+/* ===== Netlify Identity integration ===== */
+if (window.netlifyIdentity) {
+  netlifyIdentity.init();
+
+  function checkBanAndUnlock(user){
+    fetch('/.netlify/functions/check-ban', {
+      headers: { 'Authorization': 'Bearer ' + user.token.access_token }
+    })
+    .then(res => {
+      if(res.status === 403) throw new Error('banned');
+      if(!res.ok) throw new Error('fail');
+      return res.json();
+    })
+    .then(() => { reveal('user'); })
+    .catch(err => {
+      if(err.message === 'banned'){
+        alert('You are banned from this site.');
+        netlifyIdentity.logout();
+      } else {
+        console.error(err);
+        alert('Login check failed — try again.');
+      }
+    });
+  }
+
+  netlifyIdentity.on('init', user => { /* optional auto-unlock on reload:
+    if(user) checkBanAndUnlock(user); */ });
+  netlifyIdentity.on('login', user => { checkBanAndUnlock(user); netlifyIdentity.close(); });
+  netlifyIdentity.on('logout', () => { location.reload(); });
+
+  // Change your user password path: after correct site password, we require Identity login
+  function submitPassword(){
+    const pass=pwInput.value.trim();
+    if(!pass){ pwErr.textContent="Password required."; return; }
+    if(pass===ADMIN_PASSWORD){ closePw(); reveal("admin"); return; }
+    if(pass===USER_PASSWORD){
+      pwErr.textContent="";
+      closePw();
+      const u = netlifyIdentity.currentUser();
+      if (u){ checkBanAndUnlock(u); return; }
+      // First time: open login/signup (Netlify handles verification email)
+      netlifyIdentity.open('login');
+      return;
+    }
+    pwErr.textContent="Incorrect password.";
+  }
+  window.submitPassword = submitPassword; // keep it accessible if needed
+}
+
+/* ===== Reveal (unchanged) ===== */
 let ROLE=null, loadTimer=null;
 function reveal(role){
   ROLE=role;
   locked.style.display="none";
   panel.classList.add("unlocked");
-  showMenu();                       // start open
-
+  showMenu();
   const saved=loadCloak();
   if(saved&&saved.title&&saved.icon) setTab(saved.title,saved.icon); else setTab("Math Help","icon.png");
-
-  // Load embedded site
   embedFrame.src=EMBED_URL;
   embedLoader.style.display="flex";
   clearTimeout(loadTimer);
   loadTimer=setTimeout(()=>{ embedLoader.style.display="none"; },4000);
 }
-function submitPassword(){
-  const pass=pwInput.value.trim();
-  if(!pass){ pwErr.textContent="Password required."; return; }
-  if(pass===ADMIN_PASSWORD || pass===USER_PASSWORD){ closePw(); reveal(pass===ADMIN_PASSWORD?"admin":"user"); return; }
-  pwErr.textContent="Incorrect password.";
-}
 
-/* Tools */
+/* Tools + Notepad + Timer (kept) */
 function openTools(){ toolsDrawer.classList.add("open"); }
 function closeTools(){ toolsDrawer.classList.remove("open"); }
 toolsBtn.addEventListener("click",openTools);
 toolsClose.addEventListener("click",closeTools);
-
-/* Notepad */
 noteArea.value=localStorage.getItem("mh_note")||"";
 noteArea.addEventListener("input",()=>{ localStorage.setItem("mh_note",noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900); });
-
-/* Timer */
 let timerLeft=Number(timerMin.value)*60, timerId=null;
 function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(timerLeft%60).padStart(2,"0"); timerReadout.textContent=`${m}:${s}`; }
 function startTimer(){ if(timerId) return; timerId=setInterval(()=>{ if(timerLeft>0){ timerLeft--; renderTimer(); } else { clearInterval(timerId); timerId=null; alert("Time!"); }},1000); }
 function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
 function resetTimer(){ stopTimer(); timerLeft=Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
-timerStart.addEventListener("click",startTimer);
-timerStop.addEventListener("click",stopTimer);
-timerReset.addEventListener("click",resetTimer);
-timerMin.addEventListener("change",resetTimer);
-renderTimer();
+timerStart.addEventListener("click",startTimer); timerStop.addEventListener("click",stopTimer); timerReset.addEventListener("click",resetTimer); timerMin.addEventListener("change",resetTimer); renderTimer();
 
-/* Terminal */
+/* Terminal (kept) */
 function openTerm(){ termDesk.style.display="block"; termIn.value=""; termIn.focus(); if(!termOut.textContent) termOut.textContent="Terminal ready. Type ;help\n"; }
 function closeTerm(){ termDesk.style.display="none"; }
 openTermBtn.addEventListener("click",openTerm);
@@ -473,7 +465,7 @@ function handleCommand(s){
 }
 termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
 
-/* Browser chooser */
+/* Browser chooser + mini browser (kept, with fullscreen fix) */
 function showBrowserChooser(){ browserChooser.classList.add("show"); browserChooser.setAttribute("aria-hidden","false"); }
 function hideBrowserChooser(){ browserChooser.classList.remove("show"); browserChooser.setAttribute("aria-hidden","true"); }
 browserChooser.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) hideBrowserChooser(); });
@@ -481,26 +473,11 @@ chooseBean.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(BEAN
 chooseWin11.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
 openBrowserBtn.addEventListener('click',showBrowserChooser);
 
-/* Mini browser */
 let browserLoadTimer=null;
-function resetBrowserInline(){
-  browserWin.style.left=''; browserWin.style.top=''; browserWin.style.right=''; browserWin.style.transform='';
-}
-function makeWindow(){
-  browserWin.classList.remove('full','half');
-  resetBrowserInline();
-  browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)';
-}
-function makeFull(){
-  browserWin.classList.remove('half');
-  browserWin.classList.add('full');
-  resetBrowserInline();
-}
-function makeHalf(){
-  browserWin.classList.remove('full');
-  browserWin.classList.add('half');
-  resetBrowserInline();
-}
+function resetBrowserInline(){ browserWin.style.left=''; browserWin.style.top=''; browserWin.style.right=''; browserWin.style.transform=''; }
+function makeWindow(){ browserWin.classList.remove('full','half'); resetBrowserInline(); browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)'; }
+function makeFull(){ browserWin.classList.remove('half'); browserWin.classList.add('full'); resetBrowserInline(); }
+function makeHalf(){ browserWin.classList.remove('full'); browserWin.classList.add('half'); resetBrowserInline(); }
 function openBrowser(url){
   browserDesk.style.display="block"; browserDesk.setAttribute("aria-hidden","false");
   makeWindow(); browserErr.style.display="none"; browserLoader.style.display="flex";
@@ -513,8 +490,6 @@ fullBtn.addEventListener('click',makeFull);
 halfBtn.addEventListener('click',makeHalf);
 winBtn .addEventListener('click',makeWindow);
 browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display="none"; });
-
-/* Drag (disabled in full/half) */
 (function(){ let dragging=false,sx=0,sy=0,left=0,top=0;
   browserTop.addEventListener('mousedown',e=>{
     if(browserWin.classList.contains('full')||browserWin.classList.contains('half'))return;
@@ -531,9 +506,9 @@ browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); brows
 })();
 
 /* Game */
-document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
+document.getElementById("openBurrito").addEventListener("click",()=>{ window.open("https://nintendoboi222.github.io/games/Burrito-Bison/","_blank","noopener"); });
 
-/* Initial "down" favicon set (multi-size) */
+/* Initial “down” favicon */
 setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
 </script>
 </body>
