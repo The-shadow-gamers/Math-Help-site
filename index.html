@@ -29,9 +29,7 @@
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
+    margin:0;background:var(--bg);color:var(--text);
     font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
   }
   img{display:block}
@@ -114,7 +112,7 @@
   #browserWin.full{top:0; left:0; transform:none; width:100vw; height:calc(100vh - var(--bar-h)); border-radius:0}
   #browserWin.half{top:0; right:0; left:auto; transform:none; width:50vw; height:calc(100vh - var(--bar-h)); border-radius:0}
 
-  /* ===== Modals (NEW: Password + Browser Chooser) ===== */
+  /* ===== Modals (Password + Browser Chooser + NEW: Game Source) ===== */
   .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000}
   .modal.show{display:flex}
   .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
@@ -154,23 +152,21 @@
   <nav class="bar" id="panel" aria-label="Main menu">
     <div class="bar-row">
       <div class="bar-left">
-        <!-- Brand icon shows DOWN logo until unlock -->
         <span class="brand"><img id="brandIcon" src="down-favicon-32.png" alt="">Math Help</span>
 
         <!-- Tab cloak buttons -->
-        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png" aria-label="Cloak: Calculator"><img src="calculator-icon.png" alt="">Calculator</button>
-        <button class="btn" data-title="Google" data-favicon="google-favicon.png" aria-label="Cloak: Google"><img src="google-favicon.png" alt="">Google</button>
-        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png" aria-label="Cloak: Google Docs"><img src="google-docs-icon.png" alt="">Docs</button>
-        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png" aria-label="Cloak: Google Classroom"><img src="classroom-favicon.png" alt="">Classroom</button>
-        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png" aria-label="Cloak: Khan Academy"><img src="khan-favicon.png" alt="">Khan</button>
-        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png" aria-label="Cloak: Wikipedia"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
         <button class="btn clear" id="clearCloak">Clear</button>
 
-        <!-- Panic URL input (press '-' to trigger) -->
+        <!-- Panic URL input -->
         <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
           <label for="panicUrl">Panic URL (<span class="kbd">-</span>):</label>
-          <input id="panicUrl" type="url" placeholder="https://example.com" style="width:220px"
-                 class="input" aria-label="URL opened when pressing minus">
+          <input id="panicUrl" type="url" placeholder="https://example.com" style="width:220px" class="input" aria-label="URL opened when pressing minus">
         </div>
 
         <!-- Tools / Browser / Terminal -->
@@ -272,7 +268,7 @@
     </div>
   </div>
 
-  <!-- ===== NEW: Password Modal ===== -->
+  <!-- Password Modal -->
   <div id="pwModal" class="modal" aria-hidden="true">
     <div class="backdrop"></div>
     <div class="card" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
@@ -290,24 +286,38 @@
     </div>
   </div>
 
-  <!-- ===== NEW: Browser Chooser Modal ===== -->
+  <!-- Browser Chooser Modal -->
   <div id="browserChooser" class="modal" aria-hidden="true">
     <div class="backdrop"></div>
     <div class="card" role="dialog" aria-modal="true" aria-labelledby="bcTitle">
       <h2 id="bcTitle">Open Browser</h2>
       <p>Pick where to browse:</p>
       <div class="grid-2" style="margin:.6rem 0">
-        <button id="bcBean" class="choice" type="button">
-          <h3>BeanBrowser</h3>
-          <small>Fast & minimal</small>
+        <button id="bcBean" class="choice" type="button"><h3>BeanBrowser</h3><small>Fast & minimal</small></button>
+        <button id="bcWin" class="choice" type="button"><h3>Windows 11 Emulator</h3><small>Desktop-like experience</small></button>
+      </div>
+      <div class="actions"><button id="bcCancel" class="secondary" type="button">Cancel</button></div>
+    </div>
+  </div>
+
+  <!-- ===== NEW: Game Source Chooser Modal ===== -->
+  <div id="gameChooser" class="modal" aria-hidden="true">
+    <div class="backdrop"></div>
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="gsTitle">
+      <h2 id="gsTitle">Choose Games Source</h2>
+      <p>Where do you want to run games from?</p>
+      <div class="grid-2" style="margin:.6rem 0">
+        <button id="gsCool" class="choice" type="button">
+          <h3>Cool UBG</h3>
+          <small>Lots of unblocked games</small>
         </button>
-        <button id="bcWin" class="choice" type="button">
-          <h3>Windows 11 Emulator</h3>
-          <small>Desktop-like experience</small>
+        <button id="gsMaths" class="choice" type="button">
+          <h3>Mathsframe</h3>
+          <small>Maths practice games</small>
         </button>
       </div>
       <div class="actions">
-        <button id="bcCancel" class="secondary" type="button">Cancel</button>
+        <button id="gsSkip" class="secondary" type="button">Not now</button>
       </div>
     </div>
   </div>
@@ -326,12 +336,16 @@
 
 <script>
 /* ===== Config ===== */
-const EMBED_URL="https://mathhelp0g1.netlify.app/";
+const EMBED_URL="https://mathhelp0g1.netlify.app/"; // (kept; used only if skipping game choice)
 const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
 const BEAN_URL="https://mbxp.vercel.app/";
 const BURRITO_URL="/burrito/";          // opens in new tab
 const ADMIN_PASSWORD="imadmin";
 const USER_PASSWORD="gamerzforever";
+
+/* NEW: Game repos (embedded) */
+const COOL_UBG_URL = "https://coolubg2.github.io/";
+const MATHSFRAME_URL = "https://mathsframegames.github.io/";
 
 /* ===== Elements ===== */
 const hotspot=document.getElementById("hotspot");
@@ -369,18 +383,24 @@ const halfBtn=document.getElementById("halfBtn");
 const winBtn=document.getElementById("winBtn");
 const brandIcon=document.getElementById("brandIcon");
 
-/* NEW: Password modal elements */
+/* Password modal */
 const pwModal=document.getElementById("pwModal");
 const pwInput=document.getElementById("pwInput");
 const pwSubmit=document.getElementById("pwSubmit");
 const pwCancel=document.getElementById("pwCancel");
 const pwError=document.getElementById("pwError");
 
-/* NEW: Browser chooser modal elements */
+/* Browser chooser modal */
 const bcModal=document.getElementById("browserChooser");
 const bcBean=document.getElementById("bcBean");
 const bcWin=document.getElementById("bcWin");
 const bcCancel=document.getElementById("bcCancel");
+
+/* NEW: Game source chooser modal */
+const gsModal=document.getElementById("gameChooser");
+const gsCool=document.getElementById("gsCool");
+const gsMaths=document.getElementById("gsMaths");
+const gsSkip=document.getElementById("gsSkip");
 
 /* ===== Favicons / Tab Cloak core ===== */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
@@ -394,7 +414,6 @@ function setTab(title,icon){ document.title=title; setFavicons(icon); }
 function saveCloak(title, icon){ localStorage.setItem("mh_cloak", JSON.stringify({title, icon})); }
 function loadCloak(){ try{ return JSON.parse(localStorage.getItem("mh_cloak")||"null"); }catch{ return null; } }
 function clearCloak(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); if(brandIcon) brandIcon.src="icon.png"; }
-
 document.querySelectorAll('.btn[data-title]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const title = btn.getAttribute('data-title');
@@ -406,7 +425,7 @@ document.querySelectorAll('.btn[data-title]').forEach(btn=>{
 });
 document.getElementById('clearCloak')?.addEventListener('click', clearCloak);
 
-/* ===== Initial DOWN state (no auto-reveal) ===== */
+/* ===== Initial DOWN state ===== */
 function setInitialDown(){
   setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
   if(brandIcon) brandIcon.src="down-favicon-32.png";
@@ -415,6 +434,14 @@ function setInitialDown(){
   document.documentElement.style.setProperty("--bar-h","56px");
 }
 setInitialDown();
+
+/* ===== Helpers ===== */
+function loadEmbedded(url){
+  embedLoader.style.display="flex";
+  embedFrame.removeAttribute('src');
+  embedFrame.src=url;
+  setTimeout(()=>{ embedLoader.style.display="none"; },1600);
+}
 
 /* ===== Unlock flow ===== */
 function reveal(){
@@ -428,31 +455,17 @@ function reveal(){
     setTab("Math Help","icon.png");
     if(brandIcon) brandIcon.src="icon.png";
   }
-  embedLoader.style.display="flex";
-  embedFrame.src=EMBED_URL;
-  setTimeout(()=>{ embedLoader.style.display="none"; },1600);
+  // Instead of auto-embedding EMBED_URL, ask for the games source:
+  openGameChooser();
 }
 
-/* ===== Password Modal (NEW UI) ===== */
-function openPwModal(){
-  pwError.textContent="";
-  pwInput.value="";
-  pwModal.classList.add("show");
-  pwModal.setAttribute("aria-hidden","false");
-  setTimeout(()=> pwInput.focus(), 0);
-}
-function closePwModal(){
-  pwModal.classList.remove("show");
-  pwModal.setAttribute("aria-hidden","true");
-}
+/* ===== Password Modal ===== */
+function openPwModal(){ pwError.textContent=""; pwInput.value=""; pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); setTimeout(()=> pwInput.focus(), 0); }
+function closePwModal(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
 function submitPw(){
   const pw = pwInput.value.trim();
-  if(pw===ADMIN_PASSWORD || pw===USER_PASSWORD){
-    closePwModal(); reveal();
-  }else{
-    pwError.textContent="Incorrect password.";
-    pwInput.focus();
-  }
+  if(pw===ADMIN_PASSWORD || pw===USER_PASSWORD){ closePwModal(); reveal(); }
+  else{ pwError.textContent="Incorrect password."; pwInput.focus(); }
 }
 hotspot.addEventListener("click", openPwModal);
 pwCancel.addEventListener("click", closePwModal);
@@ -538,16 +551,9 @@ function handleCommand(s){
 }
 termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
 
-/* ===== Browser chooser (NEW UI Modal) ===== */
-function openBrowserChooser(){
-  bcModal.classList.add("show");
-  bcModal.setAttribute("aria-hidden","false");
-  setTimeout(()=> bcBean.focus(), 0);
-}
-function closeBrowserChooser(){
-  bcModal.classList.remove("show");
-  bcModal.setAttribute("aria-hidden","true");
-}
+/* ===== Browser chooser ===== */
+function openBrowserChooser(){ bcModal.classList.add("show"); bcModal.setAttribute("aria-hidden","false"); setTimeout(()=> bcBean.focus(), 0); }
+function closeBrowserChooser(){ bcModal.classList.remove("show"); bcModal.setAttribute("aria-hidden","true"); }
 openBrowserBtn.addEventListener('click', openBrowserChooser);
 bcCancel.addEventListener('click', closeBrowserChooser);
 bcBean.addEventListener('click', ()=>{ closeBrowserChooser(); openBrowser(BEAN_URL); });
@@ -591,6 +597,20 @@ browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); brows
 /* ===== Games ===== */
 document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
 document.getElementById("openGolfHit").addEventListener("click",()=>{ window.open("golfhit.html","_blank","noopener"); });
+
+/* ===== Game source chooser (NEW) ===== */
+function openGameChooser(){
+  gsModal.classList.add("show");
+  gsModal.setAttribute("aria-hidden","false");
+  setTimeout(()=> gsCool.focus(), 0);
+}
+function closeGameChooser(){
+  gsModal.classList.remove("show");
+  gsModal.setAttribute("aria-hidden","true");
+}
+gsCool.addEventListener('click', ()=>{ closeGameChooser(); loadEmbedded(COOL_UBG_URL); });
+gsMaths.addEventListener('click',()=>{ closeGameChooser(); loadEmbedded(MATHSFRAME_URL); });
+gsSkip.addEventListener('click', ()=>{ closeGameChooser(); loadEmbedded(EMBED_URL); });
 
 /* Helper for setTab also used above (kept for completeness) */
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
