@@ -9,21 +9,18 @@
 <style>
   /* ===== Design System ===== */
   :root{
-    --bar-h:56px;                 /* updated dynamically in JS */
-    --bg:#0b1220;                 /* page background */
-    --panel:#0f172a;              /* panels */
-    --panel-2:#0c1426;            /* panel inner */
-    --line:#0a0f1c;               /* borders */
-    --text:#e7edf5;               /* main text */
-    --muted:#9fb0c2;              /* secondary text */
-    --brand:#cbd5ff;              /* brand accent */
-    --btn:#162238;                /* button bg */
-    --btnH:#1b2a45;               /* button hover */
-    --accent:#5ea1ff;             /* progress gradients etc */
+    --bar-h:56px;
+    --bg:#0b1220;
+    --panel:#0f172a;
+    --panel-2:#0c1426;
+    --line:#0a0f1c;
+    --text:#e7edf5;
+    --muted:#9fb0c2;
+    --brand:#cbd5ff;
+    --btn:#162238;
+    --btnH:#1b2a45;
+    --accent:#5ea1ff;
     --accent2:#38bdf8;
-    --ok:#2ecc71;
-    --warn:#f39c12;
-    --danger:#e74c3c;
     --radius:14px;
     --shadow:0 14px 40px rgba(0,0,0,.35);
     --focus:0 0 0 3px rgba(94,161,255,.35);
@@ -39,97 +36,54 @@
   }
   img{display:block}
   button,select,input,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:none; box-shadow:var(--focus)}
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important}}
 
-  /* ===== Accessibility / Motion ===== */
-  :focus-visible{outline:none; box-shadow:var(--focus);}
-  @media (prefers-reduced-motion:reduce){
-    *{animation:none!important; transition:none!important}
-  }
-
-  /* ===== Top “Down”/Locked Screen ===== */
+  /* ===== Down / Locked ===== */
   #locked{
-    position:fixed; inset:0;
-    display:flex; align-items:center; justify-content:center;
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(180deg,#0a49c4,#053a97);
     color:#dbeafe; z-index:1000; text-align:center; padding:2rem;
   }
   #lockedInner{max-width:720px}
   #lockedIcon{width:64px; height:64px; border-radius:12px; margin:0 auto 12px}
 
-  /* ===== Invisible unlock hotspot (top-left) ===== */
+  /* ===== Hotspot ===== */
   #hotspot{position:fixed; top:0; left:0; width:44px; height:44px; opacity:0; z-index:1500; cursor:pointer}
 
-  /* ===== Top Navigation Bar ===== */
+  /* ===== Top Bar ===== */
   .bar{
-    display:none; flex-wrap:wrap; gap:.5rem;
-    padding:.5rem .75rem;
-    background:linear-gradient(180deg,#121a2b,var(--panel));
-    border-bottom:1px solid var(--line);
+    display:none; flex-wrap:wrap; gap:.5rem; padding:.5rem .75rem;
+    background:linear-gradient(180deg,#121a2b,var(--panel)); border-bottom:1px solid var(--line);
     position:fixed; top:0; left:0; right:0; z-index:1200;
   }
   .bar.unlocked{display:flex}
   .bar-row{width:100%; display:flex; align-items:center; gap:.5rem}
   .bar-left{display:flex; align-items:center; gap:.5rem}
   .bar-right{margin-left:auto; display:flex; gap:.5rem}
-
-  .brand{
-    display:inline-flex; align-items:center; gap:.5rem;
-    padding-right:.6rem; margin-right:.8rem;
-    border-right:1px solid var(--line);
-    color:var(--brand); font-weight:800; letter-spacing:.2px; user-select:none;
-  }
+  .brand{display:inline-flex; align-items:center; gap:.5rem; padding-right:.6rem; margin-right:.8rem; border-right:1px solid var(--line); color:var(--brand); font-weight:800; letter-spacing:.2px; user-select:none}
   .brand img{width:22px; height:22px; border-radius:6px}
-
-  .btn{
-    display:inline-flex; align-items:center; gap:.5rem;
-    background:var(--btn); border:1px solid var(--line);
-    color:#e7edf5; padding:.45rem .7rem; border-radius:10px;
-    cursor:pointer; transition:background .15s, transform .02s;
-    white-space:nowrap;
-  }
-  .btn:hover{background:var(--btnH)}
-  .btn:active{transform:translateY(1px)}
+  .btn{display:inline-flex; align-items:center; gap:.5rem; background:var(--btn); border:1px solid var(--line); color:#e7edf5; padding:.45rem .7rem; border-radius:10px; cursor:pointer; transition:background .15s, transform .02s; white-space:nowrap}
+  .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
   .btn img{width:18px; height:18px; border-radius:4px}
   .btn.clear{color:#fca5a5; border-color:#4b1010}
-
   .kbd{font:12px ui-monospace,monospace; background:var(--panel-2); border:1px solid #1f2937; padding:.1rem .35rem; border-radius:6px; color:#cbd5e1}
-
-  /* Menu restore when hidden */
-  #menuRestore{
-    display:none; position:fixed; top:8px; right:8px; z-index:1300;
-    background:#111827; border:1px solid #1f2937; color:#e5e7eb;
-    border-radius:10px; padding:.35rem .55rem; cursor:pointer;
-  }
+  #menuRestore{display:none; position:fixed; top:8px; right:8px; z-index:1300; background:#111827; border:1px solid #1f2937; color:#e5e7eb; border-radius:10px; padding:.35rem .55rem; cursor:pointer}
   body.bar-hidden #menuRestore{display:block}
   body.bar-hidden .bar{display:none!important}
 
   /* ===== Tools Drawer ===== */
-  #toolsDrawer{
-    position:fixed; top:var(--bar-h); right:0; bottom:0; width:360px;
-    background:var(--panel); border-left:1px solid var(--line);
-    transform:translateX(100%); transition:transform .18s ease;
-    z-index:1250; overflow:auto; box-shadow:var(--shadow);
-  }
+  #toolsDrawer{position:fixed; top:var(--bar-h); right:0; bottom:0; width:360px; background:var(--panel); border-left:1px solid var(--line); transform:translateX(100%); transition:transform .18s ease; z-index:1250; overflow:auto; box-shadow:var(--shadow)}
   #toolsDrawer.open{transform:translateX(0)}
-  #toolsHdr{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:.65rem .8rem; background:var(--panel-2); border-bottom:1px solid var(--line)
-  }
+  #toolsHdr{display:flex; align-items:center; justify-content:space-between; padding:.65rem .8rem; background:var(--panel-2); border-bottom:1px solid var(--line)}
   .toolCard{padding:.8rem; border-bottom:1px solid var(--line)}
   .toolRow{display:flex; gap:.5rem; align-items:center; margin:.45rem 0}
-  .input{
-    flex:1; background:var(--panel-2); border:1px solid #111827;
-    border-radius:10px; padding:.6rem .7rem; color:#e7edf5;
-  }
+  .input{flex:1; background:var(--panel-2); border:1px solid #111827; border-radius:10px; padding:.6rem .7rem; color:#e7edf5}
   .small{font-size:.85rem; color:var(--muted)}
 
-  /* ===== Terminal Modal ===== */
+  /* ===== Terminal ===== */
   #termDesk{display:none; position:fixed; inset:0; z-index:1400; background:rgba(0,0,0,.45)}
-  #termBox{
-    position:absolute; left:50%; top:10%; transform:translateX(-50%);
-    width:min(900px,95vw); background:var(--panel);
-    border:1px solid #101826; border-radius:14px; box-shadow:var(--shadow); overflow:hidden
-  }
+  #termBox{position:absolute; left:50%; top:10%; transform:translateX(-50%); width:min(900px,95vw); background:var(--panel); border:1px solid #101826; border-radius:14px; box-shadow:var(--shadow); overflow:hidden}
   #termTop{display:flex; align-items:center; justify-content:space-between; padding:.6rem .8rem; background:var(--panel-2); border-bottom:1px solid var(--line)}
   #termOut{height:320px; overflow:auto; padding:.8rem; font-family:ui-monospace,Menlo,Consolas,monospace; background:#0c1426}
   #termInRow{display:flex; gap:.5rem; align-items:center; padding:.6rem; border-top:1px solid var(--line)}
@@ -145,14 +99,9 @@
   #embedProg>span{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2)); animation:loading 2.2s infinite}
   @keyframes loading{0%{width:0%}50%{width:85%}100%{width:0%}}
 
-  /* ===== Mini Browser Window ===== */
+  /* ===== Browser Window ===== */
   #browserDesk{display:none; position:fixed; left:0; right:0; top:var(--bar-h); bottom:0; z-index:1350; pointer-events:none}
-  #browserWin{
-    position:absolute; left:50%; top:18px; transform:translateX(-50%);
-    width:min(1100px,96vw); height:min(80vh,calc(100vh - var(--bar-h) - 36px));
-    background:var(--panel); border:1px solid #101826; border-radius:14px; box-shadow:var(--shadow);
-    overflow:hidden; pointer-events:auto
-  }
+  #browserWin{position:absolute; left:50%; top:18px; transform:translateX(-50%); width:min(1100px,96vw); height:min(80vh,calc(100vh - var(--bar-h) - 36px)); background:var(--panel); border:1px solid #101826; border-radius:14px; box-shadow:var(--shadow); overflow:hidden; pointer-events:auto}
   #browserTop{display:flex; align-items:center; justify-content:space-between; padding:.6rem .8rem; background:var(--panel-2); border-bottom:1px solid var(--line); cursor:move}
   #browserBody{position:absolute; inset:44px 0 0 0}
   #browserFrame{position:absolute; inset:0; border:0; width:100%; height:100%; background:#000}
@@ -164,6 +113,25 @@
   #browserErr{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:var(--panel); text-align:center; padding:1rem}
   #browserWin.full{top:0; left:0; transform:none; width:100vw; height:calc(100vh - var(--bar-h)); border-radius:0}
   #browserWin.half{top:0; right:0; left:auto; transform:none; width:50vw; height:calc(100vh - var(--bar-h)); border-radius:0}
+
+  /* ===== Modals (NEW: Password + Browser Chooser) ===== */
+  .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000}
+  .modal.show{display:flex}
+  .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
+  .modal .card{position:relative; width:min(92vw,440px); background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:1rem; box-shadow:var(--shadow)}
+  .modal h2{margin:.2rem 0 .4rem; font-weight:800; color:#c7d2fe}
+  .modal p{margin:.2rem 0 .6rem; color:var(--muted)}
+  .actions{display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem}
+  .primary{background:#1f2937; border:1px solid #2b3443; color:#e5e7eb; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+  .secondary{background:#0b1220; border:1px solid #1f2937; color:#94a3b8; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+  .field{display:flex; flex-direction:column; gap:.35rem; margin:.6rem 0}
+  .label{font-size:.9rem; color:#cbd5e1}
+  .password-input{background:var(--panel-2); border:1px solid #111827; border-radius:10px; padding:.65rem .7rem; color:#e7edf5}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:.6rem}
+  .choice{border:1px solid #1b2233; border-radius:12px; padding:.8rem; background:var(--panel-2); cursor:pointer; text-align:center}
+  .choice:hover{border-color:#2a3958; background:#12203a}
+  .choice h3{margin:.2rem 0 .3rem}
+  .choice small{color:#9fb0c2}
 </style>
 </head>
 <body>
@@ -304,6 +272,46 @@
     </div>
   </div>
 
+  <!-- ===== NEW: Password Modal ===== -->
+  <div id="pwModal" class="modal" aria-hidden="true">
+    <div class="backdrop"></div>
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+      <h2 id="pwTitle">Enter Password</h2>
+      <p>Unlock Math Help to continue.</p>
+      <div class="field">
+        <label class="label" for="pwInput">Password</label>
+        <input id="pwInput" class="password-input" type="password" placeholder="Enter password" autocomplete="current-password" />
+        <div id="pwError" class="small" style="min-height:1em; color:#fca5a5"></div>
+      </div>
+      <div class="actions">
+        <button id="pwCancel" class="secondary" type="button">Cancel</button>
+        <button id="pwSubmit" class="primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NEW: Browser Chooser Modal ===== -->
+  <div id="browserChooser" class="modal" aria-hidden="true">
+    <div class="backdrop"></div>
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="bcTitle">
+      <h2 id="bcTitle">Open Browser</h2>
+      <p>Pick where to browse:</p>
+      <div class="grid-2" style="margin:.6rem 0">
+        <button id="bcBean" class="choice" type="button">
+          <h3>BeanBrowser</h3>
+          <small>Fast & minimal</small>
+        </button>
+        <button id="bcWin" class="choice" type="button">
+          <h3>Windows 11 Emulator</h3>
+          <small>Desktop-like experience</small>
+        </button>
+      </div>
+      <div class="actions">
+        <button id="bcCancel" class="secondary" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Embed Area -->
   <section id="embedArea" aria-label="Embedded site">
     <iframe id="embedFrame" title="Embedded Site"></iframe>
@@ -331,29 +339,23 @@ const locked=document.getElementById("locked");
 const panel=document.getElementById("panel");
 const menuRestore=document.getElementById("menuRestore");
 const collapseBtn=document.getElementById("collapseBtn");
-
 const embedFrame=document.getElementById("embedFrame");
 const embedLoader=document.getElementById("embedLoader");
-
 const toolsDrawer=document.getElementById("toolsDrawer");
 const toolsBtn=document.getElementById("toolsBtn");
 const toolsClose=document.getElementById("toolsClose");
-
 const noteArea=document.getElementById("noteArea");
 const noteSaved=document.getElementById("noteSaved");
-
 const timerMin=document.getElementById("timerMin");
 const timerStart=document.getElementById("timerStart");
 const timerStop=document.getElementById("timerStop");
 const timerReset=document.getElementById("timerReset");
 const timerReadout=document.getElementById("timerReadout");
-
 const termDesk=document.getElementById("termDesk");
 const termOut=document.getElementById("termOut");
 const termIn=document.getElementById("termIn");
 const termClose=document.getElementById("termClose");
 const openTermBtn=document.getElementById("openTermBtn");
-
 const openBrowserBtn=document.getElementById("openBrowser");
 const browserDesk=document.getElementById("browserDesk");
 const browserWin=document.getElementById("browserWin");
@@ -365,8 +367,20 @@ const closeBtn=document.getElementById("closeBtn");
 const fullBtn=document.getElementById("fullBtn");
 const halfBtn=document.getElementById("halfBtn");
 const winBtn=document.getElementById("winBtn");
-
 const brandIcon=document.getElementById("brandIcon");
+
+/* NEW: Password modal elements */
+const pwModal=document.getElementById("pwModal");
+const pwInput=document.getElementById("pwInput");
+const pwSubmit=document.getElementById("pwSubmit");
+const pwCancel=document.getElementById("pwCancel");
+const pwError=document.getElementById("pwError");
+
+/* NEW: Browser chooser modal elements */
+const bcModal=document.getElementById("browserChooser");
+const bcBean=document.getElementById("bcBean");
+const bcWin=document.getElementById("bcWin");
+const bcCancel=document.getElementById("bcCancel");
 
 /* ===== Favicons / Tab Cloak core ===== */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
@@ -376,7 +390,7 @@ function addShortcutIcon(href){ const l=document.createElement('link'); l.rel='s
 function setFavicons(icon){ removeFavicons(); if(typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else { let first=null; for(const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first); } }
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
 
-/* ===== Tab Cloak persistence (NEW/Fixed) ===== */
+/* ===== Tab Cloak persistence ===== */
 function saveCloak(title, icon){ localStorage.setItem("mh_cloak", JSON.stringify({title, icon})); }
 function loadCloak(){ try{ return JSON.parse(localStorage.getItem("mh_cloak")||"null"); }catch{ return null; } }
 function clearCloak(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); if(brandIcon) brandIcon.src="icon.png"; }
@@ -392,30 +406,20 @@ document.querySelectorAll('.btn[data-title]').forEach(btn=>{
 });
 document.getElementById('clearCloak')?.addEventListener('click', clearCloak);
 
-/* ===== Initial DOWN state (no auto-reveal!) ===== */
+/* ===== Initial DOWN state (no auto-reveal) ===== */
 function setInitialDown(){
-  // Title + down icons
-  setTab("Math Help - Down",{
-    "16x16":"down-favicon-16.png",
-    "32x32":"down-favicon-32.png",
-    "64x64":"down-favicon-64.png"
-  });
-  // Brand icon shows down logo
+  setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
   if(brandIcon) brandIcon.src="down-favicon-32.png";
-  // Keep lock screen visible, keep bar hidden
   locked.style.display="flex";
   panel.classList.remove("unlocked");
-  // Reserve bar height so layout is stable if needed
   document.documentElement.style.setProperty("--bar-h","56px");
 }
 setInitialDown();
 
-/* ===== Unlock flow (only after correct password) ===== */
+/* ===== Unlock flow ===== */
 function reveal(){
   locked.style.display="none";
-  panel.classList.add("unlocked");        // shows the nav bar
-
-  // Prefer saved cloak if present, else normal branding
+  panel.classList.add("unlocked");
   const savedCloak = loadCloak();
   if (savedCloak && savedCloak.title && savedCloak.icon) {
     setTab(savedCloak.title, savedCloak.icon);
@@ -424,81 +428,64 @@ function reveal(){
     setTab("Math Help","icon.png");
     if(brandIcon) brandIcon.src="icon.png";
   }
-
-  // Load main content
   embedLoader.style.display="flex";
   embedFrame.src=EMBED_URL;
   setTimeout(()=>{ embedLoader.style.display="none"; },1600);
 }
 
-/* Simple password prompt via hotspot click */
-function openPw(){
-  const pw=prompt("Enter password:");
+/* ===== Password Modal (NEW UI) ===== */
+function openPwModal(){
+  pwError.textContent="";
+  pwInput.value="";
+  pwModal.classList.add("show");
+  pwModal.setAttribute("aria-hidden","false");
+  setTimeout(()=> pwInput.focus(), 0);
+}
+function closePwModal(){
+  pwModal.classList.remove("show");
+  pwModal.setAttribute("aria-hidden","true");
+}
+function submitPw(){
+  const pw = pwInput.value.trim();
   if(pw===ADMIN_PASSWORD || pw===USER_PASSWORD){
-    reveal();
-  }else if(pw!==null){
-    alert("Incorrect password.");
+    closePwModal(); reveal();
+  }else{
+    pwError.textContent="Incorrect password.";
+    pwInput.focus();
   }
 }
-hotspot.addEventListener("click", openPw);
+hotspot.addEventListener("click", openPwModal);
+pwCancel.addEventListener("click", closePwModal);
+pwSubmit.addEventListener("click", submitPw);
+pwInput.addEventListener("keydown", e=>{ if(e.key==="Enter") submitPw(); });
 
 /* ===== Menu show/hide ===== */
 function setBarHeight(px){ document.documentElement.style.setProperty("--bar-h", px + "px"); }
-function showMenu(){
-  document.body.classList.remove('bar-hidden');
-  if(!panel.classList.contains('unlocked')) return;
-  requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0));
-}
+function showMenu(){ document.body.classList.remove('bar-hidden'); if(!panel.classList.contains('unlocked')) return; requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0)); }
 function hideMenu(){ document.body.classList.add('bar-hidden'); setBarHeight(0); }
 collapseBtn?.addEventListener("click", hideMenu);
 menuRestore?.addEventListener("click", showMenu);
 window.addEventListener('resize',()=>{ if(panel.classList.contains('unlocked')) setBarHeight(panel.getBoundingClientRect().height || 0); });
 
-/* ===== Panic: URL input + minus key => open + reset to Down (NEW) ===== */
+/* ===== Panic: URL + minus key => open + reset to Down ===== */
 const PANIC_URL_KEY = "mh_panic_url";
 const panicUrlInput = document.getElementById("panicUrl");
-
-// initialize from storage
-(function initPanicUrl(){
-  const saved = localStorage.getItem(PANIC_URL_KEY) || "";
-  if (panicUrlInput) panicUrlInput.value = saved;
-})();
-
-// keep updated
-panicUrlInput?.addEventListener("change", ()=>{
-  localStorage.setItem(PANIC_URL_KEY, panicUrlInput.value.trim());
-});
-
-// Reset the site to the Down screen (password required again)
+(function initPanicUrl(){ const saved = localStorage.getItem(PANIC_URL_KEY) || ""; if (panicUrlInput) panicUrlInput.value = saved; })();
+panicUrlInput?.addEventListener("change", ()=>{ localStorage.setItem(PANIC_URL_KEY, panicUrlInput.value.trim()); });
 function resetToDown(){
-  // Close overlays
   try { toolsDrawer.classList.remove("open"); } catch {}
-  try { document.getElementById("browserDesk").style.display = "none"; } catch {}
-  try { document.getElementById("termDesk").style.display = "none"; } catch {}
-
-  // Clear embed
+  try { browserDesk.style.display = "none"; } catch {}
+  try { termDesk.style.display = "none"; } catch {}
   try { embedFrame.removeAttribute("src"); } catch {}
   try { embedLoader.style.display = "none"; } catch {}
-
-  // Return to initial Down state
   setInitialDown();
 }
-
-// Handle the "-" key
 document.addEventListener("keydown", (e)=>{
-  // Ignore if typing in a field
-  const a = document.activeElement;
-  const typing = a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.isContentEditable);
+  const a = document.activeElement, typing = a && (a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.isContentEditable);
   if (typing) return;
-
   if (e.key === "-" || e.code === "Minus"){
     let url = (panicUrlInput?.value || "").trim();
-    if (!url){
-      url = prompt("Enter a panic URL to open:");
-      if (!url) return; // canceled
-      if (panicUrlInput) panicUrlInput.value = url;
-      localStorage.setItem(PANIC_URL_KEY, url);
-    }
+    if (!url){ url = prompt("Enter a panic URL to open:"); if (!url) return; if (panicUrlInput) panicUrlInput.value = url; localStorage.setItem(PANIC_URL_KEY, url); }
     try { window.open(url, "_blank", "noopener"); } catch {}
     resetToDown();
   }
@@ -538,10 +525,10 @@ function handleCommand(s){
   const line=s.trim(); if(!line) return; printLine("> "+line);
   if(line===";help"){ printLine("Commands: ;help ;clear ;panic ;open tools ;close tools"); printLine(";browser open [url] ;browser close ;browser full ;browser half ;browser window"); return; }
   if(line===";clear"){ clearTerm(); return; }
-  if(line===";panic"){ /* uses '-' key behavior; for consistency: */ const u=(panicUrlInput?.value||"").trim(); if(u) { window.open(u,"_blank","noopener"); resetToDown(); } return; }
+  if(line===";panic"){ const u=(panicUrlInput?.value||"").trim(); if(u) { window.open(u,"_blank","noopener"); resetToDown(); } return; }
   if(line===";open tools"){ openTools(); return; }
   if(line===";close tools"){ closeTools(); return; }
-  if(line===";browser open"){ showBrowserChooser(); return; }
+  if(line===";browser open"){ openBrowserChooser(); return; }
   if(line.startsWith(";browser open ")){ openBrowser(line.slice(14).trim()||MINI_BROWSER_URL); return; }
   if(line===";browser close"){ closeBrowser(); return; }
   if(line===";browser full"){ makeFull(); return; }
@@ -551,12 +538,20 @@ function handleCommand(s){
 }
 termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
 
-/* ===== Browser chooser (simple) ===== */
-function showBrowserChooser(){
-  const choice=confirm("Open BeanBrowser? Click Cancel for Windows 11 emulator.");
-  openBrowser(choice ? BEAN_URL : MINI_BROWSER_URL);
+/* ===== Browser chooser (NEW UI Modal) ===== */
+function openBrowserChooser(){
+  bcModal.classList.add("show");
+  bcModal.setAttribute("aria-hidden","false");
+  setTimeout(()=> bcBean.focus(), 0);
 }
-openBrowserBtn.addEventListener('click',showBrowserChooser);
+function closeBrowserChooser(){
+  bcModal.classList.remove("show");
+  bcModal.setAttribute("aria-hidden","true");
+}
+openBrowserBtn.addEventListener('click', openBrowserChooser);
+bcCancel.addEventListener('click', closeBrowserChooser);
+bcBean.addEventListener('click', ()=>{ closeBrowserChooser(); openBrowser(BEAN_URL); });
+bcWin.addEventListener('click',  ()=>{ closeBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
 
 /* ===== Mini browser window ===== */
 let browserLoadTimer=null;
