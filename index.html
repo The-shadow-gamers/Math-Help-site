@@ -181,15 +181,18 @@
     </div>
 
     <!-- Games row -->
-    <div class="bar-row" style="border-top:1px solid var(--line); padding-top:.45rem">
+    <div class="bar-row" style="border-top:1px solid var(--line); padding-top:.45rem; align-items:center">
       <span class="brand" style="border-right:none; margin-right:.25rem; padding-right:0; color:var(--muted)">Games</span>
       <button id="openBurrito" class="btn">Burrito Bison</button>
       <button id="openGolfHit" class="btn">Golf Hit</button>
 
-      <!-- NEW: quick switches + chooser -->
+      <!-- quick switches + chooser -->
       <button id="switchCool" class="btn" title="Switch to Cool UBG">Switch to UBG</button>
       <button id="switchMaths" class="btn" title="Switch to Mathsframe">Switch to Mathsframe</button>
       <button id="changeGamesSource" class="btn" title="Pick a source">Change Source</button>
+
+      <!-- NOW PLAYING label -->
+      <span id="nowPlaying" class="small" style="margin-left:.5rem; opacity:.85">Now playing: —</span>
     </div>
   </nav>
 
@@ -304,7 +307,7 @@
         </button>
         <button id="gsMaths" class="choice" type="button">
           <h3>Mathsframe</h3>
-          <small>Fun games</small> <!-- CHANGED DESCRIPTION -->
+          <small>Fun games</small>
         </button>
       </div>
       <div class="actions">
@@ -327,16 +330,16 @@
 
 <script>
 /* ===== Config ===== */
-const EMBED_URL="https://mathhelp0g1.netlify.app/"; // used if skipping game choice
+const EMBED_URL="https://mathhelp0g1.netlify.app/"; // fallback if skipping choice
 const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
 const BEAN_URL="https://mbxp.vercel.app/";
 const BURRITO_URL="/burrito/";          // opens in new tab
 const ADMIN_PASSWORD="imadmin";
 const USER_PASSWORD="gamerzforever";
 
-/* Game repos (embedded) */
-const COOL_UBG_URL = "https://coolubg2.github.io/";
-const MATHSFRAME_URL = "https://mathsframegames.github.io/";
+/* Game sources (your links) */
+const COOL_UBG_URL     = "https://mathhelp0g1.netlify.app/";
+const MATHSFRAME_URL   = "https://mathhelpg1.netlify.app/";
 
 /* ===== Elements ===== */
 const hotspot=document.getElementById("hotspot");
@@ -393,10 +396,11 @@ const gsCool=document.getElementById("gsCool");
 const gsMaths=document.getElementById("gsMaths");
 const gsSkip=document.getElementById("gsSkip");
 
-/* Quick switch & change buttons */
+/* Quick switch & change buttons + label */
 const switchCool=document.getElementById("switchCool");
 const switchMaths=document.getElementById("switchMaths");
 const changeGamesSource=document.getElementById("changeGamesSource");
+const nowPlaying=document.getElementById("nowPlaying");
 
 /* ===== Favicons / Tab Cloak core ===== */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
@@ -428,14 +432,27 @@ function setInitialDown(){
   locked.style.display="flex";
   panel.classList.remove("unlocked");
   document.documentElement.style.setProperty("--bar-h","56px");
+  if (nowPlaying) nowPlaying.textContent = "Now playing: —";
 }
 setInitialDown();
 
 /* ===== Embed helpers & game source state ===== */
 const GAMES_SRC_KEY = "mh_games_source";
+function labelForUrl(url){
+  if (!url) return "—";
+  if (url.startsWith(COOL_UBG_URL)) return "UBG";
+  if (url.startsWith(MATHSFRAME_URL)) return "Mathsframe";
+  // fallback for unknown
+  return url.includes("mathhelp0g1") ? "UBG"
+       : url.includes("mathhelpg1")  ? "Mathsframe"
+       : "Custom";
+}
+function setNowPlaying(url){
+  if (nowPlaying) nowPlaying.textContent = "Now playing: " + labelForUrl(url);
+}
 function setGamesSource(url){
-  // Save and load
   localStorage.setItem(GAMES_SRC_KEY, url);
+  setNowPlaying(url);
   loadEmbedded(url);
 }
 function getSavedGamesSource(){
@@ -460,13 +477,9 @@ function reveal(){
     setTab("Math Help","icon.png");
     if(brandIcon) brandIcon.src="icon.png";
   }
-  // If a games source was saved before, load it; else ask
   const prev = getSavedGamesSource();
-  if (prev) {
-    loadEmbedded(prev);
-  } else {
-    openGameChooser();
-  }
+  if (prev) { setNowPlaying(prev); loadEmbedded(prev); }
+  else { openGameChooser(); }
 }
 
 /* ===== Password Modal ===== */
@@ -620,9 +633,9 @@ function closeGameChooser(){
 }
 gsCool.addEventListener('click', ()=>{ closeGameChooser(); setGamesSource(COOL_UBG_URL); });
 gsMaths.addEventListener('click',()=>{ closeGameChooser(); setGamesSource(MATHSFRAME_URL); });
-gsSkip.addEventListener('click', ()=>{ closeGameChooser(); loadEmbedded(EMBED_URL); });
+gsSkip.addEventListener('click', ()=>{ closeGameChooser(); setGamesSource(EMBED_URL); });
 
-/* NEW: quick switches + change button */
+/* quick switches + change button */
 switchCool.addEventListener('click', ()=> setGamesSource(COOL_UBG_URL));
 switchMaths.addEventListener('click', ()=> setGamesSource(MATHSFRAME_URL));
 changeGamesSource.addEventListener('click', openGameChooser);
