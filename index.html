@@ -112,7 +112,7 @@
   #browserWin.full{top:0; left:0; transform:none; width:100vw; height:calc(100vh - var(--bar-h)); border-radius:0}
   #browserWin.half{top:0; right:0; left:auto; transform:none; width:50vw; height:calc(100vh - var(--bar-h)); border-radius:0}
 
-  /* ===== Modals (Password + Browser Chooser + NEW: Game Source) ===== */
+  /* ===== Modals ===== */
   .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:2000}
   .modal.show{display:flex}
   .modal .backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55)}
@@ -185,6 +185,11 @@
       <span class="brand" style="border-right:none; margin-right:.25rem; padding-right:0; color:var(--muted)">Games</span>
       <button id="openBurrito" class="btn">Burrito Bison</button>
       <button id="openGolfHit" class="btn">Golf Hit</button>
+
+      <!-- NEW: quick switches + chooser -->
+      <button id="switchCool" class="btn" title="Switch to Cool UBG">Switch to UBG</button>
+      <button id="switchMaths" class="btn" title="Switch to Mathsframe">Switch to Mathsframe</button>
+      <button id="changeGamesSource" class="btn" title="Pick a source">Change Source</button>
     </div>
   </nav>
 
@@ -210,20 +215,6 @@
         <button id="timerReset" class="btn" type="button">Reset</button>
       </div>
       <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem; font-weight:700">25:00</div></div>
-    </div>
-
-    <div class="toolCard">
-      <h4 style="margin:0 0 .4rem 0">Unit Converter</h4>
-      <div class="toolRow">
-        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
-        <span>↔</span>
-        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
-      </div>
-      <div class="toolRow">
-        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
-        <span>↔</span>
-        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
-      </div>
     </div>
   </aside>
 
@@ -300,7 +291,7 @@
     </div>
   </div>
 
-  <!-- ===== NEW: Game Source Chooser Modal ===== -->
+  <!-- Game Source Chooser Modal -->
   <div id="gameChooser" class="modal" aria-hidden="true">
     <div class="backdrop"></div>
     <div class="card" role="dialog" aria-modal="true" aria-labelledby="gsTitle">
@@ -313,7 +304,7 @@
         </button>
         <button id="gsMaths" class="choice" type="button">
           <h3>Mathsframe</h3>
-          <small>Maths practice games</small>
+          <small>Fun games</small> <!-- CHANGED DESCRIPTION -->
         </button>
       </div>
       <div class="actions">
@@ -336,14 +327,14 @@
 
 <script>
 /* ===== Config ===== */
-const EMBED_URL="https://mathhelp0g1.netlify.app/"; // (kept; used only if skipping game choice)
+const EMBED_URL="https://mathhelp0g1.netlify.app/"; // used if skipping game choice
 const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
 const BEAN_URL="https://mbxp.vercel.app/";
 const BURRITO_URL="/burrito/";          // opens in new tab
 const ADMIN_PASSWORD="imadmin";
 const USER_PASSWORD="gamerzforever";
 
-/* NEW: Game repos (embedded) */
+/* Game repos (embedded) */
 const COOL_UBG_URL = "https://coolubg2.github.io/";
 const MATHSFRAME_URL = "https://mathsframegames.github.io/";
 
@@ -396,11 +387,16 @@ const bcBean=document.getElementById("bcBean");
 const bcWin=document.getElementById("bcWin");
 const bcCancel=document.getElementById("bcCancel");
 
-/* NEW: Game source chooser modal */
+/* Game source chooser modal */
 const gsModal=document.getElementById("gameChooser");
 const gsCool=document.getElementById("gsCool");
 const gsMaths=document.getElementById("gsMaths");
 const gsSkip=document.getElementById("gsSkip");
+
+/* Quick switch & change buttons */
+const switchCool=document.getElementById("switchCool");
+const switchMaths=document.getElementById("switchMaths");
+const changeGamesSource=document.getElementById("changeGamesSource");
 
 /* ===== Favicons / Tab Cloak core ===== */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
@@ -435,7 +431,16 @@ function setInitialDown(){
 }
 setInitialDown();
 
-/* ===== Helpers ===== */
+/* ===== Embed helpers & game source state ===== */
+const GAMES_SRC_KEY = "mh_games_source";
+function setGamesSource(url){
+  // Save and load
+  localStorage.setItem(GAMES_SRC_KEY, url);
+  loadEmbedded(url);
+}
+function getSavedGamesSource(){
+  return localStorage.getItem(GAMES_SRC_KEY) || "";
+}
 function loadEmbedded(url){
   embedLoader.style.display="flex";
   embedFrame.removeAttribute('src');
@@ -455,8 +460,13 @@ function reveal(){
     setTab("Math Help","icon.png");
     if(brandIcon) brandIcon.src="icon.png";
   }
-  // Instead of auto-embedding EMBED_URL, ask for the games source:
-  openGameChooser();
+  // If a games source was saved before, load it; else ask
+  const prev = getSavedGamesSource();
+  if (prev) {
+    loadEmbedded(prev);
+  } else {
+    openGameChooser();
+  }
 }
 
 /* ===== Password Modal ===== */
@@ -594,11 +604,11 @@ browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); brows
   browserTop.addEventListener('dblclick',()=>{ browserWin.classList.contains('full')?makeWindow():makeFull(); });
 })();
 
-/* ===== Games ===== */
+/* ===== Games: existing buttons ===== */
 document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
 document.getElementById("openGolfHit").addEventListener("click",()=>{ window.open("golfhit.html","_blank","noopener"); });
 
-/* ===== Game source chooser (NEW) ===== */
+/* ===== Game source chooser & switching ===== */
 function openGameChooser(){
   gsModal.classList.add("show");
   gsModal.setAttribute("aria-hidden","false");
@@ -608,9 +618,14 @@ function closeGameChooser(){
   gsModal.classList.remove("show");
   gsModal.setAttribute("aria-hidden","true");
 }
-gsCool.addEventListener('click', ()=>{ closeGameChooser(); loadEmbedded(COOL_UBG_URL); });
-gsMaths.addEventListener('click',()=>{ closeGameChooser(); loadEmbedded(MATHSFRAME_URL); });
+gsCool.addEventListener('click', ()=>{ closeGameChooser(); setGamesSource(COOL_UBG_URL); });
+gsMaths.addEventListener('click',()=>{ closeGameChooser(); setGamesSource(MATHSFRAME_URL); });
 gsSkip.addEventListener('click', ()=>{ closeGameChooser(); loadEmbedded(EMBED_URL); });
+
+/* NEW: quick switches + change button */
+switchCool.addEventListener('click', ()=> setGamesSource(COOL_UBG_URL));
+switchMaths.addEventListener('click', ()=> setGamesSource(MATHSFRAME_URL));
+changeGamesSource.addEventListener('click', openGameChooser);
 
 /* Helper for setTab also used above (kept for completeness) */
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
