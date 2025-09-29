@@ -165,19 +165,122 @@
     <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
       <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
       <button id="openBurrito" class="btn">Burrito Bison</button>
-      <button id="openGolfHit" class="btn">Golf Hit</button>
     </div>
   </div>
 
   <!-- Tools drawer -->
   <aside id="toolsDrawer" aria-hidden="true">
-    ...
+    <div id="toolsHdr">
+      <h3 style="margin:0">Tools</h3>
+      <button id="toolsClose" class="btn" type="button">Close</button>
+    </div>
+
+    <div class="toolCard">
+      <h4>Notepad</h4>
+      <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
+      <div class="toolRow" style="justify-content:flex-end"><span id="noteSaved" class="small"></span></div>
+    </div>
+
+    <div class="toolCard">
+      <h4>Timer</h4>
+      <div class="toolRow">
+        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
+        <button id="timerStart" class="btn" type="button">Start</button>
+        <button id="timerStop" class="btn" type="button">Stop</button>
+        <button id="timerReset" class="btn" type="button">Reset</button>
+      </div>
+      <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
+    </div>
+
+    <div class="toolCard">
+      <h4>Unit Converter</h4>
+      <div class="toolRow">
+        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
+        <span>↔</span>
+        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
+      </div>
+      <div class="toolRow">
+        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
+        <span>↔</span>
+        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
+      </div>
+    </div>
   </aside>
 
   <!-- Password Modal -->
-  ...
-  
-  <!-- Embed Area -->
+  <div id="pwModal" class="modal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <div class="card">
+      <h2>Enter password</h2>
+      <div class="toolRow">
+        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
+        <button id="togglePw" class="toggle" type="button">Show</button>
+      </div>
+      <div id="pwErr" class="err"></div>
+      <div class="actions">
+        <button class="secondary" data-close type="button">Cancel</button>
+        <button id="pwSubmit" class="primary" type="button">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Browser chooser -->
+  <div id="browserChooser" class="modal" aria-hidden="true">
+    <div class="backdrop" data-close></div>
+    <div class="card">
+      <h2>Open Browser</h2>
+      <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
+        <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
+        <button id="chooseWin11" class="primary" type="button">Windows 11</button>
+        <button class="secondary" data-close type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div id="termDesk" aria-hidden="true" style="display:none">
+    <div id="termBox">
+      <div id="termTop">
+        <strong>Terminal</strong>
+        <button id="termClose" class="btn" type="button">Close</button>
+      </div>
+      <pre id="termOut"></pre>
+      <div id="termInRow">
+        <input id="termIn" class="input" type="text" placeholder="Type ;help" />
+        <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Browser -->
+  <div id="browserDesk" aria-hidden="true">
+    <div id="browserWin" role="dialog" aria-label="Browser window">
+      <div id="browserTop" title="Drag • Double-click to toggle full/window">
+        <div id="browserTitle">Browser</div>
+        <div id="browserCtrls">
+          <button id="halfBtn" class="btn" title="Half screen">▭▭</button>
+          <button id="fullBtn" class="btn" title="Full screen">▢</button>
+          <button id="winBtn"  class="btn" title="Windowed">▣</button>
+          <button id="closeBtn" class="btn" title="Close">✕</button>
+        </div>
+      </div>
+      <div id="browserBody">
+        <iframe id="browserFrame" title="Mini Browser"></iframe>
+        <div id="browserLoader">
+          <div id="browserLoaderInner">
+            <img id="browserLogo" src="icon.png" alt="Loading">
+            <div id="browserProg"><span></span></div>
+            <p class="small" style="text-align:center;margin-top:.6rem">Launching…</p>
+          </div>
+        </div>
+        <div id="browserErr" style="display:none;text-align:center;padding:1rem">
+          Couldn’t load. The site may block iframes.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embed Area (fixed so it never crops) -->
   <div id="embedArea">
     <iframe id="embedFrame" title="Embedded Site"></iframe>
     <div id="embedLoader">
@@ -190,15 +293,248 @@
   </div>
 
 <script>
-/* existing code... */
-
+/* ===== Config ===== */
+const EMBED_URL="https://mathhelp0g1.netlify.app/";
+const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
+const BEAN_URL="https://mbxp.vercel.app/";
 const BURRITO_URL="/burrito/";
+
+const ADMIN_PASSWORD="imadmin";
+const USER_PASSWORD="gamerzforever";
+
+/* Elements */
+const hotspot=document.getElementById("hotspot");
+const locked=document.getElementById("locked");
+const panel=document.getElementById("panel");
+const menuRestore=document.getElementById("menuRestore");
+const collapseBtn=document.getElementById("collapseBtn");
+
+const embedFrame=document.getElementById("embedFrame");
+const embedLoader=document.getElementById("embedLoader");
+
+const toolsDrawer=document.getElementById("toolsDrawer");
+const toolsBtn=document.getElementById("toolsBtn");
+const toolsClose=document.getElementById("toolsClose");
+
+const noteArea=document.getElementById("noteArea");
+const noteSaved=document.getElementById("noteSaved");
+
+const timerMin=document.getElementById("timerMin");
+const timerStart=document.getElementById("timerStart");
+const timerStop=document.getElementById("timerStop");
+const timerReset=document.getElementById("timerReset");
+const timerReadout=document.getElementById("timerReadout");
+
+const termDesk=document.getElementById("termDesk");
+const termOut=document.getElementById("termOut");
+const termIn=document.getElementById("termIn");
+const termClose=document.getElementById("termClose");
+const openTermBtn=document.getElementById("openTermBtn");
+
+const openBrowserBtn=document.getElementById("openBrowser");
+const browserChooser=document.getElementById("browserChooser");
+const chooseBean=document.getElementById("chooseBean");
+const chooseWin11=document.getElementById("chooseWin11");
+
+const browserDesk=document.getElementById("browserDesk");
+const browserWin=document.getElementById("browserWin");
+const browserTop=document.getElementById("browserTop");
+const browserFrame=document.getElementById("browserFrame");
+const browserLoader=document.getElementById("browserLoader");
+const browserErr=document.getElementById("browserErr");
+const closeBtn=document.getElementById("closeBtn");
+const fullBtn=document.getElementById("fullBtn");
+const halfBtn=document.getElementById("halfBtn");
+const winBtn=document.getElementById("winBtn");
+
+/* Tab cloak helpers (with multi-size icons) */
+let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
+function removeFavicons(){ document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
+function addIconWithSizes(href,s){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if(s) l.sizes=s; l.href=__v(href); document.head.appendChild(l); }
+function addShortcutIcon(href){ const l=document.createElement('link'); l.rel='shortcut icon'; l.href=__v(href); document.head.appendChild(l); }
+function setFavicons(icon){ removeFavicons(); if(typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else { let first=null; for(const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first); } }
+function setTab(title,icon){ document.title=title; setFavicons(icon); }
+function saveCloak(title,icon){ localStorage.setItem("mh_cloak",JSON.stringify({title,icon})); }
+function loadCloak(){ try{return JSON.parse(localStorage.getItem("mh_cloak")||"null");}catch{return null;} }
+function clearTab(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); }
+
+/* Panic */
+const panicSelect=document.getElementById("panicSelect");
+const panicFire=document.getElementById("panicFire");
+function savePanic(obj){ localStorage.setItem("mh_panic",JSON.stringify(obj)); }
+function loadPanic(){ try{return JSON.parse(localStorage.getItem("mh_panic")||"null");}catch{return null;} }
+(function(){ const saved=loadPanic(); if(saved){ for(const o of panicSelect.options){ if(o.value===JSON.stringify(saved)){ panicSelect.value=o.value; break; } } } else savePanic(JSON.parse(panicSelect.value)); })();
+panicSelect.addEventListener("change",()=>savePanic(JSON.parse(panicSelect.value)));
+function triggerPanic(){ const sel=loadPanic()||JSON.parse(panicSelect.value); setTab(sel.title,sel.icon); saveCloak(sel.title,sel.icon); }
+panicFire.addEventListener("click",triggerPanic);
+document.addEventListener("keydown",e=>{
+  const el=document.activeElement, typing=el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
+  if(!typing && (e.key==="-"||e.key==="_"||e.code==="Minus")) triggerPanic();
+});
+document.querySelectorAll('.btn[data-title]').forEach(b=>b.addEventListener('click',()=>{
+  const t=b.getAttribute('data-title'), i=b.getAttribute('data-favicon'); setTab(t,i); saveCloak(t,i);
+}));
+document.getElementById('clearCloak').addEventListener('click',clearTab);
+
+/* Password modal */
+const pwModal=document.getElementById("pwModal");
+const pwInput=document.getElementById("pwInput");
+const pwErr=document.getElementById("pwErr");
+document.getElementById("togglePw").addEventListener("click",e=>{
+  pwInput.type=pwInput.type==="password"?"text":"password"; e.target.textContent=pwInput.type==="password"?"Show":"Hide";
+});
+function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
+function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
+pwModal.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closePw(); });
+document.getElementById("pwSubmit").addEventListener("click",submitPassword);
+pwInput.addEventListener("keydown",e=>{ if(e.key==="Enter") submitPassword(); });
+hotspot.addEventListener("click",openPw);
+
+/* ---- FIX DRIVER: set --bar-h precisely ---- */
+function setBarHeight(px){ document.documentElement.style.setProperty('--bar-h', px + 'px'); }
+function showMenu(){
+  document.body.classList.remove('bar-hidden');
+  panel.classList.add("unlocked");
+  requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0));
+}
+function hideMenu(){ document.body.classList.add('bar-hidden'); setBarHeight(0); }
+collapseBtn.addEventListener('click',hideMenu);
+menuRestore.addEventListener('click',showMenu);
+window.addEventListener('resize',()=>{ if(!document.body.classList.contains('bar-hidden')) setBarHeight(panel.getBoundingClientRect().height || 0); });
+
+/* Unlock flow */
+let ROLE=null, loadTimer=null;
+function reveal(role){
+  ROLE=role;
+  locked.style.display="none";
+  panel.classList.add("unlocked");
+  showMenu();                       // start open
+
+  const saved=loadCloak();
+  if(saved&&saved.title&&saved.icon) setTab(saved.title,saved.icon); else setTab("Math Help","icon.png");
+
+  // Load embedded site
+  embedFrame.src=EMBED_URL;
+  embedLoader.style.display="flex";
+  clearTimeout(loadTimer);
+  loadTimer=setTimeout(()=>{ embedLoader.style.display="none"; },4000);
+}
+function submitPassword(){
+  const pass=pwInput.value.trim();
+  if(!pass){ pwErr.textContent="Password required."; return; }
+  if(pass===ADMIN_PASSWORD || pass===USER_PASSWORD){ closePw(); reveal(pass===ADMIN_PASSWORD?"admin":"user"); return; }
+  pwErr.textContent="Incorrect password.";
+}
+
+/* Tools */
+function openTools(){ toolsDrawer.classList.add("open"); }
+function closeTools(){ toolsDrawer.classList.remove("open"); }
+toolsBtn.addEventListener("click",openTools);
+toolsClose.addEventListener("click",closeTools);
+
+/* Notepad */
+noteArea.value=localStorage.getItem("mh_note")||"";
+noteArea.addEventListener("input",()=>{ localStorage.setItem("mh_note",noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900); });
+
+/* Timer */
+let timerLeft=Number(timerMin.value)*60, timerId=null;
+function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(timerLeft%60).padStart(2,"0"); timerReadout.textContent=`${m}:${s}`; }
+function startTimer(){ if(timerId) return; timerId=setInterval(()=>{ if(timerLeft>0){ timerLeft--; renderTimer(); } else { clearInterval(timerId); timerId=null; alert("Time!"); }},1000); }
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+function resetTimer(){ stopTimer(); timerLeft=Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
+timerStart.addEventListener("click",startTimer);
+timerStop.addEventListener("click",stopTimer);
+timerReset.addEventListener("click",resetTimer);
+timerMin.addEventListener("change",resetTimer);
+renderTimer();
+
+/* Terminal */
+function openTerm(){ termDesk.style.display="block"; termIn.value=""; termIn.focus(); if(!termOut.textContent) termOut.textContent="Terminal ready. Type ;help\n"; }
+function closeTerm(){ termDesk.style.display="none"; }
+openTermBtn.addEventListener("click",openTerm);
+termClose.addEventListener("click",closeTerm);
+document.addEventListener("keydown",e=>{ if(termDesk.style.display==="block"&&e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
+function printLine(x=""){ const esc=x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML+=esc+"\n"; termOut.scrollTop=termOut.scrollHeight; }
+function clearTerm(){ termOut.textContent=""; }
+function handleCommand(s){
+  const line=s.trim(); if(!line) return; printLine("> "+line);
+  if(line===";help"){ printLine("Commands: ;help ;clear ;panic ;open tools ;close tools"); printLine(";browser open [url] ;browser close ;browser full ;browser half ;browser window"); return; }
+  if(line===";clear"){ clearTerm(); return; }
+  if(line===";panic"){ triggerPanic(); return; }
+  if(line===";open tools"){ openTools(); return; }
+  if(line===";close tools"){ closeTools(); return; }
+  if(line===";browser open"){ showBrowserChooser(); return; }
+  if(line.startsWith(";browser open ")){ openBrowser(line.slice(14).trim()||MINI_BROWSER_URL); return; }
+  if(line===";browser close"){ closeBrowser(); return; }
+  if(line===";browser full"){ makeFull(); return; }
+  if(line===";browser half"){ makeHalf(); return; }
+  if(line===";browser window"){ makeWindow(); return; }
+  printLine("Unknown command. Try ;help");
+}
+termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
+
+/* Browser chooser */
+function showBrowserChooser(){ browserChooser.classList.add("show"); browserChooser.setAttribute("aria-hidden","false"); }
+function hideBrowserChooser(){ browserChooser.classList.remove("show"); browserChooser.setAttribute("aria-hidden","true"); }
+browserChooser.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) hideBrowserChooser(); });
+chooseBean.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(BEAN_URL); });
+chooseWin11.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
+openBrowserBtn.addEventListener('click',showBrowserChooser);
+
+/* Mini browser */
+let browserLoadTimer=null;
+function resetBrowserInline(){
+  browserWin.style.left=''; browserWin.style.top=''; browserWin.style.right=''; browserWin.style.transform='';
+}
+function makeWindow(){
+  browserWin.classList.remove('full','half');
+  resetBrowserInline();
+  browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)';
+}
+function makeFull(){
+  browserWin.classList.remove('half');
+  browserWin.classList.add('full');
+  resetBrowserInline();
+}
+function makeHalf(){
+  browserWin.classList.remove('full');
+  browserWin.classList.add('half');
+  resetBrowserInline();
+}
+function openBrowser(url){
+  browserDesk.style.display="block"; browserDesk.setAttribute("aria-hidden","false");
+  makeWindow(); browserErr.style.display="none"; browserLoader.style.display="flex";
+  browserFrame.removeAttribute('src'); browserFrame.src=url;
+  clearTimeout(browserLoadTimer); browserLoadTimer=setTimeout(()=>{ browserLoader.style.display="none"; browserErr.style.display="block"; },6000);
+}
+function closeBrowser(){ browserDesk.style.display="none"; browserDesk.setAttribute("aria-hidden","true"); }
+closeBtn.addEventListener('click',closeBrowser);
+fullBtn.addEventListener('click',makeFull);
+halfBtn.addEventListener('click',makeHalf);
+winBtn .addEventListener('click',makeWindow);
+browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display="none"; });
+
+/* Drag (disabled in full/half) */
+(function(){ let dragging=false,sx=0,sy=0,left=0,top=0;
+  browserTop.addEventListener('mousedown',e=>{
+    if(browserWin.classList.contains('full')||browserWin.classList.contains('half'))return;
+    dragging=true; sx=e.clientX; sy=e.clientY;
+    const r=browserWin.getBoundingClientRect(); left=r.left; top=r.top; document.body.style.userSelect="none";
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
+    browserWin.style.left=(left+dx)+"px"; browserWin.style.top=(top+dy)+"px"; browserWin.style.transform="translateX(0)";
+  });
+  window.addEventListener('mouseup',()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
+  browserTop.addEventListener('dblclick',()=>{ browserWin.classList.contains('full')?makeWindow():makeFull(); });
+})();
 
 /* Game */
 document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
-document.getElementById("openGolfHit").addEventListener("click",()=>{ window.open("golfhit.html","_blank","noopener"); });
 
-/* existing code continues... */
+/* Initial "down" favicon set (multi-size) */
+setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
 </script>
 </body>
 </html>
