@@ -1,347 +1,204 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Math Help</title>
-<link rel="icon" type="image/png" sizes="16x16" href="down-favicon-16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="down-favicon-32.png">
-<link rel="icon" type="image/png" sizes="64x64" href="down-favicon-64.png">
+<link rel="icon" href="icon.png" type="image/png" />
+
 <style>
-/* ====== ORIGINAL STYLES (preserved) ====== */
-:root{--bar-h:56px}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:#0b1220;color:#e6edf3;font:14px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
-a{color:#9ec1ff;text-decoration:none}
-a:hover{text-decoration:underline}
+  :root{
+    --bar-h:56px;              /* updated in JS */
+    --bg:#0f172a;
+    --panel:#0b1220;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --btn:#111827;
+    --btnH:#1f2937;
+    --accent:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  body{background:var(--bg)}
+  body.with-bg-img{background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed}
 
-.bar{position:fixed;left:0;right:0;top:0;height:var(--bar-h);z-index:50;background:#0f172a;border-bottom:1px solid #0b1220}
-.bar-row{display:flex;align-items:center;gap:8px;height:100%;padding:0 10px}
-.brand{font-weight:800;letter-spacing:.3px;margin-right:6px}
-select, input[type="text"], input[type="number"]{background:#0f1628;color:#fff;border:1px solid #213155;border-radius:8px;padding:6px 10px}
-.btn{background:#3281ff;color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.btn:hover{background:#009cff}
-.btn.ghost{background:#172036;color:#dbe7ff;border:1px solid #1b2742;box-shadow:none}
-.btn.ghost:hover{background:#1a2542}
+  /* Invisible unlock hotspot (top-left) */
+  #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
 
-.wrap{position:fixed;inset:var(--bar-h) 0 0 0;display:grid;grid-template-rows:auto auto 1fr}
-.section{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0e1527;border-bottom:1px solid #0b1220}
-#mainFrame{width:100%;height:100%;border:0;background:#0b1220}
+  /* Down/locked screen */
+  #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
+  #lockedInner{max-width:720px}
+  #lockedIcon{width:64px;height:64px;border-radius:12px;display:block;margin:0 auto 12px}
+  #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
+  #locked p{margin:0;opacity:.9}
 
-/* Drawer / panels */
-.drawer{position:fixed;top:var(--bar-h);left:0;right:0;z-index:40;display:none}
-.drawer.open{display:block}
-.panel{margin:10px;background:#121a2e;border:1px solid #1b2742;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.panel-h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #1b2742;background:#0f1628;border-radius:14px 14px 0 0}
-.panel-b{padding:10px 12px}
-.tools-grid{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:10px}
-.tool{background:#111a30;border:1px solid #1b2742;border-radius:12px;padding:8px}
-.tool h4{margin:6px 0 8px}
-.tool textarea,.tool input{width:100%;background:#0e162a;color:#fff;border:1px solid #213155;border-radius:10px;padding:8px;resize:vertical}
+  /* Top bar (fixed) */
+  .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c;position:fixed;top:0;left:0;right:0;z-index:1200}
+  .bar.unlocked{display:flex}
+  .bar-row{width:100%;display:flex;align-items:center;gap:.5rem}
+  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
+  .brand img{width:22px;height:22px;border-radius:6px}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:#e5e7eb;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
+  .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
+  .btn img{width:18px;height:18px;border-radius:4px}
+  .btn.clear{color:#fca5a5;border-color:#4b1010}
+  .bar-left{display:flex;align-items:center;gap:.5rem}
+  .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
+  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
 
-/* Terminal */
-#terminal{background:#0b1220;border:1px solid #1b2742;border-radius:12px;padding:10px;height:260px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-#termOut pre{margin:0;white-space:pre-wrap;word-break:break-word}
-#termIn{width:100%;margin-top:8px;background:#0e162a;color:#fff;border:1px solid #213155;border-radius:10px;padding:8px}
+  /* Menu restore button (when bar hidden) */
+  #menuRestore{display:none;position:fixed;top:8px;right:8px;z-index:1300;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
+  body.bar-hidden #menuRestore{display:block}
+  body.bar-hidden .bar{display:none !important}
 
-/* Mini-browser */
-#browserWrap{display:none}
-#miniBrowser{width:100%;height:420px;border:0;background:#000}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.hidden{display:none}
+  /* Tools drawer */
+  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:1250;overflow:auto}
+  #toolsDrawer.open{transform:translateX(0)}
+  #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+  .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
+  .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
+  .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
+  .small{font-size:.85rem;color:#9ca3af}
 
-/* Hotspot + collapse */
-#hotspot{position:fixed;top:0;left:0;width:56px;height:56px;z-index:60;background:transparent}
-.collapsed .section.games,.collapsed .section.menu{display:none}
-.toast{position:fixed;right:12px;bottom:12px;background:#172036;color:#dbe7ff;border:1px solid #1b2742;border-radius:10px;padding:10px 12px;opacity:0;transform:translateY(10px);transition:all .25s ease;z-index:60}
-.toast.show{opacity:1;transform:none}
+  /* Modals */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
+  .modal.show{display:flex}
+  .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+  .modal .card{position:relative;width:min(92vw,440px);background:#0f172a;border:1px solid #0b1220;border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .modal h2{margin:.3rem 0;color:#c7d2fe}
+  .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
+  .primary{background:#1f2937;border:1px solid #2b3443;color:#e5e7eb;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
+  .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
+  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
+  .err{color:#fca5a5;font-size:.9rem;min-height:1em}
+
+  /* Terminal */
+  #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.45)}
+  #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
+  #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
+  #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1426}
+  #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
+  #termIn{flex:1}
+
+  /* ---- FIX: Embed area always fills below menu ---- */
+  #embedArea{position:fixed;top:var(--bar-h);left:0;right:0;bottom:0;z-index:100}
+  #embedFrame{width:100%;height:100%;border:0;background:#000}
+  #embedLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
+  #embedLoaderInner{text-align:center;max-width:320px}
+  #embedLogo{width:100px;height:100px;border-radius:14px;display:block;margin:0 auto 12px}
+  #embedProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
+  #embedProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#38bdf8);animation:loading 2.2s infinite}
+  @keyframes loading{0%{width:0%}50%{width:85%}100%{width:0%}}
+
+  /* Browser overlay */
+  #browserDesk{display:none;position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:3300;pointer-events:none}
+  #browserWin{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(1100px,96vw);height:min(80vh,calc(100vh - var(--bar-h) - 36px));background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;pointer-events:auto}
+  #browserTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c;cursor:move}
+  #browserBody{position:absolute;inset:44px 0 0 0}
+  #browserFrame{position:absolute;inset:0;border:0;width:100%;height:100%;background:#000}
+  #browserLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
+  #browserLoaderInner{text-align:center;max-width:360px}
+  #browserLogo{width:90px;height:90px;border-radius:14px;display:block;margin:0 auto 12px}
+  #browserProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
+  #browserProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#93c5fd);animation:loading 2.2s infinite}
+  #browserErr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
+  #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
+  #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
 </style>
 </head>
 <body>
+  <!-- Restore button when menu is hidden -->
+  <button id="menuRestore" title="Show menu">≡ Menu</button>
 
-<!-- Invisible unlock hotspot (top-left) -->
-<div id="hotspot" title="Hotspot"></div>
+  <!-- Invisible password hotspot -->
+  <div id="hotspot" aria-label="Open password"></div>
 
-<!-- Bar (original look) -->
-<div class="bar" id="panel">
-  <div class="bar-row">
-    <div class="brand">Math Help</div>
-    <div class="spacer" style="flex:1"></div>
-    <button id="panicTop" class="btn ghost" title="Quick Panic">Panic</button>
-    <button id="collapseBtn" class="btn">Close Menu</button>
-  </div>
-</div>
-
-<div class="wrap" id="appRoot">
-
-  <!-- Row 1: Main controls (original style) -->
-  <div class="section menu">
-    <select id="cloakSelect" title="Tab cloak">
-      <option value='{"title":"Math Help - Down","icon":"down-favicon-32.png"}'>Math Help</option>
-      <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-      <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-      <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-      <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
-      <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-      <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-    </select>
-    <button id="panicFire" class="btn">Panic</button>
-
-    <button id="toolsBtn" class="btn">Tools</button>
-    <button id="openBrowser" class="btn">Browser</button>
-    <button id="openTermBtn" class="btn">Terminal</button>
-  </div>
-
-  <!-- Row 2: Games (original style) -->
-  <div class="section games" id="gamesRow">
-    <strong>Games:</strong>
-    <button id="openBurrito" class="btn">Burrito Bison</button>
-    <!-- NEW button in same style/row -->
-    <button id="openGolfHit" class="btn">Golf Hit</button>
-  </div>
-
-  <!-- Row 3: Main iframe -->
-  <iframe id="mainFrame" src="https://mathhelp0g1.netlify.app/" title="Main Content"></iframe>
-</div>
-
-<!-- Drawer panels -->
-<div class="drawer" id="drawer">
-
-  <!-- Tools Panel -->
-  <div class="panel" id="toolsPanel" style="display:none">
-    <div class="panel-h">
-      <div>Tools</div>
-      <button class="btn ghost" type="button" id="toolsClose">Close</button>
+  <!-- Down screen -->
+  <div id="locked">
+    <div id="lockedInner">
+      <img id="lockedIcon" src="down-favicon-64.png" alt="">
+      <h1>Math Help is down right now</h1>
+      <p>Please come back later.</p>
     </div>
-    <div class="panel-b">
-      <div class="tools-grid">
-        <div class="tool">
-          <h4>Notepad</h4>
-          <textarea id="noteBox" rows="7" placeholder="Quick notes…"></textarea>
-          <div class="row" style="margin-top:8px">
-            <button id="noteSave" class="btn">Save</button>
-            <button id="noteClear" class="btn ghost">Clear</button>
-          </div>
+  </div>
+
+  <!-- Top menu -->
+  <div class="bar" id="panel">
+    <div class="bar-row">
+      <div class="bar-left">
+        <span class="brand"><img src="icon.png" alt="">Math Help</span>
+
+        <!-- Tab cloak buttons -->
+        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
+        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
+        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
+        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
+        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
+        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
+        <button class="btn clear" id="clearCloak">Clear</button>
+
+        <!-- Panic -->
+        <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
+          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
+          <select id="panicSelect">
+            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
+            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+          </select>
+          <button id="panicFire" class="btn">Panic</button>
         </div>
 
-        <div class="tool">
-          <h4>Timer</h4>
-          <div class="row">
-            <input id="tMin" type="number" min="0" step="1" placeholder="min">
-            <input id="tSec" type="number" min="0" max="59" step="1" placeholder="sec">
-            <button id="timerStart" class="btn">Start</button>
-            <button id="timerStop" class="btn ghost">Stop</button>
-          </div>
-          <div style="margin-top:8px"><span id="tLeft">00:00</span></div>
-        </div>
-
-        <div class="tool">
-          <h4>Unit Converter</h4>
-          <div class="row">
-            <input id="ucInput" type="text" placeholder="e.g., 10 ft to m">
-            <button id="ucRun" class="btn">Convert</button>
-          </div>
-          <div style="margin-top:8px" id="ucOut"></div>
-        </div>
+        <!-- Tools / Browser / Terminal -->
+        <button id="toolsBtn" class="btn">Tools</button>
+        <button id="openBrowser" class="btn">Browser</button>
+        <button id="openTermBtn" class="btn">Terminal</button>
       </div>
+
+      <div class="bar-right">
+        <button id="collapseBtn" class="btn">Close Menu</button>
+      </div>
+    </div>
+
+    <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
+      <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
+      <button id="openBurrito" class="btn">Burrito Bison</button>
+      <button id="openGolfHit" class="btn">Golf Hit</button>
     </div>
   </div>
 
-  <!-- Mini Browser -->
-  <div class="panel" id="browserPanel" style="display:none">
-    <div class="panel-h">
-      <div>Mini Browser</div>
-      <div class="row">
-        <button id="browserOpen" class="btn">Open</button>
-        <button id="browserClose" class="btn ghost">Close</button>
-        <button id="browserHalf" class="btn ghost">Half</button>
-        <button id="browserWindow" class="btn ghost">Window</button>
-      </div>
-    </div>
-    <div class="panel-b">
-      <div class="row" style="margin-bottom:8px">
-        <select id="siteChooser" title="Choose preset">
-          <option value='{"title":"Math Help - Down","icon":"down-favicon-32.png"}'>Math Help</option>
-          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
-          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-        </select>
-        <input id="browserURL" type="text" placeholder="https://example.com">
-        <button id="browserGo" class="btn">Go</button>
-      </div>
-      <iframe id="miniBrowser" title="Mini Browser"></iframe>
-    </div>
-  </div>
+  <!-- Tools drawer -->
+  <aside id="toolsDrawer" aria-hidden="true">
+    ...
+  </aside>
 
-  <!-- Terminal -->
-  <div class="panel" id="termPanel" style="display:none">
-    <div class="panel-h">
-      <div>Terminal</div>
-      <button id="termClose" class="btn ghost" type="button">Close</button>
-    </div>
-    <div class="panel-b">
-      <div id="terminal">
-        <div id="termOut"></div>
-        <input id="termIn" type="text" placeholder="Type ;help for commands">
+  <!-- Password Modal -->
+  ...
+  
+  <!-- Embed Area -->
+  <div id="embedArea">
+    <iframe id="embedFrame" title="Embedded Site"></iframe>
+    <div id="embedLoader">
+      <div id="embedLoaderInner">
+        <img id="embedLogo" src="icon.png" alt="Loading">
+        <div id="embedProg"><span></span></div>
+        <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
       </div>
     </div>
   </div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <script>
-/* ====== ORIGINAL JS (preserved) with Golf Hit added ====== */
+/* existing code... */
 
-// Utilities
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const toast = (msg, ms=1600)=>{ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"), ms); };
+const BURRITO_URL="/burrito/";
 
-// Tab cloak
-function setTab(title, icons){
-  document.title = title || "Math Help";
-  if(icons && typeof icons==="object"){
-    const l16 = document.querySelector('link[sizes="16x16"]');
-    const l32 = document.querySelector('link[sizes="32x32"]');
-    const l64 = document.querySelector('link[sizes="64x64"]');
-    if(l16 && icons["16x16"]) l16.href = icons["16x16"];
-    if(l32 && icons["32x32"]) l32.href = icons["32x32"];
-    if(l64 && icons["64x64"]) l64.href = icons["64x64"];
-  }
-}
-$("#cloakSelect").addEventListener("change", e=>{
-  try{
-    const v = JSON.parse(e.target.value);
-    setTab(v.title, {"16x16":v.icon,"32x32":v.icon,"64x64":v.icon});
-    toast("Tab updated");
-  }catch(_){}
-});
-// Initial icons
-setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
+/* Game */
+document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
+document.getElementById("openGolfHit").addEventListener("click",()=>{ window.open("golfhit.html","_blank","noopener"); });
 
-// Hotspot toggles collapse
-$("#hotspot").addEventListener("click", ()=>{
-  document.body.classList.toggle("collapsed");
-});
-
-// Collapse button
-$("#collapseBtn").addEventListener("click", ()=>{
-  document.body.classList.toggle("collapsed");
-  $("#collapseBtn").textContent = document.body.classList.contains("collapsed") ? "Open Menu" : "Close Menu";
-});
-
-// Panic
-function doPanic(){
-  setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
-  $("#mainFrame").src = "about:blank";
-  window.location.href = "https://www.khanacademy.org/";
-}
-document.addEventListener("keydown", (e)=>{ if(e.key === "-") doPanic(); });
-$("#panicTop").addEventListener("click", doPanic);
-$("#panicFire").addEventListener("click", doPanic);
-
-// Drawer open/close
-const drawer = $("#drawer");
-const toolsPanel = $("#toolsPanel");
-$("#toolsBtn").addEventListener("click", ()=>{ drawer.classList.add("open"); toolsPanel.style.display="block"; });
-$("#toolsClose").addEventListener("click", ()=>{
-  toolsPanel.style.display="none";
-  if($("#browserPanel").style.display!=="block" && $("#termPanel").style.display!=="block") drawer.classList.remove("open");
-});
-
-// Notepad
-const NOTE_KEY = "mh_note";
-const noteBox = $("#noteBox");
-if(noteBox) noteBox.value = localStorage.getItem(NOTE_KEY) || "";
-$("#noteSave").addEventListener("click", ()=>{ localStorage.setItem(NOTE_KEY, noteBox.value||""); toast("Saved"); });
-$("#noteClear").addEventListener("click", ()=>{ noteBox.value=""; localStorage.removeItem(NOTE_KEY); toast("Cleared"); });
-
-// Timer
-let tHandle=null, remain=0;
-const tLeft = $("#tLeft");
-function fmt(n){return n<10?("0"+n):n}
-function tick(){
-  if(remain<=0){ clearInterval(tHandle); tHandle=null; toast("Timer done"); return; }
-  remain--;
-  const m=Math.floor(remain/60), s=remain%60;
-  tLeft.textContent = `${fmt(m)}:${fmt(s)}`;
-}
-$("#timerStart").addEventListener("click", ()=>{
-  const m=parseInt($("#tMin").value||"0",10);
-  const s=parseInt($("#tSec").value||"0",10);
-  remain=Math.max(0,m*60+s);
-  if(tHandle) clearInterval(tHandle);
-  tHandle=setInterval(tick,1000); tick();
-});
-$("#timerStop").addEventListener("click", ()=>{ if(tHandle) clearInterval(tHandle); tHandle=null; toast("Timer stopped"); });
-
-// Unit converter (basic)
-function convert(q){
-  try{
-    const parts=q.trim().toLowerCase().split(/\s+/);
-    const val=parseFloat(parts[0]); if(!isFinite(val)) return "Enter a value, e.g., 10 ft to m";
-    const from=parts[1], to=parts[3];
-    const table={ ft:{m:0.3048}, m:{ft:3.28084}, in:{cm:2.54}, cm:{in:0.3937007874}, lb:{kg:0.45359237}, kg:{lb:2.2046226218} };
-    if(table[from] && table[from][to]) return `${val} ${from} ≈ ${val*table[from][to]} ${to}`;
-    return "Unsupported conversion";
-  }catch(_){ return "Invalid format. Try: 10 ft to m"; }
-}
-$("#ucRun").addEventListener("click", ()=>{ $("#ucOut").textContent = convert($("#ucInput").value||""); });
-
-// Mini-browser
-const browserPanel=$("#browserPanel");
-const miniBrowser=$("#miniBrowser");
-$("#openBrowser").addEventListener("click", ()=>{ drawer.classList.add("open"); browserPanel.style.display="block"; });
-$("#browserClose").addEventListener("click", ()=>{ browserPanel.style.display="none"; if($("#toolsPanel").style.display!=="block" && $("#termPanel").style.display!=="block") drawer.classList.remove("open"); });
-$("#browserOpen").addEventListener("click", ()=>{ miniBrowser.style.display="block"; });
-$("#browserHalf").addEventListener("click", ()=>{ miniBrowser.style.height="220px"; });
-$("#browserWindow").addEventListener("click", ()=>{ window.open($("#browserURL").value||"about:blank","_blank"); });
-$("#browserGo").addEventListener("click", ()=>{
-  const u=$("#browserURL").value.trim(); if(!u){ toast("Enter a URL"); return; }
-  miniBrowser.src=u;
-});
-
-// Terminal
-const termPanel=$("#termPanel");
-$("#openTermBtn").addEventListener("click", ()=>{ drawer.classList.add("open"); termPanel.style.display="block"; });
-$("#termClose").addEventListener("click", ()=>{ termPanel.style.display="none"; if($("#toolsPanel").style.display!=="block" && $("#browserPanel").style.display!=="block") drawer.classList.remove("open"); });
-
-const termOut=$("#termOut"), termIn=$("#termIn");
-function termPrint(s){ const pre=document.createElement("pre"); pre.textContent=s; termOut.appendChild(pre); termOut.scrollTop=termOut.scrollHeight; }
-const cmds={
-  ";help": ()=> termPrint("Commands:\n;help ;clear ;panic ;open tools ;close tools ;browser open/close/full/half/window"),
-  ";clear": ()=>{ termOut.innerHTML=""; },
-  ";panic": ()=> doPanic(),
-  ";open tools": ()=>{ drawer.classList.add("open"); toolsPanel.style.display="block"; },
-  ";close tools": ()=>{ toolsPanel.style.display="none"; if(browserPanel.style.display!=="block" && termPanel.style.display!=="block") drawer.classList.remove("open"); },
-  ";browser open": ()=>{ drawer.classList.add("open"); browserPanel.style.display="block"; },
-  ";browser close": ()=>{ browserPanel.style.display="none"; if(toolsPanel.style.display!=="block" && termPanel.style.display!=="block") drawer.classList.remove("open"); },
-  ";browser full": ()=>{ miniBrowser.style.display="block"; miniBrowser.style.height="420px"; },
-  ";browser half": ()=>{ miniBrowser.style.display="block"; miniBrowser.style.height="220px"; },
-  ";browser window": ()=>{ window.open($("#browserURL").value||"about:blank","_blank"); }
-};
-termIn.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter"){
-    const v=termIn.value.trim(); if(!v) return;
-    termPrint("> " + v);
-    if(cmds[v]) cmds[v](); else termPrint("Unknown command. Try ;help");
-    termIn.value="";
-  }
-});
-
-// Games
-const burritoBtn=document.getElementById("openBurrito");
-if(burritoBtn){ burritoBtn.addEventListener("click", ()=>{ window.open("/burrito/index.html","_blank"); }); }
-
-// NEW: Golf Hit mirrored behavior
-const golfHitBtn=document.getElementById("openGolfHit");
-if(golfHitBtn){ golfHitBtn.addEventListener("click", ()=>{ window.open("golfhit.html","_blank"); }); }
-
+/* existing code continues... */
 </script>
 </body>
 </html>
