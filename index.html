@@ -2,539 +2,486 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Math Help</title>
-<link rel="icon" href="icon.png" type="image/png" />
+
+<!-- Favicons / Cloaking -->
+<link rel="icon" type="image/png" sizes="16x16" href="down-favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="down-favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="down-favicon-64.png">
 
 <style>
   :root{
-    --bar-h:56px;              /* updated in JS */
-    --bg:#0f172a;
-    --panel:#0b1220;
-    --text:#e5e7eb;
-    --muted:#9ca3af;
-    --btn:#111827;
-    --btnH:#1f2937;
-    --accent:#60a5fa;
+    --bar-h: 48px;
+    --bg: #0b1220;
+    --panel: #121a2e;
+    --panel-2: #0f1628;
+    --fg: #e6edf3;
+    --muted: #90a4b4;
+    --accent: #3281ff;
+    --accent-2:#009cff;
+    --ok:#2ecc71;
+    --warn:#f39c12;
+    --danger:#e74c3c;
+    --radius: 14px;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
   }
+
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  body{background:var(--bg)}
-  body.with-bg-img{background-image:var(--bg-img);background-size:cover;background-position:center;background-attachment:fixed}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font: 14px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  }
 
-  /* Invisible unlock hotspot (top-left) */
-  #hotspot{position:fixed;top:0;left:0;width:44px;height:44px;opacity:0;z-index:9999;cursor:pointer}
+  /* Top bar */
+  .topbar{
+    position:fixed; inset:0 0 auto 0; height:var(--bar-h);
+    display:flex; align-items:center; gap:10px; padding:0 10px;
+    background:#0f172a; border-bottom:1px solid #0b1220;
+    z-index:50;
+  }
+  .brand{font-weight:700; letter-spacing:.3px}
+  .spacer{flex:1}
 
-  /* Down/locked screen */
-  #locked{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a49c4,#053a97);color:#dbeafe;text-align:center;z-index:1000;padding:2rem}
-  #lockedInner{max-width:720px}
-  #lockedIcon{width:64px;height:64px;border-radius:12px;display:block;margin:0 auto 12px}
-  #locked h1{margin:.25rem 0 .4rem;font-size:1.8rem}
-  #locked p{margin:0;opacity:.9}
+  /* Buttons */
+  .btn{
+    background:var(--accent);
+    color:#fff; border:0; border-radius:10px;
+    padding:8px 12px; font-weight:700; cursor:pointer;
+    box-shadow: var(--shadow);
+  }
+  .btn:hover{ background:var(--accent-2) }
+  .btn.ghost{ background:#172036; color:#dbe7ff; border:1px solid #1b2742; box-shadow:none }
+  .btn.ghost:hover{ background:#1a2542 }
 
-  /* Top bar (fixed) */
-  .bar{display:none;flex-wrap:wrap;gap:.5rem;padding:.5rem .75rem;background:linear-gradient(180deg,#121a2b,var(--panel));border-bottom:1px solid #0a0f1c;position:fixed;top:0;left:0;right:0;z-index:1200}
-  .bar.unlocked{display:flex}
-  .bar-row{width:100%;display:flex;align-items:center;gap:.5rem}
-  .brand{display:inline-flex;align-items:center;gap:.5rem;padding-right:.5rem;margin-right:.75rem;border-right:1px solid #0a0f1c;color:var(--muted);font-weight:700;user-select:none}
-  .brand img{width:22px;height:22px;border-radius:6px}
-  .btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--btn);border:1px solid #0a0f1c;color:#e5e7eb;padding:.4rem .6rem;border-radius:10px;cursor:pointer;transition:background .15s,transform .02s;white-space:nowrap}
-  .btn:hover{background:var(--btnH)} .btn:active{transform:translateY(1px)}
-  .btn img{width:18px;height:18px;border-radius:4px}
-  .btn.clear{color:#fca5a5;border-color:#4b1010}
-  .bar-left{display:flex;align-items:center;gap:.5rem}
-  .bar-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
-  .kbd{font:12px ui-monospace,monospace;background:#0b1220;border:1px solid #1f2937;padding:.1rem .35rem;border-radius:6px;color:#cbd5e1}
+  /* Layout */
+  .wrap{ position:fixed; inset:var(--bar-h) 0 0 0; display:grid; grid-template-rows:auto 1fr }
+  .menu{
+    display:flex; align-items:center; gap:8px; padding:8px 10px;
+    background:#0e1527; border-bottom:1px solid #0b1220;
+  }
 
-  /* Menu restore button (when bar hidden) */
-  #menuRestore{display:none;position:fixed;top:8px;right:8px;z-index:1300;background:#111827;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:.35rem .55rem;cursor:pointer}
-  body.bar-hidden #menuRestore{display:block}
-  body.bar-hidden .bar{display:none !important}
+  /* Games row (second row with game buttons) */
+  .games-row{ display:flex; align-items:center; gap:8px; padding:8px 10px; background:#0e1527; border-bottom:1px solid #0b1220 }
 
-  /* Tools drawer */
-  #toolsDrawer{position:fixed;top:var(--bar-h);right:0;bottom:0;width:360px;background:#0f172a;border-left:1px solid #0a0f1c;transform:translateX(100%);transition:transform .18s ease;z-index:1250;overflow:auto}
-  #toolsDrawer.open{transform:translateX(0)}
-  #toolsHdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-  .toolCard{padding:.8rem;border-bottom:1px solid #0a0f1c}
-  .toolRow{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
-  .input{flex:1;background:#0b1220;border:1px solid #111827;border-radius:10px;padding:.6rem .7rem;color:#e5e7eb}
-  .small{font-size:.85rem;color:#9ca3af}
+  /* Embedded main frame */
+  .embed{
+    width:100%; height:100%; border:0; background:#0b1220;
+  }
 
-  /* Modals */
-  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
-  .modal.show{display:flex}
-  .modal .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55)}
-  .modal .card{position:relative;width:min(92vw,440px);background:#0f172a;border:1px solid #0b1220;border-radius:16px;padding:1rem;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-  .modal h2{margin:.3rem 0;color:#c7d2fe}
-  .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
-  .primary{background:#1f2937;border:1px solid #2b3443;color:#e5e7eb;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
-  .secondary{background:#0b1220;border:1px solid #1f2937;color:#94a3b8;padding:.6rem .9rem;border-radius:10px;cursor:pointer}
-  .toggle{cursor:pointer;padding:.5rem .65rem;background:#111827;border:1px solid #1f2937;border-radius:10px;color:#cbd5e1}
-  .err{color:#fca5a5;font-size:.9rem;min-height:1em}
+  /* Drawer / Tools / Terminal / Browser panels */
+  .drawer{ position:fixed; top:var(--bar-h); left:0; right:0; height:auto; z-index:40; display:none }
+  .drawer.open{ display:block }
+  .panel{
+    margin:10px; background:var(--panel); border:1px solid #1b2742;
+    border-radius:var(--radius); box-shadow:var(--shadow);
+  }
+  .panel-h{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px; border-bottom:1px solid #1b2742;
+    background:#0f1628; border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .panel-b{ padding:10px 12px }
+
+  /* Tools */
+  .tools-grid{ display:grid; grid-template-columns:repeat(3, minmax(220px, 1fr)); gap:10px }
+  .tool{ background:#111a30; border:1px solid #1b2742; border-radius:12px; padding:8px }
+  .tool h4{ margin:6px 0 8px 0 }
+  .tool textarea, .tool input{
+    width:100%; background:#0e162a; color:var(--fg); border:1px solid #213155;
+    border-radius:10px; padding:8px; resize:vertical;
+  }
 
   /* Terminal */
-  #termDesk{display:none;position:fixed;inset:0;z-index:3400;background:rgba(0,0,0,.45)}
-  #termBox{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(900px,95vw);background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden}
-  #termTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c}
-  #termOut{height:320px;overflow:auto;padding:.8rem;font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1426}
-  #termInRow{display:flex;gap:.5rem;align-items:center;padding:.6rem;border-top:1px solid #0a0f1c}
-  #termIn{flex:1}
+  #terminal{ background:#0b1220; border:1px solid #1b2742; border-radius:12px; padding:10px; height:260px; overflow:auto; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,"Liberation Mono","Courier New",monospace }
+  #termOut pre{ margin:0; white-space:pre-wrap; word-break:break-word }
+  #termIn{ width:100%; margin-top:8px; background:#0e162a; color:var(--fg); border:1px solid #213155; border-radius:10px; padding:8px }
 
-  /* ---- FIX: Embed area always fills below menu ---- */
-  #embedArea{position:fixed;top:var(--bar-h);left:0;right:0;bottom:0;z-index:100}
-  #embedFrame{width:100%;height:100%;border:0;background:#000}
-  #embedLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
-  #embedLoaderInner{text-align:center;max-width:320px}
-  #embedLogo{width:100px;height:100px;border-radius:14px;display:block;margin:0 auto 12px}
-  #embedProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
-  #embedProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#38bdf8);animation:loading 2.2s infinite}
-  @keyframes loading{0%{width:0%}50%{width:85%}100%{width:0%}}
+  /* Mini-browser */
+  #browserWrap{ display:none }
+  #miniBrowser{ width:100%; height:420px; border:0; background:#000 }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .row select{ background:#0f1628; color:#fff; border:1px solid #213155; border-radius:8px; padding:6px 10px }
+  .row input[type="text"]{ background:#0f1628; color:#fff; border:1px solid #213155; border-radius:8px; padding:6px 10px; flex:1 }
 
-  /* Browser overlay */
-  #browserDesk{display:none;position:fixed;left:0;right:0;top:var(--bar-h);bottom:0;z-index:3300;pointer-events:none}
-  #browserWin{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(1100px,96vw);height:min(80vh,calc(100vh - var(--bar-h) - 36px));background:#0f172a;border:1px solid #101826;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);overflow:hidden;pointer-events:auto}
-  #browserTop{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:#0b1220;border-bottom:1px solid #0a0f1c;cursor:move}
-  #browserBody{position:absolute;inset:44px 0 0 0}
-  #browserFrame{position:absolute;inset:0;border:0;width:100%;height:100%;background:#000}
-  #browserLoader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0b1220}
-  #browserLoaderInner{text-align:center;max-width:360px}
-  #browserLogo{width:90px;height:90px;border-radius:14px;display:block;margin:0 auto 12px}
-  #browserProg{height:10px;border-radius:999px;background:#0f172a;border:1px solid #1b2233;overflow:hidden}
-  #browserProg>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#93c5fd);animation:loading 2.2s infinite}
-  #browserErr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0b1220;text-align:center;padding:1rem}
-  #browserWin.full{top:0;left:0;transform:none;width:100vw;height:calc(100vh - var(--bar-h));border-radius:0}
-  #browserWin.half{top:0;right:0;left:auto;transform:none;width:50vw;height:calc(100vh - var(--bar-h));border-radius:0}
+  /* Hidden hotspot */
+  #hotspot{ position:fixed; top:0; left:0; width:56px; height:56px; z-index:60; background:transparent }
+
+  /* Collapsible menu */
+  #collapseBtn{ background:#172036 }
+  .collapsed .menu, .collapsed .games-row{ display:none }
+  .collapsed .wrap{ grid-template-rows:1fr }
+
+  /* Simple toast */
+  .toast{ position:fixed; right:12px; bottom:12px; background:#172036; color:#dbe7ff; border:1px solid #1b2742; border-radius:10px; padding:10px 12px; opacity:0; transform:translateY(10px); transition:all .25s ease; z-index:60 }
+  .toast.show{ opacity:1; transform:none }
 </style>
 </head>
 <body>
-  <!-- Restore button when menu is hidden -->
-  <button id="menuRestore" title="Show menu">≡ Menu</button>
 
-  <!-- Invisible password hotspot -->
-  <div id="hotspot" aria-label="Open password"></div>
+<!-- Invisible unlock hotspot (top-left) -->
+<div id="hotspot" title="Hotspot"></div>
 
-  <!-- Down screen -->
-  <div id="locked">
-    <div id="lockedInner">
-      <img id="lockedIcon" src="down-favicon-64.png" alt="">
-      <h1>Math Help is down right now</h1>
-      <p>Please come back later.</p>
-    </div>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="brand">Math Help</div>
+  <div class="spacer"></div>
+
+  <!-- Panic button lives here for quick access -->
+  <button id="panicTop" class="btn ghost" title="Quick Panic">Panic</button>
+  <button id="collapseBtn" class="btn">Close Menu</button>
+</div>
+
+<div class="wrap" id="appRoot">
+
+  <!-- First row: main controls -->
+  <div class="menu" id="menuRow">
+    <!-- Gate/Tab Cloak -->
+    <select id="cloakSelect" title="Tab cloak">
+      <option value='{"title":"Math Help - Down","icon":"down-favicon-32.png"}'>Math Help</option>
+      <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+      <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+      <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+      <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
+      <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+      <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+    </select>
+
+    <button id="panicFire" class="btn">Panic</button>
+
+    <!-- Tools / Browser / Terminal -->
+    <button id="toolsBtn" class="btn">Tools</button>
+    <button id="openBrowser" class="btn">Browser</button>
+    <button id="openTermBtn" class="btn">Terminal</button>
   </div>
 
-  <!-- Top menu -->
-  <div class="bar" id="panel">
-    <div class="bar-row">
-      <div class="bar-left">
-        <span class="brand"><img src="icon.png" alt="">Math Help</span>
+  <!-- Second row: Games -->
+  <div class="games-row" id="gamesRow">
+    <strong>Games:</strong>
+    <button id="openBurrito" class="btn">Burrito Bison</button>
+    <!-- NEW: Golf Hit button opening in a new tab like Burrito -->
+    <button id="openGolfHit" class="btn">Golf Hit</button>
+  </div>
 
-        <!-- Tab cloak buttons -->
-        <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png"><img src="calculator-icon.png" alt="">Calculator</button>
-        <button class="btn" data-title="Google" data-favicon="google-favicon.png"><img src="google-favicon.png" alt="">Google</button>
-        <button class="btn" data-title="Google Docs" data-favicon="google-docs-icon.png"><img src="google-docs-icon.png" alt="">Docs</button>
-        <button class="btn" data-title="Google Classroom" data-favicon="classroom-favicon.png"><img src="classroom-favicon.png" alt="">Classroom</button>
-        <button class="btn" data-title="Khan Academy" data-favicon="khan-favicon.png"><img src="khan-favicon.png" alt="">Khan</button>
-        <button class="btn" data-title="Wikipedia" data-favicon="wikipedia-favicon.png"><img src="wikipedia-favicon.png" alt="">Wikipedia</button>
-        <button class="btn clear" id="clearCloak">Clear</button>
+  <!-- Embedded main content -->
+  <iframe id="mainFrame" class="embed" src="https://mathhelp0g1.netlify.app/" title="Main Content"></iframe>
+</div>
 
-        <!-- Panic -->
-        <div style="display:flex;align-items:center;gap:.5rem;margin-left:.75rem">
-          <label for="panicSelect">Panic (<span class="kbd">-</span>):</label>
-          <select id="panicSelect">
-            <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
-            <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
-            <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
-            <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
-            <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
-            <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
-          </select>
-          <button id="panicFire" class="btn">Panic</button>
+<!-- Drawer panels (hidden until opened) -->
+<div class="drawer" id="drawer">
+
+  <!-- Tools Panel -->
+  <div class="panel" id="toolsPanel" style="display:none">
+    <div class="panel-h">
+      <div>Tools</div>
+      <button class="btn ghost" type="button" id="toolsClose">Close</button>
+    </div>
+    <div class="panel-b">
+      <div class="tools-grid">
+
+        <!-- Notepad -->
+        <div class="tool">
+          <h4>Notepad</h4>
+          <textarea id="noteBox" rows="7" placeholder="Quick notes…"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button id="noteSave" class="btn">Save</button>
+            <button id="noteClear" class="btn ghost">Clear</button>
+          </div>
         </div>
 
-        <!-- Tools / Browser / Terminal -->
-        <button id="toolsBtn" class="btn">Tools</button>
-        <button id="openBrowser" class="btn">Browser</button>
-        <button id="openTermBtn" class="btn">Terminal</button>
-      </div>
+        <!-- Timer -->
+        <div class="tool">
+          <h4>Timer</h4>
+          <div class="row">
+            <input id="tMin" type="number" min="0" step="1" placeholder="min">
+            <input id="tSec" type="number" min="0" max="59" step="1" placeholder="sec">
+            <button id="timerStart" class="btn">Start</button>
+            <button id="timerStop" class="btn ghost">Stop</button>
+          </div>
+          <div style="margin-top:8px"><span id="tLeft">00:00</span></div>
+        </div>
 
-      <div class="bar-right">
-        <button id="collapseBtn" class="btn">Close Menu</button>
-      </div>
-    </div>
+        <!-- Unit Converter -->
+        <div class="tool">
+          <h4>Unit Converter</h4>
+          <div class="row">
+            <input id="ucInput" type="text" placeholder="e.g., 10 ft to m">
+            <button id="ucRun" class="btn">Convert</button>
+          </div>
+          <div style="margin-top:8px" id="ucOut"></div>
+        </div>
 
-    <div class="bar-row" style="border-top:1px solid #0a0f1c;padding-top:.4rem">
-      <span class="brand" style="border-right:none;margin-right:.25rem;padding-right:0;color:#9ca3af">Games</span>
-      <button id="openBurrito" class="btn">Burrito Bison</button>
-    </div>
-  </div>
-
-  <!-- Tools drawer -->
-  <aside id="toolsDrawer" aria-hidden="true">
-    <div id="toolsHdr">
-      <h3 style="margin:0">Tools</h3>
-      <button id="toolsClose" class="btn" type="button">Close</button>
-    </div>
-
-    <div class="toolCard">
-      <h4>Notepad</h4>
-      <textarea id="noteArea" class="input" style="height:140px;resize:vertical" placeholder="Type notes..."></textarea>
-      <div class="toolRow" style="justify-content:flex-end"><span id="noteSaved" class="small"></span></div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Timer</h4>
-      <div class="toolRow">
-        <input id="timerMin" class="input" type="number" min="0" max="180" value="25" style="width:90px"> min
-        <button id="timerStart" class="btn" type="button">Start</button>
-        <button id="timerStop" class="btn" type="button">Stop</button>
-        <button id="timerReset" class="btn" type="button">Reset</button>
-      </div>
-      <div class="toolRow"><div id="timerReadout" style="font-size:1.4rem;font-weight:700">25:00</div></div>
-    </div>
-
-    <div class="toolCard">
-      <h4>Unit Converter</h4>
-      <div class="toolRow">
-        <input id="cm" class="input" type="number" placeholder="cm" style="width:120px">
-        <span>↔</span>
-        <input id="inch" class="input" type="number" placeholder="inches" style="width:120px">
-      </div>
-      <div class="toolRow">
-        <input id="kg" class="input" type="number" placeholder="kg" style="width:120px">
-        <span>↔</span>
-        <input id="lb" class="input" type="number" placeholder="lb" style="width:120px">
-      </div>
-    </div>
-  </aside>
-
-  <!-- Password Modal -->
-  <div id="pwModal" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="card">
-      <h2>Enter password</h2>
-      <div class="toolRow">
-        <input id="pwInput" class="input" type="password" placeholder="Password" autocomplete="off">
-        <button id="togglePw" class="toggle" type="button">Show</button>
-      </div>
-      <div id="pwErr" class="err"></div>
-      <div class="actions">
-        <button class="secondary" data-close type="button">Cancel</button>
-        <button id="pwSubmit" class="primary" type="button">Unlock</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Browser chooser -->
-  <div id="browserChooser" class="modal" aria-hidden="true">
-    <div class="backdrop" data-close></div>
-    <div class="card">
-      <h2>Open Browser</h2>
-      <div class="toolRow" style="gap:.6rem;flex-wrap:wrap">
-        <button id="chooseBean" class="primary" type="button">BeanBrowser</button>
-        <button id="chooseWin11" class="primary" type="button">Windows 11</button>
-        <button class="secondary" data-close type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Terminal -->
-  <div id="termDesk" aria-hidden="true" style="display:none">
-    <div id="termBox">
-      <div id="termTop">
-        <strong>Terminal</strong>
-        <button id="termClose" class="btn" type="button">Close</button>
-      </div>
-      <pre id="termOut"></pre>
-      <div id="termInRow">
-        <input id="termIn" class="input" type="text" placeholder="Type ;help" />
-        <span style="color:#9ca3af;font-size:.85rem">Enter ↵</span>
       </div>
     </div>
   </div>
 
   <!-- Mini Browser -->
-  <div id="browserDesk" aria-hidden="true">
-    <div id="browserWin" role="dialog" aria-label="Browser window">
-      <div id="browserTop" title="Drag • Double-click to toggle full/window">
-        <div id="browserTitle">Browser</div>
-        <div id="browserCtrls">
-          <button id="halfBtn" class="btn" title="Half screen">▭▭</button>
-          <button id="fullBtn" class="btn" title="Full screen">▢</button>
-          <button id="winBtn"  class="btn" title="Windowed">▣</button>
-          <button id="closeBtn" class="btn" title="Close">✕</button>
-        </div>
+  <div class="panel" id="browserPanel" style="display:none">
+    <div class="panel-h">
+      <div>Mini Browser</div>
+      <div class="row">
+        <button id="browserOpen" class="btn">Open</button>
+        <button id="browserClose" class="btn ghost">Close</button>
+        <button id="browserHalf" class="btn ghost">Half</button>
+        <button id="browserWindow" class="btn ghost">Window</button>
       </div>
-      <div id="browserBody">
-        <iframe id="browserFrame" title="Mini Browser"></iframe>
-        <div id="browserLoader">
-          <div id="browserLoaderInner">
-            <img id="browserLogo" src="icon.png" alt="Loading">
-            <div id="browserProg"><span></span></div>
-            <p class="small" style="text-align:center;margin-top:.6rem">Launching…</p>
-          </div>
-        </div>
-        <div id="browserErr" style="display:none;text-align:center;padding:1rem">
-          Couldn’t load. The site may block iframes.
-        </div>
+    </div>
+    <div class="panel-b">
+      <div class="row" style="margin-bottom:8px">
+        <select id="siteChooser" title="Choose preset">
+          <option value='{"title":"Math Help - Down","icon":"down-favicon-32.png"}'>Math Help</option>
+          <option value='{"title":"Google","icon":"google-favicon.png"}'>Google</option>
+          <option value='{"title":"Calculator","icon":"calculator-icon.png"}'>Calculator</option>
+          <option value='{"title":"Google Docs","icon":"google-docs-icon.png"}'>Google Docs</option>
+          <option value='{"title":"Google Classroom","icon":"classroom-favicon.png"}'>Classroom</option>
+          <option value='{"title":"Khan Academy","icon":"khan-favicon.png"}'>Khan Academy</option>
+          <option value='{"title":"Wikipedia","icon":"wikipedia-favicon.png"}'>Wikipedia</option>
+        </select>
+        <input id="browserURL" type="text" placeholder="https://example.com">
+        <button id="browserGo" class="btn">Go</button>
       </div>
+      <iframe id="miniBrowser" title="Mini Browser"></iframe>
     </div>
   </div>
 
-  <!-- Embed Area (fixed so it never crops) -->
-  <div id="embedArea">
-    <iframe id="embedFrame" title="Embedded Site"></iframe>
-    <div id="embedLoader">
-      <div id="embedLoaderInner">
-        <img id="embedLogo" src="icon.png" alt="Loading">
-        <div id="embedProg"><span></span></div>
-        <p class="small" style="text-align:center;margin-top:.6rem">Loading…</p>
+  <!-- Terminal -->
+  <div class="panel" id="termPanel" style="display:none">
+    <div class="panel-h">
+      <div>Terminal</div>
+      <button id="termClose" class="btn ghost" type="button">Close</button>
+    </div>
+    <div class="panel-b">
+      <div id="terminal">
+        <div id="termOut"></div>
+        <input id="termIn" type="text" placeholder="Type ;help for commands" />
       </div>
     </div>
   </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-/* ===== Config ===== */
-const EMBED_URL="https://mathhelp0g1.netlify.app/";
-const MINI_BROWSER_URL="https://win11-emu-react.vercel.app/";
-const BEAN_URL="https://mbxp.vercel.app/";
-const BURRITO_URL="/burrito/";
+  // --- Utilities ---
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const toast = (msg, ms=1600) => {
+    const el = $("#toast"); el.textContent = msg; el.classList.add("show");
+    setTimeout(()=> el.classList.remove("show"), ms);
+  };
 
-const ADMIN_PASSWORD="imadmin";
-const USER_PASSWORD="gamerzforever";
+  // --- Tab cloak ---
+  function setTab(title, icons){
+    document.title = title || "Math Help";
+    if(icons && typeof icons === "object"){
+      const link16 = document.querySelector('link[sizes="16x16"]');
+      const link32 = document.querySelector('link[sizes="32x32"]');
+      const link64 = document.querySelector('link[sizes="64x64"]');
+      if(link16 && icons["16x16"]) link16.href = icons["16x16"];
+      if(link32 && icons["32x32"]) link32.href = icons["32x32"];
+      if(link64 && icons["64x64"]) link64.href = icons["64x64"];
+    }
+  }
 
-/* Elements */
-const hotspot=document.getElementById("hotspot");
-const locked=document.getElementById("locked");
-const panel=document.getElementById("panel");
-const menuRestore=document.getElementById("menuRestore");
-const collapseBtn=document.getElementById("collapseBtn");
-
-const embedFrame=document.getElementById("embedFrame");
-const embedLoader=document.getElementById("embedLoader");
-
-const toolsDrawer=document.getElementById("toolsDrawer");
-const toolsBtn=document.getElementById("toolsBtn");
-const toolsClose=document.getElementById("toolsClose");
-
-const noteArea=document.getElementById("noteArea");
-const noteSaved=document.getElementById("noteSaved");
-
-const timerMin=document.getElementById("timerMin");
-const timerStart=document.getElementById("timerStart");
-const timerStop=document.getElementById("timerStop");
-const timerReset=document.getElementById("timerReset");
-const timerReadout=document.getElementById("timerReadout");
-
-const termDesk=document.getElementById("termDesk");
-const termOut=document.getElementById("termOut");
-const termIn=document.getElementById("termIn");
-const termClose=document.getElementById("termClose");
-const openTermBtn=document.getElementById("openTermBtn");
-
-const openBrowserBtn=document.getElementById("openBrowser");
-const browserChooser=document.getElementById("browserChooser");
-const chooseBean=document.getElementById("chooseBean");
-const chooseWin11=document.getElementById("chooseWin11");
-
-const browserDesk=document.getElementById("browserDesk");
-const browserWin=document.getElementById("browserWin");
-const browserTop=document.getElementById("browserTop");
-const browserFrame=document.getElementById("browserFrame");
-const browserLoader=document.getElementById("browserLoader");
-const browserErr=document.getElementById("browserErr");
-const closeBtn=document.getElementById("closeBtn");
-const fullBtn=document.getElementById("fullBtn");
-const halfBtn=document.getElementById("halfBtn");
-const winBtn=document.getElementById("winBtn");
-
-/* Tab cloak helpers (with multi-size icons) */
-let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
-function removeFavicons(){ document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
-function addIconWithSizes(href,s){ const l=document.createElement('link'); l.rel='icon'; l.type='image/png'; if(s) l.sizes=s; l.href=__v(href); document.head.appendChild(l); }
-function addShortcutIcon(href){ const l=document.createElement('link'); l.rel='shortcut icon'; l.href=__v(href); document.head.appendChild(l); }
-function setFavicons(icon){ removeFavicons(); if(typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else { let first=null; for(const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first); } }
-function setTab(title,icon){ document.title=title; setFavicons(icon); }
-function saveCloak(title,icon){ localStorage.setItem("mh_cloak",JSON.stringify({title,icon})); }
-function loadCloak(){ try{return JSON.parse(localStorage.getItem("mh_cloak")||"null");}catch{return null;} }
-function clearTab(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); }
-
-/* Panic */
-const panicSelect=document.getElementById("panicSelect");
-const panicFire=document.getElementById("panicFire");
-function savePanic(obj){ localStorage.setItem("mh_panic",JSON.stringify(obj)); }
-function loadPanic(){ try{return JSON.parse(localStorage.getItem("mh_panic")||"null");}catch{return null;} }
-(function(){ const saved=loadPanic(); if(saved){ for(const o of panicSelect.options){ if(o.value===JSON.stringify(saved)){ panicSelect.value=o.value; break; } } } else savePanic(JSON.parse(panicSelect.value)); })();
-panicSelect.addEventListener("change",()=>savePanic(JSON.parse(panicSelect.value)));
-function triggerPanic(){ const sel=loadPanic()||JSON.parse(panicSelect.value); setTab(sel.title,sel.icon); saveCloak(sel.title,sel.icon); }
-panicFire.addEventListener("click",triggerPanic);
-document.addEventListener("keydown",e=>{
-  const el=document.activeElement, typing=el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
-  if(!typing && (e.key==="-"||e.key==="_"||e.code==="Minus")) triggerPanic();
-});
-document.querySelectorAll('.btn[data-title]').forEach(b=>b.addEventListener('click',()=>{
-  const t=b.getAttribute('data-title'), i=b.getAttribute('data-favicon'); setTab(t,i); saveCloak(t,i);
-}));
-document.getElementById('clearCloak').addEventListener('click',clearTab);
-
-/* Password modal */
-const pwModal=document.getElementById("pwModal");
-const pwInput=document.getElementById("pwInput");
-const pwErr=document.getElementById("pwErr");
-document.getElementById("togglePw").addEventListener("click",e=>{
-  pwInput.type=pwInput.type==="password"?"text":"password"; e.target.textContent=pwInput.type==="password"?"Show":"Hide";
-});
-function openPw(){ pwModal.classList.add("show"); pwModal.setAttribute("aria-hidden","false"); pwErr.textContent=""; pwInput.value=""; setTimeout(()=>pwInput.focus(),0); }
-function closePw(){ pwModal.classList.remove("show"); pwModal.setAttribute("aria-hidden","true"); }
-pwModal.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) closePw(); });
-document.getElementById("pwSubmit").addEventListener("click",submitPassword);
-pwInput.addEventListener("keydown",e=>{ if(e.key==="Enter") submitPassword(); });
-hotspot.addEventListener("click",openPw);
-
-/* ---- FIX DRIVER: set --bar-h precisely ---- */
-function setBarHeight(px){ document.documentElement.style.setProperty('--bar-h', px + 'px'); }
-function showMenu(){
-  document.body.classList.remove('bar-hidden');
-  panel.classList.add("unlocked");
-  requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0));
-}
-function hideMenu(){ document.body.classList.add('bar-hidden'); setBarHeight(0); }
-collapseBtn.addEventListener('click',hideMenu);
-menuRestore.addEventListener('click',showMenu);
-window.addEventListener('resize',()=>{ if(!document.body.classList.contains('bar-hidden')) setBarHeight(panel.getBoundingClientRect().height || 0); });
-
-/* Unlock flow */
-let ROLE=null, loadTimer=null;
-function reveal(role){
-  ROLE=role;
-  locked.style.display="none";
-  panel.classList.add("unlocked");
-  showMenu();                       // start open
-
-  const saved=loadCloak();
-  if(saved&&saved.title&&saved.icon) setTab(saved.title,saved.icon); else setTab("Math Help","icon.png");
-
-  // Load embedded site
-  embedFrame.src=EMBED_URL;
-  embedLoader.style.display="flex";
-  clearTimeout(loadTimer);
-  loadTimer=setTimeout(()=>{ embedLoader.style.display="none"; },4000);
-}
-function submitPassword(){
-  const pass=pwInput.value.trim();
-  if(!pass){ pwErr.textContent="Password required."; return; }
-  if(pass===ADMIN_PASSWORD || pass===USER_PASSWORD){ closePw(); reveal(pass===ADMIN_PASSWORD?"admin":"user"); return; }
-  pwErr.textContent="Incorrect password.";
-}
-
-/* Tools */
-function openTools(){ toolsDrawer.classList.add("open"); }
-function closeTools(){ toolsDrawer.classList.remove("open"); }
-toolsBtn.addEventListener("click",openTools);
-toolsClose.addEventListener("click",closeTools);
-
-/* Notepad */
-noteArea.value=localStorage.getItem("mh_note")||"";
-noteArea.addEventListener("input",()=>{ localStorage.setItem("mh_note",noteArea.value); noteSaved.textContent="Saved"; setTimeout(()=>noteSaved.textContent="",900); });
-
-/* Timer */
-let timerLeft=Number(timerMin.value)*60, timerId=null;
-function renderTimer(){ const m=String(Math.floor(timerLeft/60)).padStart(2,"0"), s=String(timerLeft%60).padStart(2,"0"); timerReadout.textContent=`${m}:${s}`; }
-function startTimer(){ if(timerId) return; timerId=setInterval(()=>{ if(timerLeft>0){ timerLeft--; renderTimer(); } else { clearInterval(timerId); timerId=null; alert("Time!"); }},1000); }
-function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
-function resetTimer(){ stopTimer(); timerLeft=Math.max(0,Math.min(180,Number(timerMin.value)))*60; renderTimer(); }
-timerStart.addEventListener("click",startTimer);
-timerStop.addEventListener("click",stopTimer);
-timerReset.addEventListener("click",resetTimer);
-timerMin.addEventListener("change",resetTimer);
-renderTimer();
-
-/* Terminal */
-function openTerm(){ termDesk.style.display="block"; termIn.value=""; termIn.focus(); if(!termOut.textContent) termOut.textContent="Terminal ready. Type ;help\n"; }
-function closeTerm(){ termDesk.style.display="none"; }
-openTermBtn.addEventListener("click",openTerm);
-termClose.addEventListener("click",closeTerm);
-document.addEventListener("keydown",e=>{ if(termDesk.style.display==="block"&&e.key==="Escape"){ e.preventDefault(); closeTerm(); }});
-function printLine(x=""){ const esc=x.replace(/</g,"&lt;").replace(/>/g,"&gt;"); termOut.innerHTML+=esc+"\n"; termOut.scrollTop=termOut.scrollHeight; }
-function clearTerm(){ termOut.textContent=""; }
-function handleCommand(s){
-  const line=s.trim(); if(!line) return; printLine("> "+line);
-  if(line===";help"){ printLine("Commands: ;help ;clear ;panic ;open tools ;close tools"); printLine(";browser open [url] ;browser close ;browser full ;browser half ;browser window"); return; }
-  if(line===";clear"){ clearTerm(); return; }
-  if(line===";panic"){ triggerPanic(); return; }
-  if(line===";open tools"){ openTools(); return; }
-  if(line===";close tools"){ closeTools(); return; }
-  if(line===";browser open"){ showBrowserChooser(); return; }
-  if(line.startsWith(";browser open ")){ openBrowser(line.slice(14).trim()||MINI_BROWSER_URL); return; }
-  if(line===";browser close"){ closeBrowser(); return; }
-  if(line===";browser full"){ makeFull(); return; }
-  if(line===";browser half"){ makeHalf(); return; }
-  if(line===";browser window"){ makeWindow(); return; }
-  printLine("Unknown command. Try ;help");
-}
-termIn.addEventListener("keydown",e=>{ if(e.key==="Enter"){ handleCommand(e.target.value); e.target.value=""; }});
-
-/* Browser chooser */
-function showBrowserChooser(){ browserChooser.classList.add("show"); browserChooser.setAttribute("aria-hidden","false"); }
-function hideBrowserChooser(){ browserChooser.classList.remove("show"); browserChooser.setAttribute("aria-hidden","true"); }
-browserChooser.addEventListener("click",e=>{ if(e.target.dataset.close!==undefined) hideBrowserChooser(); });
-chooseBean.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(BEAN_URL); });
-chooseWin11.addEventListener("click",()=>{ hideBrowserChooser(); openBrowser(MINI_BROWSER_URL); });
-openBrowserBtn.addEventListener('click',showBrowserChooser);
-
-/* Mini browser */
-let browserLoadTimer=null;
-function resetBrowserInline(){
-  browserWin.style.left=''; browserWin.style.top=''; browserWin.style.right=''; browserWin.style.transform='';
-}
-function makeWindow(){
-  browserWin.classList.remove('full','half');
-  resetBrowserInline();
-  browserWin.style.left='50%'; browserWin.style.top='18px'; browserWin.style.transform='translateX(-50%)';
-}
-function makeFull(){
-  browserWin.classList.remove('half');
-  browserWin.classList.add('full');
-  resetBrowserInline();
-}
-function makeHalf(){
-  browserWin.classList.remove('full');
-  browserWin.classList.add('half');
-  resetBrowserInline();
-}
-function openBrowser(url){
-  browserDesk.style.display="block"; browserDesk.setAttribute("aria-hidden","false");
-  makeWindow(); browserErr.style.display="none"; browserLoader.style.display="flex";
-  browserFrame.removeAttribute('src'); browserFrame.src=url;
-  clearTimeout(browserLoadTimer); browserLoadTimer=setTimeout(()=>{ browserLoader.style.display="none"; browserErr.style.display="block"; },6000);
-}
-function closeBrowser(){ browserDesk.style.display="none"; browserDesk.setAttribute("aria-hidden","true"); }
-closeBtn.addEventListener('click',closeBrowser);
-fullBtn.addEventListener('click',makeFull);
-halfBtn.addEventListener('click',makeHalf);
-winBtn .addEventListener('click',makeWindow);
-browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); browserLoader.style.display="none"; });
-
-/* Drag (disabled in full/half) */
-(function(){ let dragging=false,sx=0,sy=0,left=0,top=0;
-  browserTop.addEventListener('mousedown',e=>{
-    if(browserWin.classList.contains('full')||browserWin.classList.contains('half'))return;
-    dragging=true; sx=e.clientX; sy=e.clientY;
-    const r=browserWin.getBoundingClientRect(); left=r.left; top=r.top; document.body.style.userSelect="none";
+  $("#cloakSelect").addEventListener("change", e=>{
+    try{
+      const v = JSON.parse(e.target.value);
+      setTab(v.title, {"16x16":v.icon, "32x32":v.icon, "64x64":v.icon});
+      toast("Tab updated");
+    }catch(err){ /* ignore */ }
   });
-  window.addEventListener('mousemove',e=>{
-    if(!dragging)return;
-    const dx=e.clientX-sx, dy=e.clientY-sy;
-    browserWin.style.left=(left+dx)+"px"; browserWin.style.top=(top+dy)+"px"; browserWin.style.transform="translateX(0)";
+
+  // Initial "down" favicon set (multi-size)
+  setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
+
+  // --- Hotspot (for any secret actions if needed later) ---
+  $("#hotspot").addEventListener("click", ()=> {
+    document.body.classList.toggle("collapsed");
   });
-  window.addEventListener('mouseup',()=>{ if(dragging){ dragging=false; document.body.style.userSelect=""; }});
-  browserTop.addEventListener('dblclick',()=>{ browserWin.classList.contains('full')?makeWindow():makeFull(); });
-})();
 
-/* Game */
-document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
+  // --- Collapsible menu ---
+  $("#collapseBtn").addEventListener("click", ()=>{
+    document.body.classList.toggle("collapsed");
+    $("#collapseBtn").textContent = document.body.classList.contains("collapsed") ? "Open Menu" : "Close Menu";
+  });
 
-/* Initial "down" favicon set (multi-size) */
-setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
+  // --- Panic key / button ---
+  function doPanic(){
+    // Clear UI, swap to "safe" title/icon, and navigate away
+    setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
+    $("#mainFrame").src = "about:blank";
+    window.location.href = "https://www.khanacademy.org/";
+  }
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "-"){ doPanic(); }
+  });
+  $("#panicTop").addEventListener("click", doPanic);
+  $("#panicFire").addEventListener("click", doPanic);
+
+  // --- Tools drawer ---
+  const drawer = $("#drawer");
+  const toolsPanel = $("#toolsPanel");
+  $("#toolsBtn").addEventListener("click", ()=>{
+    drawer.classList.add("open");
+    toolsPanel.style.display = "block";
+  });
+  $("#toolsClose").addEventListener("click", ()=>{
+    toolsPanel.style.display = "none";
+    if($("#browserPanel").style.display!=="block" && $("#termPanel").style.display!=="block"){
+      drawer.classList.remove("open");
+    }
+  });
+
+  // Notepad
+  const noteBox = $("#noteBox");
+  const NOTE_KEY = "mh_note";
+  noteBox.value = localStorage.getItem(NOTE_KEY) || "";
+  $("#noteSave").addEventListener("click", ()=> {
+    localStorage.setItem(NOTE_KEY, noteBox.value || "");
+    toast("Saved");
+  });
+  $("#noteClear").addEventListener("click", ()=> {
+    noteBox.value = "";
+    localStorage.removeItem(NOTE_KEY);
+    toast("Cleared");
+  });
+
+  // Timer
+  let tHandle = null, remain = 0;
+  const tLeft = $("#tLeft");
+  function fmt(n){ return n<10 ? "0"+n : n; }
+  function tick(){
+    if(remain<=0){ clearInterval(tHandle); tHandle=null; toast("Timer done"); return; }
+    remain--;
+    const m = Math.floor(remain/60), s = remain%60;
+    tLeft.textContent = `${fmt(m)}:${fmt(s)}`;
+  }
+  $("#timerStart").addEventListener("click", ()=>{
+    const m = parseInt($("#tMin").value||"0",10);
+    const s = parseInt($("#tSec").value||"0",10);
+    remain = Math.max(0, m*60 + s);
+    if(tHandle) clearInterval(tHandle);
+    tHandle = setInterval(tick,1000);
+    tick();
+  });
+  $("#timerStop").addEventListener("click", ()=> {
+    if(tHandle) clearInterval(tHandle); tHandle=null;
+    toast("Timer stopped");
+  });
+
+  // Unit converter (very basic)
+  function convert(query){
+    // expects like "10 ft to m"
+    try{
+      const parts = query.trim().toLowerCase().split(/\s+/);
+      const val = parseFloat(parts[0]);
+      if(!isFinite(val)) return "Enter a value, e.g., 10 ft to m";
+      const from = parts[1]; const to = parts[3];
+      const table = {
+        ft:{m:0.3048}, m:{ft:3.28084},
+        in:{cm:2.54}, cm:{in:0.3937007874},
+        lb:{kg:0.45359237}, kg:{lb:2.2046226218}
+      };
+      if(table[from] && table[from][to]){
+        const out = val * table[from][to];
+        return `${val} ${from} ≈ ${out} ${to}`;
+      }
+      return "Unsupported conversion";
+    }catch(e){ return "Invalid format. Try: 10 ft to m"; }
+  }
+  $("#ucRun").addEventListener("click", ()=>{
+    $("#ucOut").textContent = convert($("#ucInput").value || "");
+  });
+
+  // --- Mini Browser ---
+  const browserPanel = $("#browserPanel");
+  const miniBrowser = $("#miniBrowser");
+  $("#openBrowser").addEventListener("click", ()=>{
+    drawer.classList.add("open");
+    browserPanel.style.display = "block";
+  });
+  $("#browserClose").addEventListener("click", ()=>{
+    browserPanel.style.display = "none";
+    if($("#toolsPanel").style.display!=="block" && $("#termPanel").style.display!=="block"){
+      drawer.classList.remove("open");
+    }
+  });
+  $("#browserOpen").addEventListener("click", ()=>{
+    miniBrowser.style.display = "block";
+  });
+  $("#browserHalf").addEventListener("click", ()=>{
+    miniBrowser.style.height = "220px";
+  });
+  $("#browserWindow").addEventListener("click", ()=>{
+    window.open($("#browserURL").value || "about:blank","_blank");
+  });
+  $("#browserGo").addEventListener("click", ()=>{
+    const u = $("#browserURL").value.trim();
+    if(!u) { toast("Enter a URL"); return; }
+    miniBrowser.src = u;
+  });
+
+  // --- Terminal ---
+  const termPanel = $("#termPanel");
+  $("#openTermBtn").addEventListener("click", ()=>{
+    drawer.classList.add("open");
+    termPanel.style.display = "block";
+  });
+  $("#termClose").addEventListener("click", ()=>{
+    termPanel.style.display = "none";
+    if($("#toolsPanel").style.display!=="block" && $("#browserPanel").style.display!=="block"){
+      drawer.classList.remove("open");
+    }
+  });
+
+  const termOut = $("#termOut");
+  const termIn = $("#termIn");
+  function termPrint(s){ const pre = document.createElement("pre"); pre.textContent = s; termOut.appendChild(pre); termOut.scrollTop = termOut.scrollHeight; }
+
+  const cmds = {
+    ";help": ()=> termPrint("Commands:\n;help ;clear ;panic ;open tools ;close tools ;browser open/close/full/half/window"),
+    ";clear": ()=> { termOut.innerHTML=""; },
+    ";panic": ()=> doPanic(),
+    ";open tools": ()=> { drawer.classList.add("open"); toolsPanel.style.display="block"; },
+    ";close tools": ()=> { toolsPanel.style.display="none"; if(browserPanel.style.display!=="block" && termPanel.style.display!=="block"){drawer.classList.remove("open");} },
+    ";browser open": ()=> { drawer.classList.add("open"); browserPanel.style.display="block"; },
+    ";browser close": ()=> { browserPanel.style.display="none"; if(toolsPanel.style.display!=="block" && termPanel.style.display!=="block"){drawer.classList.remove("open");} },
+    ";browser full": ()=> { miniBrowser.style.display="block"; miniBrowser.style.height="420px"; },
+    ";browser half": ()=> { miniBrowser.style.display="block"; miniBrowser.style.height="220px"; },
+    ";browser window": ()=> { window.open($("#browserURL").value || "about:blank","_blank"); }
+  };
+
+  termIn.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter"){
+      const v = termIn.value.trim();
+      if(!v) return;
+      termPrint("> " + v);
+      if(cmds[v]) cmds[v]();
+      else termPrint("Unknown command. Try ;help");
+      termIn.value = "";
+    }
+  });
+
+  // --- Games buttons ---
+  const burritoBtn = document.getElementById('openBurrito');
+  if (burritoBtn) {
+    burritoBtn.addEventListener('click', () => {
+      // Keep your original behavior (new tab load)
+      window.open('/burrito/index.html', '_blank');
+    });
+  }
+
+  // NEW: Golf Hit handler (mirrors Burrito Bison behavior; opens in new tab)
+  const golfHitBtn = document.getElementById('openGolfHit');
+  if (golfHitBtn) {
+    golfHitBtn.addEventListener('click', () => {
+      window.open('golfhit.html', '_blank');
+    });
+  }
+
 </script>
 </body>
 </html>
