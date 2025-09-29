@@ -186,7 +186,8 @@
   <nav class="bar" id="panel" aria-label="Main menu">
     <div class="bar-row">
       <div class="bar-left">
-        <span class="brand"><img src="icon.png" alt="">Math Help</span>
+        <!-- CHANGED: brandIcon shows DOWN logo until unlock -->
+        <span class="brand"><img id="brandIcon" src="down-favicon-32.png" alt="">Math Help</span>
 
         <!-- Tab cloak buttons -->
         <button class="btn" data-title="Calculator" data-favicon="calculator-icon.png" aria-label="Cloak: Calculator"><img src="calculator-icon.png" alt="">Calculator</button>
@@ -372,6 +373,8 @@ const fullBtn=document.getElementById("fullBtn");
 const halfBtn=document.getElementById("halfBtn");
 const winBtn=document.getElementById("winBtn");
 
+const brandIcon=document.getElementById("brandIcon");
+
 /* ===== Favicons / Tab Cloak ===== */
 let __iconVer=0; const __v=href=>href+(href.includes('?')?'&':'?')+'v='+(++__iconVer);
 function removeFavicons(){ document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove()); }
@@ -379,61 +382,72 @@ function addIconWithSizes(href,s){ const l=document.createElement('link'); l.rel
 function addShortcutIcon(href){ const l=document.createElement('link'); l.rel='shortcut icon'; l.href=__v(href); document.head.appendChild(l); }
 function setFavicons(icon){ removeFavicons(); if(typeof icon==='string'){ addIconWithSizes(icon,''); addShortcutIcon(icon); } else { let first=null; for(const [sz,href] of Object.entries(icon)){ addIconWithSizes(href,sz); if(!first) first=href; } if(first) addShortcutIcon(first); } }
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
-function saveCloak(title,icon){ localStorage.setItem("mh_cloak",JSON.stringify({title,icon})); }
-function loadCloak(){ try{return JSON.parse(localStorage.getItem("mh_cloak")||"null");}catch{return null;} }
-function clearTab(){ localStorage.removeItem("mh_cloak"); setTab("Math Help","icon.png"); }
 
-/* ===== Panic ===== */
-const panicSelect=document.getElementById("panicSelect");
-const panicFire=document.getElementById("panicFire");
-function savePanic(obj){ localStorage.setItem("mh_panic",JSON.stringify(obj)); }
-function loadPanic(){ try{return JSON.parse(localStorage.getItem("mh_panic")||"null");}catch{return null;} }
-(function(){ const saved=loadPanic(); if(saved){ for(const o of panicSelect.options){ if(o.value===JSON.stringify(saved)){ panicSelect.value=o.value; break; } } } else savePanic(JSON.parse(panicSelect.value)); })();
-panicSelect.addEventListener("change",()=>savePanic(JSON.parse(panicSelect.value)));
-function triggerPanic(){ const sel=loadPanic()||JSON.parse(panicSelect.value); setTab(sel.title,sel.icon); saveCloak(sel.title,sel.icon); }
-panicFire.addEventListener("click",triggerPanic);
-document.addEventListener("keydown",e=>{
-  const el=document.activeElement, typing=el&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA"||el.isContentEditable);
-  if(!typing && (e.key==="-"||e.key==="_"||e.code==="Minus")) triggerPanic();
-});
-document.querySelectorAll('.btn[data-title]').forEach(b=>b.addEventListener('click',()=>{
-  const t=b.getAttribute('data-title'), i=b.getAttribute('data-favicon'); setTab(t,i); saveCloak(t,i);
-}));
-document.getElementById('clearCloak').addEventListener('click',clearTab);
+/* ===== Initial DOWN state (no auto-reveal!) ===== */
+function setInitialDown(){
+  // Title + down icons
+  setTab("Math Help - Down",{
+    "16x16":"down-favicon-16.png",
+    "32x32":"down-favicon-32.png",
+    "64x64":"down-favicon-64.png"
+  });
+  // Brand icon shows down logo
+  if(brandIcon) brandIcon.src="down-favicon-32.png";
+  // Keep lock screen visible, keep bar hidden
+  locked.style.display="flex";
+  panel.classList.remove("unlocked");
+  // Reserve bar height so layout is stable if needed
+  document.documentElement.style.setProperty("--bar-h","56px");
+}
+setInitialDown();
 
-/* ===== Password Modal (kept minimal UI via hotspot) ===== */
-const ADMIN_PASSWORD="imadmin";
-const USER_PASSWORD="gamerzforever";
-function openPw(){ /* Your existing modal could be wired here if you add it back later */ }
-hotspot.addEventListener("click",openPw);
+/* ===== Unlock flow (only after correct password) ===== */
+function reveal(){
+  locked.style.display="none";
+  panel.classList.add("unlocked");        // shows the nav bar
+  // Switch to normal branding
+  setTab("Math Help","icon.png");
+  if(brandIcon) brandIcon.src="icon.png";
+  // Load main content
+  embedLoader.style.display="flex";
+  embedFrame.src=EMBED_URL;
+  setTimeout(()=>{ embedLoader.style.display="none"; },1600);
+}
 
-/* ===== Bar height & show/hide ===== */
-function setBarHeight(px){ document.documentElement.style.setProperty('--bar-h', px + 'px'); }
+/* Simple password prompt via hotspot click */
+function openPw(){
+  const pw=prompt("Enter password:");
+  if(pw===ADMIN_PASSWORD || pw===USER_PASSWORD){
+    reveal();
+  }else if(pw!==null){
+    alert("Incorrect password.");
+  }
+}
+hotspot.addEventListener("click", openPw);
+
+/* ===== Menu show/hide ===== */
+function setBarHeight(px){ document.documentElement.style.setProperty("--bar-h", px + "px"); }
 function showMenu(){
   document.body.classList.remove('bar-hidden');
-  panel.classList.add("unlocked");
+  if(!panel.classList.contains('unlocked')) return;
   requestAnimationFrame(()=> setBarHeight(panel.getBoundingClientRect().height || 0));
 }
 function hideMenu(){ document.body.classList.add('bar-hidden'); setBarHeight(0); }
-collapseBtn.addEventListener('click',hideMenu);
-menuRestore.addEventListener('click',showMenu);
-window.addEventListener('resize',()=>{ if(!document.body.classList.contains('bar-hidden')) setBarHeight(panel.getBoundingClientRect().height || 0); });
+collapseBtn?.addEventListener("click", hideMenu);
+menuRestore?.addEventListener("click", showMenu);
+window.addEventListener('resize',()=>{ if(panel.classList.contains('unlocked')) setBarHeight(panel.getBoundingClientRect().height || 0); });
 
-/* ===== Unlock & Load Embed ===== */
-let loadTimer=null;
-function reveal(){
-  locked.style.display="none";
-  panel.classList.add("unlocked");
-  showMenu();
-  const saved=loadCloak();
-  if(saved&&saved.title&&saved.icon) setTab(saved.title,saved.icon); else setTab("Math Help","icon.png");
-  embedFrame.src=EMBED_URL;
-  embedLoader.style.display="flex";
-  clearTimeout(loadTimer);
-  loadTimer=setTimeout(()=>{ embedLoader.style.display="none"; },4000);
+/* ===== Panic (kept simple) ===== */
+const panicSelect=document.getElementById("panicSelect");
+const panicFire=document.getElementById("panicFire");
+function triggerPanic(){
+  let sel={title:"Google",icon:"google-favicon.png"};
+  try{ if(panicSelect && panicSelect.value) sel=JSON.parse(panicSelect.value); }catch{}
+  setTab(sel.title,sel.icon);
+  window.location.href="https://www.google.com";
 }
-/* Directly reveal on load (you can gate behind a modal/password if desired) */
-reveal();
+document.addEventListener("keydown",e=>{ const typing=document.activeElement&&(document.activeElement.tagName==="INPUT"||document.activeElement.tagName==="TEXTAREA"||document.activeElement.isContentEditable); if(!typing&&(e.key==="-"||e.code==="Minus")) triggerPanic(); });
+panicFire?.addEventListener("click", triggerPanic);
 
 /* ===== Tools Drawer ===== */
 function openTools(){ toolsDrawer.classList.add("open"); }
@@ -528,10 +542,7 @@ browserFrame.addEventListener('load',()=>{ clearTimeout(browserLoadTimer); brows
 document.getElementById("openBurrito").addEventListener("click",()=>{ window.open(BURRITO_URL,"_blank","noopener"); });
 document.getElementById("openGolfHit").addEventListener("click",()=>{ window.open("golfhit.html","_blank","noopener"); });
 
-/* ===== Initial down icon set ===== */
-setTab("Math Help - Down",{"16x16":"down-favicon-16.png","32x32":"down-favicon-32.png","64x64":"down-favicon-64.png"});
-
-/* ===== Helpers reused above ===== */
+/* ===== Helpers reused above (tab set—kept for completeness) ===== */
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
 </script>
 </body>
