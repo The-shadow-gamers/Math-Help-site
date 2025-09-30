@@ -54,9 +54,21 @@
     display:none; flex-wrap:wrap; gap:.5rem; padding:.5rem .75rem;
     background:linear-gradient(180deg,#121a2b,var(--panel)); border-bottom:1px solid var(--line);
     position:fixed; top:0; left:0; right:0; z-index:1200;
+
+    /* NEW: make the top menu bar scrollable ONLY */
+    max-height:44vh;               /* lets it scroll if it wraps to multiple rows */
+    overflow-y:auto;
+    overscroll-behavior:contain;   /* keep scroll inside the bar */
+    -webkit-overflow-scrolling:touch;
   }
   .bar.unlocked{display:flex}
-  .bar-row{width:100%; display:flex; align-items:center; gap:.5rem}
+  .bar-row{
+    width:100%; display:flex; align-items:center; gap:.5rem;
+
+    /* NEW: horizontal scrolling for narrow screens */
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
   .bar-left{display:flex; align-items:center; gap:.5rem}
   .bar-right{margin-left:auto; display:flex; gap:.5rem}
   .brand{display:inline-flex; align-items:center; gap:.5rem; padding-right:.6rem; margin-right:.8rem; border-right:1px solid var(--line); color:var(--brand); font-weight:800; letter-spacing:.2px; user-select:none}
@@ -191,8 +203,12 @@
       <button id="switchMaths" class="btn" title="Switch to Mathsframe">Switch to Mathsframe</button>
       <button id="changeGamesSource" class="btn" title="Pick a source">Change Source</button>
 
-      <!-- NOW PLAYING label -->
-      <span id="nowPlaying" class="small" style="margin-left:.5rem; opacity:.85">Now playing: —</span>
+      <!-- NOW PLAYING label (clickable) -->
+      <span id="nowPlaying" class="small" role="button" tabindex="0"
+            title="Click to change source"
+            style="margin-left:.5rem; opacity:.85; cursor:pointer; user-select:none">
+        Now playing: —
+      </span>
     </div>
   </nav>
 
@@ -442,7 +458,6 @@ function labelForUrl(url){
   if (!url) return "—";
   if (url.startsWith(COOL_UBG_URL)) return "UBG";
   if (url.startsWith(MATHSFRAME_URL)) return "Mathsframe";
-  // fallback for unknown
   return url.includes("mathhelp0g1") ? "UBG"
        : url.includes("mathhelpg1")  ? "Mathsframe"
        : "Custom";
@@ -503,7 +518,7 @@ collapseBtn?.addEventListener("click", hideMenu);
 menuRestore?.addEventListener("click", showMenu);
 window.addEventListener('resize',()=>{ if(panel.classList.contains('unlocked')) setBarHeight(panel.getBoundingClientRect().height || 0); });
 
-/* ===== Panic: URL + minus key => open + reset to Down ===== */
+/* ===== Panic: URL + minus key ===== */
 const PANIC_URL_KEY = "mh_panic_url";
 const panicUrlInput = document.getElementById("panicUrl");
 (function initPanicUrl(){ const saved = localStorage.getItem(PANIC_URL_KEY) || ""; if (panicUrlInput) panicUrlInput.value = saved; })();
@@ -639,6 +654,12 @@ gsSkip.addEventListener('click', ()=>{ closeGameChooser(); setGamesSource(EMBED_
 switchCool.addEventListener('click', ()=> setGamesSource(COOL_UBG_URL));
 switchMaths.addEventListener('click', ()=> setGamesSource(MATHSFRAME_URL));
 changeGamesSource.addEventListener('click', openGameChooser);
+
+/* NEW: make "Now playing" clickable (also with Enter/Space) */
+nowPlaying.addEventListener('click', openGameChooser);
+nowPlaying.addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGameChooser(); }
+});
 
 /* Helper for setTab also used above (kept for completeness) */
 function setTab(title,icon){ document.title=title; setFavicons(icon); }
